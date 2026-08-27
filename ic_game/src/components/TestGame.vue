@@ -1,4 +1,4 @@
-<script setup>
+<script setup> //
 import { onBeforeUnmount, onMounted, ref, shallowRef } from "vue";
 import Phaser from "phaser";
 import skyImage from "../assets/sky.png";

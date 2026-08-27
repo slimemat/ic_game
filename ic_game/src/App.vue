@@ -1,4 +1,5 @@
 <script setup>
+//
 import { ref } from "vue";
 import MainMenu from "./components/MainMenu.vue";
 import PlaceholderGame from "./components/PlaceholderGame.vue";
