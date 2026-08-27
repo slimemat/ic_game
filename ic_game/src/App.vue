@@ -3,6 +3,8 @@ import { ref } from "vue";
 import MainMenu from "./components/MainMenu.vue";
 import PlaceholderGame from "./components/PlaceholderGame.vue";
 import TestGame from "./components/TestGame.vue";
+import PatternRecognitionGame from "./components/PatternRecognitionGame.vue";
+import GenericGame from "./components/GenericGame.vue";
 
 const games = [
   {
@@ -17,7 +19,21 @@ const games = [
     number: "02",
     title: "Logic Lab",
     description: "Um novo jogo de resolução de problemas.",
-    status: "Soon",
+    status: "Play",
+  },
+  {
+    id: "pattern-recognition",
+    number: "03",
+    title: "Pattern Recognition",
+    description: "Reconhecimento de padrões.",
+    status: "Play",
+  },
+  {
+    id: "generic-game",
+    number: "04",
+    title: "Generic Game",
+    description: "Esqueleto de um novo jogo.",
+    status: "Play",
   },
 ];
 
@@ -32,6 +48,14 @@ const activeGame = ref("menu");
   />
   <TestGame
     v-else-if="activeGame === 'test-platformer'"
+    @back="activeGame = 'menu'"
+  />
+  <PatternRecognitionGame
+    v-else-if="activeGame === 'pattern-recognition'"
+    @back="activeGame = 'menu'"
+  />
+  <GenericGame
+    v-else-if="activeGame === 'generic-game'"
     @back="activeGame = 'menu'"
   />
   <PlaceholderGame v-else @back="activeGame = 'menu'" />
