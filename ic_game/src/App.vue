@@ -5,6 +5,8 @@ import PlaceholderGame from "./components/PlaceholderGame.vue";
 import TestGame from "./components/TestGame.vue";
 import PatternRecognitionGame from "./components/PatternRecognitionGame.vue";
 import GenericGame from "./components/GenericGame.vue";
+import MatrixMirrorGame from "./components/MatrixMirrorGame.vue";
+import CharadeGame from "./components/CharadeGame.vue";
 
 const games = [
   {
@@ -35,6 +37,20 @@ const games = [
     description: "Esqueleto de um novo jogo.",
     status: "Play",
   },
+  {
+    id: "matrix-mirror",
+    number: "05",
+    title: "Matrix Mirroring",
+    description: "Aprenda manipulação de arrays Python.",
+    status: "Play",
+  },
+  {
+    id: "charade-game",
+    number: "06",
+    title: "Detetive de Charadas",
+    description: "Resolva charadas de lógica montando esquemas no canvas.",
+    status: "Play",
+  },
 ];
 
 const activeGame = ref("menu");
@@ -56,6 +72,14 @@ const activeGame = ref("menu");
   />
   <GenericGame
     v-else-if="activeGame === 'generic-game'"
+    @back="activeGame = 'menu'"
+  />
+  <MatrixMirrorGame
+    v-else-if="activeGame === 'matrix-mirror'"
+    @back="activeGame = 'menu'"
+  />
+  <CharadeGame
+    v-else-if="activeGame === 'charade-game'"
     @back="activeGame = 'menu'"
   />
   <PlaceholderGame v-else @back="activeGame = 'menu'" />
