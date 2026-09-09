@@ -103,6 +103,23 @@ class TestGameScene extends Phaser.Scene {
       fontSize: "16px",
       fill: "#000",
     });
+
+    this.backendText = this.add.text(16, 85, "Testando backend...", {
+      fontSize: "16px",
+      fill: "#000",
+      backgroundColor: "#ffffff",
+    });
+
+    fetch("http://localhost:3000/api/test")
+      .then((response) => response.json())
+      .then((data) => {
+        this.backendText.setText(`Backend OK: ${data.message}`);
+        this.backendText.setFill("#00aa00");
+      })
+      .catch((err) => {
+        this.backendText.setText(`Backend falhou: ${err.message}`);
+        this.backendText.setFill("#aa0000");
+      });
   }
 
   createCollisions() {
