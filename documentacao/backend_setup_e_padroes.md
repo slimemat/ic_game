@@ -1,3 +1,10 @@
+### ATENÇÃO DEV, AQUI NA DATA 10/09/2026 AINDA NÃO ESTAMOS COM O PRISMA CONFIGURADO PODE PULAR PARA
+### O FINAL DO ARQUIVO NO RESUMO E SÓ RODAR OS GIT PULL, NPM INSTALL, IGNORAR OS COMANDOS PRISMA AGORA
+### RECOMENDO DEIXAR 3 TERMINAIS DO TIPO GIT BASH NO VSCODE: 
+### 1 PARA OS COMANDOS GIT
+### 2 PARA ENTRAR NA PASTA IC_GAME (FRONT)
+### 3 PARA ENTRAR NA PASTA BACKEND (BACK)
+
 # Setup e Padrões do Back-end
 
 Este documento detalha as boas práticas e o fluxo de trabalho do back-end (Node.js + Express + Prisma) para garantir que o projeto rode perfeitamente em qualquer máquina (evitando o famoso "na minha máquina funciona") e facilite o deploy no futuro, sem a necessidade imediata de Docker.
