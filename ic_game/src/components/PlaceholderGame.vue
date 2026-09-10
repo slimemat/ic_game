@@ -3,9 +3,9 @@ import { onBeforeUnmount, onMounted, ref, shallowRef } from "vue";
 import Phaser from "phaser";
 
 // Adjust these extensions (.mp3, .wav, .ogg) based on your actual files in src/assets/
-import connectAudio from "../assets/connect.mp3";
-import errorAudio from "../assets/error.mp3";
-import winAudio from "../assets/win.mp3";
+import connectAudio from "../assets/audio/connect.mp3";
+import errorAudio from "../assets/audio/error.mp3";
+import winAudio from "../assets/audio/win.mp3";
 
 const emit = defineEmits(["back"]);
 

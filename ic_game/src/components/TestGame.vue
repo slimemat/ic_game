@@ -1,11 +1,11 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref, shallowRef } from "vue";
 import Phaser from "phaser";
-import skyImage from "../assets/sky.png";
-import platformImage from "../assets/platform.png";
-import starImage from "../assets/star.png";
-import bombImage from "../assets/bomb.png";
-import dudeImage from "../assets/dude.png";
+import skyImage from "../assets/images/sky.png";
+import platformImage from "../assets/images/platform.png";
+import starImage from "../assets/images/star.png";
+import bombImage from "../assets/images/bomb.png";
+import dudeImage from "../assets/images/dude.png";
 
 defineEmits(["back"]);
 
