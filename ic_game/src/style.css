@@ -1,9 +1,15 @@
 @import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 :root {
+  --accent-color: #0ea5e9; /* fresh sky */
+  --background-dark: #36393b; /* gunmetal */
+  --background-light: #bfb6bb; /* pale gray */
+  --light-green: #a0ecd0; /* aquamarine */
+  --medium-green: #94ddbc; /* celadon */
+
   font-family: "Space Grotesk", sans-serif;
   color: #edf2f4;
-  background: #101820;
+  background: var(--background-dark);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -15,13 +21,17 @@
 body {
   margin: 0;
   min-width: 320px;
-  min-height: 100svh;
+  height: 100svh;
+  overflow: hidden; /* Evita scroll na tela principal */
 }
 button {
   font: inherit;
 }
 #app {
-  min-height: 100svh;
+  height: 100svh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .menu-screen,
