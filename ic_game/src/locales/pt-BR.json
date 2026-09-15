@@ -73,7 +73,12 @@
     "diff_1": "Rotação/Cores",
     "diff_2": "Múltipla Escolha",
     "stats_level": "Fase Concluída: {num}",
-    "stats_diff": "Dificuldade: {diff}"
+    "stats_diff": "Dificuldade: {diff}",
+    "question_diff_1": "Qual é o próximo padrão?",
+    "click_to_change": "Clique para\nmudar",
+    "question_diff_2": "Selecione o próximo padrão",
+    "err_select_first": "Selecione uma opção antes de confirmar!",
+    "err_incorrect": "Padrão incorreto! Observe com mais atenção."
   },
   "charade": {
     "level_title": "Fase {num}: {title}",

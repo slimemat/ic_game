@@ -49,6 +49,9 @@ onMounted(() => {
       autoCenter: Phaser.Scale.CENTER_BOTH,
       width: 600,
       height: 800,
+      mode: Phaser.Scale.RESIZE,
+      width: "100%",
+      height: "100%",
     },
     scene,
   });
@@ -117,36 +120,22 @@ const triggerWarning = (msg, type = "info") => {
       aria-label="Pattern Recognition Game"
     ></div>
 
-    <!-- External UI Shell -->
-    <div class="ui-controls">
+    <!-- Floating UI -->
+    <div class="floating-ui">
       <div class="level-indicator">
         {{ $t("pattern.level", { num: currentLevel }) }}
         <span class="diff-badge">{{
           $t("pattern.diff", { diff: currentDifficulty })
         }}</span>
       </div>
-      <div class="button-group">
-        <button
-          class="action-button highlight"
-          type="button"
-          @click="checkAnswer"
-        >
-          {{ $t("global.buttons.confirm") }}
-        </button>
-        <button class="action-button warning" type="button" @click="pauseGame">
-          {{ $t("global.buttons.pause") }}
-        </button>
-        <button class="action-button" type="button" @click="resetGame">
-          {{ $t("global.buttons.restart") }}
-        </button>
-        <button
-          class="action-button secondary"
-          type="button"
-          @click="$emit('back')"
-        >
-          {{ $t("global.buttons.back") }}
-        </button>
-      </div>
+      <button
+        class="menu-button"
+        type="button"
+        @click="pauseGame"
+        aria-label="Pause Menu"
+      >
+        &#9776;
+      </button>
     </div>
 
     <!-- Modals Compartilhados -->
@@ -176,11 +165,46 @@ const triggerWarning = (msg, type = "info") => {
 </template>
 
 <style scoped>
+.floating-ui {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  width: 100%;
+  padding: 0 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+}
+
+.level-indicator {
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  pointer-events: auto;
+}
+
 .diff-badge {
   font-size: 0.8rem;
   background-color: #4a5568;
   padding: 0.2rem 0.5rem;
   border-radius: 4px;
   color: #e2e8f0;
+  margin-left: 8px;
+}
+
+.menu-button {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid #4a5568;
+  color: white;
+  font-size: 1.5rem;
+  padding: 4px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.menu-button:hover {
+  background: rgba(0, 0, 0, 0.8);
 }
 </style>
