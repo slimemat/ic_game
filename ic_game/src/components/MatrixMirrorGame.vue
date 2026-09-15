@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { onBeforeUnmount, onMounted, ref, shallowRef, computed } from "vue";
 import Phaser from "phaser";
 import MatrixMirrorScene from "../game/scenes/MatrixMirrorScene";
@@ -48,10 +48,9 @@ onMounted(() => {
     parent: gameRoot.value,
     backgroundColor: "#1a202c",
     scale: {
-      mode: Phaser.Scale.FIT,
-      autoCenter: Phaser.Scale.CENTER_BOTH,
-      width: 800,
-      height: 500,
+      mode: Phaser.Scale.RESIZE,
+      width: "100%",
+      height: "100%",
     },
     scene,
   });
@@ -106,39 +105,16 @@ const triggerWarning = (msg, type = "info") => {
       :type="warningType"
     />
 
-    <div class="level-header">
-      <h2>
-        {{
-          $t("matrix.level_title")
-            .replace("{num}", currentLevel)
-            .replace("{title}", currentLevelData.title)
-        }}
-      </h2>
-      <p class="description">{{ currentLevelData.description }}</p>
-    </div>
-
-    <div
-      class="status-bar"
-      :class="{
-        'all-correct': correctBlocks === totalBlocks && totalBlocks > 0,
-      }"
-    >
-      <div class="progress-text">
-        {{
-          $t("matrix.sync")
-            .replace("{correct}", correctBlocks)
-            .replace("{total}", totalBlocks)
-        }}
-      </div>
-      <div class="progress-bar-container">
-        <div
-          class="progress-bar-fill"
-          :style="{
-            width:
-              (totalBlocks > 0 ? (correctBlocks / totalBlocks) * 100 : 0) + '%',
-          }"
-        ></div>
-      </div>
+    <!-- Floating UI -->
+    <div class="floating-ui">
+      <button
+        class="menu-button"
+        type="button"
+        @click="pauseGame"
+        aria-label="Pause Menu"
+      >
+        &#9776;
+      </button>
     </div>
 
     <!-- Phaser Visualizer -->
@@ -148,31 +124,16 @@ const triggerWarning = (msg, type = "info") => {
       aria-label="Matrix Mirror Game Visuals"
     ></div>
 
-    <div class="controls-area">
-      <button class="action-button" @click="resetLevel">
-        {{ $t("matrix.clear_matrix") }}
-      </button>
-      <button class="action-button warning" @click="pauseGame">
-        {{ $t("global.buttons.pause") }}
-      </button>
-      <button class="action-button secondary" @click="$emit('back')">
-        {{ $t("global.buttons.back_to_menu") }}
-      </button>
-    </div>
-
     <!-- Modals Compartilhados -->
     <PauseModal
       :isOpen="isPaused"
-@resume="resumeGame"
+      :description="`${$t('matrix.level_title').replace('{num}', currentLevel).replace('{title}', currentLevelData.title)}`"
+      @resume="resumeGame"
       @restart="resetLevel"
       @quit="$emit('back')"
     />
 
-    <VictoryModal
-      :isOpen="hasWon"
-@next="nextLevel"
-      @menu="$emit('back')"
-    >
+    <VictoryModal :isOpen="hasWon" @next="nextLevel" @menu="$emit('back')">
       <template #stats>
         <div>
           <p>{{ $t("matrix.stats_level").replace("{num}", currentLevel) }}</p>
@@ -184,29 +145,35 @@ const triggerWarning = (msg, type = "info") => {
 </template>
 
 <style scoped>
-.progress-text {
-  color: var(--text-main);
-  font-size: 1.2rem;
-  margin-bottom: 0.5rem;
+.game-root {
+  padding: 0 !important;
 }
 
-.progress-bar-container {
-  width: 300px;
-  height: 12px;
-  background-color: var(--bg-header);
-  border-radius: 6px;
-  overflow: hidden;
+.floating-ui {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  width: 100%;
+  padding: 0 15px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  pointer-events: none;
+  z-index: 50;
 }
 
-.progress-bar-fill {
-  height: 100%;
-  background-color: var(--color-warning);
-  transition: width 0.3s ease;
+.menu-button {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid #4a5568;
+  color: white;
+  font-size: 1.5rem;
+  padding: 4px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  pointer-events: auto;
 }
 
-.status-bar.all-correct .progress-text {
-  color: var(--color-warning);
-  font-weight: bold;
+.menu-button:hover {
+  background: rgba(0, 0, 0, 0.8);
 }
 </style>
-
