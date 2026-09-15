@@ -122,12 +122,6 @@ const triggerWarning = (msg, type = "info") => {
 
     <!-- Floating UI -->
     <div class="floating-ui">
-      <div class="level-indicator">
-        {{ $t("pattern.level", { num: currentLevel }) }}
-        <span class="diff-badge">{{
-          $t("pattern.diff", { diff: currentDifficulty })
-        }}</span>
-      </div>
       <button
         class="menu-button"
         type="button"
@@ -141,6 +135,7 @@ const triggerWarning = (msg, type = "info") => {
     <!-- Modals Compartilhados -->
     <PauseModal
       :isOpen="isPaused"
+      :description="`${$t('pattern.level', { num: currentLevel })} - ${$t('pattern.diff', { diff: currentDifficulty === 1 ? $t('pattern.diff_1') : $t('pattern.diff_2') })}`"
       @resume="resumeGame"
       @restart="resetGame"
       @quit="$emit('back')"
@@ -165,6 +160,10 @@ const triggerWarning = (msg, type = "info") => {
 </template>
 
 <style scoped>
+.game-root {
+  padding: 0 !important;
+}
+
 .floating-ui {
   position: absolute;
   top: 10px;
@@ -172,25 +171,9 @@ const triggerWarning = (msg, type = "info") => {
   width: 100%;
   padding: 0 15px;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   pointer-events: none;
-}
-
-.level-indicator {
-  font-weight: bold;
-  color: #fff;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
-  pointer-events: auto;
-}
-
-.diff-badge {
-  font-size: 0.8rem;
-  background-color: #4a5568;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  color: #e2e8f0;
-  margin-left: 8px;
 }
 
 .menu-button {

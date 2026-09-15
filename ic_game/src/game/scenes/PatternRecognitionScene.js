@@ -40,6 +40,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
 
     const width = this.scale.width;
     const height = this.scale.height;
+    const baseSize = Math.min(width, height);
 
     const levelIdx = (this.registry.get("level") - 1) % LEVEL_CONFIGS.length;
     this.levelData = LEVEL_CONFIGS[levelIdx];
@@ -49,37 +50,45 @@ export default class PatternRecognitionScene extends Phaser.Scene {
 
     const totalItems = this.levelData.sequence.length + 1;
     const spacing = width / (totalItems + 1);
-    const yPos = height * 0.45;
+
+    // Adjusted yPos higher up to give more room for options and buttons
+    const yPos = height * 0.4;
 
     this.levelData.sequence.forEach((itemVal, i) => {
       const x = spacing * (i + 1);
-      this.createShape(x, yPos, itemVal, false);
+      this.createShape(x, yPos, itemVal, baseSize);
     });
 
     this.ansX = spacing * totalItems;
     this.ansY = yPos;
 
+    const slotSize = baseSize * 0.18;
+
     this.add
-      .rectangle(this.ansX, this.ansY, 80, 80, COLORS.SLOT_BG)
+      .rectangle(this.ansX, this.ansY, slotSize, slotSize, COLORS.SLOT_BG)
       .setStrokeStyle(2, COLORS.SLOT_BORDER);
     this.questionMark = this.add
-      .text(this.ansX, this.ansY, "?", { fontSize: "32px", fill: "#a0aec0" })
+      .text(this.ansX, this.ansY, "?", {
+        fontSize: `${baseSize * 0.06}px`,
+        fill: "#a0aec0",
+      })
       .setOrigin(0.5);
 
     if (this.levelData.difficulty === 1) {
-      this.setupDifficulty1Mechanics(width, height);
+      this.setupDifficulty1Mechanics(width, height, baseSize);
     } else {
-      this.setupDifficulty2Mechanics(width, height);
+      this.setupDifficulty2Mechanics(width, height, baseSize);
     }
 
-    this.createConfirmButton(width, height);
+    this.createConfirmButton(width, height, baseSize);
   }
 
-  createConfirmButton(width, height) {
-    const btnWidth = Math.min(200, width * 0.6);
-    const btnHeight = 50;
+  createConfirmButton(width, height, baseSize) {
+    const btnWidth = Math.min(250, width * 0.7);
+    const btnHeight = baseSize * 0.12;
     const btnX = width / 2;
-    const btnY = height * 0.85;
+    // Lowered slightly to use the vertical space
+    const btnY = height * 0.88;
 
     const btnBg = this.add
       .rectangle(btnX, btnY, btnWidth, btnHeight, 0x48bb78)
@@ -90,7 +99,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
 
     const btnText = this.add
       .text(btnX, btnY, t("global.buttons.confirm"), {
-        fontSize: "20px",
+        fontSize: `${Math.min(24, baseSize * 0.05)}px`,
         fill: "#ffffff",
         fontStyle: "bold",
       })
@@ -111,43 +120,48 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     });
   }
 
-  setupDifficulty1Mechanics(width, height) {
+  setupDifficulty1Mechanics(width, height, baseSize) {
     this.questionMark.setVisible(false);
     this.answerShape = this.createShape(
       this.ansX,
       this.ansY,
       this.levelData.answerOptions[this.currentOptionIndex],
-      true,
+      baseSize,
     );
 
     this.answerShape.setInteractive({ useHandCursor: true });
     this.answerShape.input.isCycleSlot = true;
 
-    const fontSize = Math.min(24, width * 0.05);
+    const fontSize = Math.min(24, width * 0.06);
 
     this.add
-      .text(width / 2, height * 0.25, t("pattern.question_diff_1"), {
+      .text(width / 2, height * 0.2, t("pattern.question_diff_1"), {
         fontSize: `${fontSize}px`,
         fill: "#e2e8f0",
       })
       .setOrigin(0.5);
 
     this.add
-      .text(this.ansX, this.ansY + 60, t("pattern.click_to_change"), {
-        fontSize: "14px",
-        fill: "#a0aec0",
-        align: "center",
-      })
+      .text(
+        this.ansX,
+        this.ansY + baseSize * 0.12,
+        t("pattern.click_to_change"),
+        {
+          fontSize: `${Math.max(12, baseSize * 0.03)}px`,
+          fill: "#a0aec0",
+          align: "center",
+        },
+      )
       .setOrigin(0.5);
   }
 
-  setupDifficulty2Mechanics(width, height) {
+  setupDifficulty2Mechanics(width, height, baseSize) {
     this.answerShape = null;
 
-    const fontSize = Math.min(24, width * 0.05);
+    const fontSize = Math.min(24, width * 0.06);
 
     this.add
-      .text(width / 2, height * 0.2, t("pattern.question_diff_2"), {
+      .text(width / 2, height * 0.18, t("pattern.question_diff_2"), {
         fontSize: `${fontSize}px`,
         fill: "#e2e8f0",
       })
@@ -156,12 +170,13 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     const optionsCount = this.levelData.answerOptions.length;
     const optionSpacing = width / (optionsCount + 1);
     const optionsY = height * 0.65;
+    const boxSize = baseSize * 0.14;
 
     this.levelData.answerOptions.forEach((optVal, i) => {
       const optX = optionSpacing * (i + 1);
 
       const box = this.add
-        .rectangle(optX, optionsY, 60, 60, COLORS.OPTION_BG)
+        .rectangle(optX, optionsY, boxSize, boxSize, COLORS.OPTION_BG)
         .setStrokeStyle(2, COLORS.OPTION_BORDER)
         .setInteractive({ useHandCursor: true });
 
@@ -169,27 +184,30 @@ export default class PatternRecognitionScene extends Phaser.Scene {
       box.input.optionIndex = i;
       this.optionBoxes.push(box);
 
-      this.createShape(optX, optionsY, optVal, false);
+      this.createShape(optX, optionsY, optVal, baseSize);
     });
   }
 
-  createShape(x, y, value, isInteractive) {
+  createShape(x, y, value, baseSize) {
     let shape;
+    const r = baseSize * 0.06; // ratio for radius
+
     if (this.levelData.type === "rotation") {
+      // Create an isosceles triangle scaled by baseSize
       shape = this.add.triangle(
         x,
         y,
         0,
-        40,
-        40,
-        40,
-        20,
+        r * 1.6,
+        r * 1.6,
+        r * 1.6,
+        r * 0.8,
         0,
         COLORS.SHAPE_DEFAULT,
       );
       shape.setAngle(value);
     } else if (this.levelData.type === "color") {
-      shape = this.add.circle(x, y, 25, value);
+      shape = this.add.circle(x, y, r, value);
     }
     return shape;
   }
@@ -243,11 +261,12 @@ export default class PatternRecognitionScene extends Phaser.Scene {
         if (this.answerShape) {
           this.answerShape.destroy();
         }
+        const baseSize = Math.min(this.scale.width, this.scale.height);
         this.answerShape = this.createShape(
           this.ansX,
           this.ansY,
           this.levelData.answerOptions[this.currentOptionIndex],
-          false,
+          baseSize,
         );
       }
     }
