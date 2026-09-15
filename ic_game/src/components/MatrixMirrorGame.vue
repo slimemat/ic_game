@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { onBeforeUnmount, onMounted, ref, shallowRef, computed } from "vue";
 import Phaser from "phaser";
 import MatrixMirrorScene from "../game/scenes/MatrixMirrorScene";
@@ -107,7 +107,13 @@ const triggerWarning = (msg, type = "info") => {
     />
 
     <div class="level-header">
-      <h2>Fase {{ currentLevel }}: {{ currentLevelData.title }}</h2>
+      <h2>
+        {{
+          $t("matrix.level_title")
+            .replace("{num}", currentLevel)
+            .replace("{title}", currentLevelData.title)
+        }}
+      </h2>
       <p class="description">{{ currentLevelData.description }}</p>
     </div>
 
@@ -118,8 +124,11 @@ const triggerWarning = (msg, type = "info") => {
       }"
     >
       <div class="progress-text">
-        Sincronização: <strong>{{ correctBlocks }}</strong> /
-        <strong>{{ totalBlocks }}</strong>
+        {{
+          $t("matrix.sync")
+            .replace("{correct}", correctBlocks)
+            .replace("{total}", totalBlocks)
+        }}
       </div>
       <div class="progress-bar-container">
         <div
@@ -140,34 +149,34 @@ const triggerWarning = (msg, type = "info") => {
     ></div>
 
     <div class="controls-area">
-      <button class="action-button" @click="resetLevel">Limpar Matriz</button>
-      <button class="action-button warning" @click="pauseGame">Pausar</button>
+      <button class="action-button" @click="resetLevel">
+        {{ $t("matrix.clear_matrix") }}
+      </button>
+      <button class="action-button warning" @click="pauseGame">
+        {{ $t("global.buttons.pause") }}
+      </button>
       <button class="action-button secondary" @click="$emit('back')">
-        Voltar ao Menu
+        {{ $t("global.buttons.back_to_menu") }}
       </button>
     </div>
 
     <!-- Modals Compartilhados -->
     <PauseModal
       :isOpen="isPaused"
-      title="Matrix Pausada"
-      description="Faça uma pausa e analise o padrão."
-      @resume="resumeGame"
+@resume="resumeGame"
       @restart="resetLevel"
       @quit="$emit('back')"
     />
 
     <VictoryModal
       :isOpen="hasWon"
-      title="Espelhamento Perfeito!"
-      description="A prova real confirmou: os índices se encaixam exatamente."
-      @next="nextLevel"
+@next="nextLevel"
       @menu="$emit('back')"
     >
       <template #stats>
         <div>
-          <p>Fase Concluída: {{ currentLevel }}</p>
-          <p>Blocos Sincronizados: {{ totalBlocks }}</p>
+          <p>{{ $t("matrix.stats_level").replace("{num}", currentLevel) }}</p>
+          <p>{{ $t("matrix.stats_blocks").replace("{total}", totalBlocks) }}</p>
         </div>
       </template>
     </VictoryModal>
@@ -200,3 +209,4 @@ const triggerWarning = (msg, type = "info") => {
   font-weight: bold;
 }
 </style>
+

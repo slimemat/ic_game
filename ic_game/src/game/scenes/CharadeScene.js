@@ -1,3 +1,4 @@
+﻿import i18n from '../../i18n';
 import Phaser from "phaser";
 import AudioManager from "../managers/AudioManager";
 import connectAudio from "../../assets/audio/connect.mp3";
@@ -26,12 +27,12 @@ export default class CharadeGameScene extends Phaser.Scene {
 
     // Divider line
     this.add.line(0, 0, 200, 0, 200, 800, 0xcbd5e1).setOrigin(0, 0);
-    this.add.text(10, 10, "Biblioteca", {
+    this.add.text(10, 10, i18n.global.t('canvas.charade.library'), {
       fontSize: "20px",
       fill: "#334155",
       fontStyle: "bold",
     });
-    this.add.text(220, 10, "Canvas", {
+    this.add.text(220, 10, i18n.global.t('canvas.charade.canvas'), {
       fontSize: "20px",
       fill: "#334155",
       fontStyle: "bold",
@@ -42,7 +43,7 @@ export default class CharadeGameScene extends Phaser.Scene {
       .rectangle(600, 800, 150, 150, 0xef4444, 0.2)
       .setOrigin(1, 1);
     this.trashIcon = this.add
-      .text(525, 725, "🗑️", { fontSize: "40px" })
+      .text(525, 725, "ðŸ—‘ï¸", { fontSize: "40px" })
       .setOrigin(0.5);
     this.add
       .text(525, 770, "Lixeira", { fontSize: "16px", fill: "#ef4444" })
@@ -185,3 +186,4 @@ export default class CharadeGameScene extends Phaser.Scene {
     }
   }
 }
+

@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { onBeforeUnmount, onMounted, ref, shallowRef, computed } from "vue";
 import Phaser from "phaser";
 import PatternRecognitionScene from "../game/scenes/PatternRecognitionScene";
@@ -120,8 +120,10 @@ const triggerWarning = (msg, type = "info") => {
     <!-- External UI Shell -->
     <div class="ui-controls">
       <div class="level-indicator">
-        Fase {{ currentLevel }}
-        <span class="diff-badge">Dif: {{ currentDifficulty }}</span>
+        {{ $t("pattern.level", { num: currentLevel }) }}
+        <span class="diff-badge">{{
+          $t("pattern.diff", { diff: currentDifficulty })
+        }}</span>
       </div>
       <div class="button-group">
         <button
@@ -129,20 +131,20 @@ const triggerWarning = (msg, type = "info") => {
           type="button"
           @click="checkAnswer"
         >
-          Confirmar
+          {{ $t("global.buttons.confirm") }}
         </button>
         <button class="action-button warning" type="button" @click="pauseGame">
-          Pausar
+          {{ $t("global.buttons.pause") }}
         </button>
         <button class="action-button" type="button" @click="resetGame">
-          Reiniciar
+          {{ $t("global.buttons.restart") }}
         </button>
         <button
           class="action-button secondary"
           type="button"
           @click="$emit('back')"
         >
-          Voltar
+          {{ $t("global.buttons.back") }}
         </button>
       </div>
     </div>
@@ -150,26 +152,22 @@ const triggerWarning = (msg, type = "info") => {
     <!-- Modals Compartilhados -->
     <PauseModal
       :isOpen="isPaused"
-      title="PadrÃ£o em Pausa"
-      description="Pense bem na lÃ³gica da sequÃªncia."
       @resume="resumeGame"
       @restart="resetGame"
       @quit="$emit('back')"
     />
 
-    <VictoryModal
-      :isOpen="hasWon"
-      title="LÃ³gica Correta!"
-      description="VocÃª encontrou o padrÃ£o com perfeiÃ§Ã£o."
-      @next="nextLevel"
-      @menu="$emit('back')"
-    >
+    <VictoryModal :isOpen="hasWon" @next="nextLevel" @menu="$emit('back')">
       <template #stats>
         <div>
-          <p>Fase ConcluÃ­da: {{ currentLevel }}</p>
+          <p>{{ $t("pattern.stats_level", { num: currentLevel }) }}</p>
           <p>
-            Dificuldade:
-            {{ currentDifficulty === 1 ? "RotaÃ§Ã£o/Cores" : "MÃºltipla Escolha" }}
+            {{ $t("pattern.stats_diff", { diff: "" }) }}
+            {{
+              currentDifficulty === 1
+                ? $t("pattern.diff_1")
+                : $t("pattern.diff_2")
+            }}
           </p>
         </div>
       </template>
@@ -185,6 +183,4 @@ const triggerWarning = (msg, type = "info") => {
   border-radius: 4px;
   color: #e2e8f0;
 }
-
 </style>
-

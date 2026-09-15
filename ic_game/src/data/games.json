@@ -5,7 +5,7 @@
     "title": "Star Runner",
     "description": "Teste do phaser com plataforma e coleta de itens.",
     "status": "Play",
-    "category": "Plataforma",
+    "category": "platform",
     "previewImage": "https://placehold.co/400x300/36393B/A0ECD0?text=Star+Runner"
   },
   {
@@ -14,7 +14,7 @@
     "title": "Pattern Recognition",
     "description": "Reconhecimento de padrões.",
     "status": "Play",
-    "category": "Lógica",
+    "category": "logic",
     "previewImage": "https://placehold.co/400x300/36393B/94DDBC?text=Pattern"
   },
   {
@@ -23,7 +23,7 @@
     "title": "Matrix Mirroring",
     "description": "Aprenda manipulação de arrays Python.",
     "status": "Play",
-    "category": "Educacional",
+    "category": "educational",
     "previewImage": "https://placehold.co/400x300/36393B/A0ECD0?text=Matrix"
   },
   {
@@ -32,7 +32,7 @@
     "title": "Detetive de Charadas",
     "description": "Resolva charadas de lógica montando esquemas no canvas.",
     "status": "Play",
-    "category": "Lógica",
+    "category": "logic",
     "previewImage": "https://placehold.co/400x300/36393B/0EA5E9?text=Charadas"
   }
 ]

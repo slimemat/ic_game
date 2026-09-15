@@ -12,36 +12,40 @@ const totalGames = gamesData.length;
   <main class="home-screen">
     <div class="home-content">
       <div class="header">
-        <p class="eyebrow">Bem-vindo(a) de volta</p>
-        <h1>Logic Hub</h1>
+        <p class="eyebrow">{{ $t("home.welcome") }}</p>
+        <h1>{{ $t("home.title") }}</h1>
       </div>
 
       <div class="suggested-game">
         <img
           :src="suggestedGame.previewImage"
-          :alt="suggestedGame.title"
+          :alt="$t(`games.${suggestedGame.id}.title`)"
           class="preview-image"
         />
         <div class="game-info">
-          <h2>{{ suggestedGame.title }}</h2>
-          <p>{{ suggestedGame.category }}</p>
+          <h2>{{ $t(`games.${suggestedGame.id}.title`) }}</h2>
+          <p>{{ $t(`global.categories.${suggestedGame.category}`) }}</p>
         </div>
       </div>
 
       <div class="actions">
         <button class="btn-primary" @click="$emit('play', suggestedGame.id)">
-          Jogar
+          {{ $t("global.buttons.play") }}
         </button>
         <button class="btn-secondary" @click="$emit('choose-games')">
-          Escolher Jogos
+          {{ $t("global.buttons.choose_games") }}
         </button>
       </div>
 
       <div class="stats">
         <p>
-          <strong>{{ totalGames }}</strong> jogos disponíveis
+          <strong>{{ totalGames }}</strong>
+          {{ $t("home.available_games").replace("{count}", "") }}
         </p>
-        <p>Nível: <span class="highlight">Iniciante</span></p>
+        <p>
+          {{ $t("home.level") }}
+          <span class="highlight">{{ $t("home.beginner") }}</span>
+        </p>
       </div>
     </div>
   </main>

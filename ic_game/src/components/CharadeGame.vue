@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { onBeforeUnmount, onMounted, ref, shallowRef, computed } from "vue";
 import Phaser from "phaser";
 import CharadeGameScene from "../game/scenes/CharadeScene";
@@ -116,10 +116,19 @@ const triggerWarning = (msg, type = "info") => {
 
     <div class="ui-header">
       <button class="action-button secondary" @click="$emit('back')">
-        â† Voltar
+        {{ $t("global.buttons.back") }}
       </button>
-      <button class="action-button warning" @click="pauseGame">Pausar</button>
-      <h2>{{ currentCharade.title }}</h2>
+      <button class="action-button warning" @click="pauseGame">
+        {{ $t("global.buttons.pause") }}
+      </button>
+      <h2>
+        {{
+          $t("charade.level_title", {
+            num: currentLevel + 1,
+            title: currentCharade.title,
+          })
+        }}
+      </h2>
     </div>
 
     <div class="game-content">
@@ -136,7 +145,7 @@ const triggerWarning = (msg, type = "info") => {
             {{ currentCharade.statement }}
           </p>
 
-          <h3>Pista:</h3>
+          <h3>{{ $t("charade.clue", { num: 1 }) }}:</h3>
           <p class="clue-text">{{ currentCharade.clue }}</p>
           <p v-if="currentCharade.rule" class="rule-text">
             <strong>Regra:</strong> {{ currentCharade.rule }}
@@ -144,7 +153,7 @@ const triggerWarning = (msg, type = "info") => {
         </div>
 
         <div class="answer-box">
-          <h3>Quem Ã© o culpado?</h3>
+          <h3>{{ $t("charade.suspects") }}</h3>
           <div class="suspects-buttons">
             <button
               v-for="suspect in currentCharade.suspects"
@@ -159,12 +168,7 @@ const triggerWarning = (msg, type = "info") => {
 
         <div class="instructions">
           <p>
-            <strong>Dica:</strong> Arraste os itens da biblioteca para o canvas
-            para ajudar a pensar!
-          </p>
-          <p>
-            Para apagar, arraste para a lixeira no canto inferior direito do
-            canvas.
+            {{ $t("charade.instructions") }}
           </p>
         </div>
       </div>
@@ -173,26 +177,23 @@ const triggerWarning = (msg, type = "info") => {
     <!-- Modals -->
     <PauseModal
       :isOpen="isPaused"
-      title="DeduÃ§Ã£o em Pausa"
-      description="Revise mentalmente as pistas coletadas."
       @resume="resumeGame"
       @restart="restartGame"
       @quit="$emit('back')"
     />
 
-    <VictoryModal
-      :isOpen="hasWon"
-      title="Caso Encerrado!"
-      description="VocÃª desvendou o mistÃ©rio."
-      @next="nextLevel"
-      @menu="$emit('back')"
-    >
+    <VictoryModal :isOpen="hasWon" @next="nextLevel" @menu="$emit('back')">
+      <template #stats>
+        <div>
+          <p>{{ $t("charade.stats_level", { num: currentLevel + 1 }) }}</p>
+        </div>
+      </template>
       <template #actions>
         <button @click="nextLevel" class="btn btn-primary">
           {{
             currentLevel < CHARADES_LEVELS.length - 1
-              ? "PrÃ³ximo MistÃ©rio"
-              : "Finalizar (Voltar)"
+              ? $t("global.buttons.next_level")
+              : $t("global.buttons.back_to_menu")
           }}
         </button>
       </template>
@@ -290,4 +291,3 @@ const triggerWarning = (msg, type = "info") => {
   text-align: center;
 }
 </style>
-

@@ -28,18 +28,20 @@ const filteredGames = computed(() => {
 <template>
   <main class="selection-screen">
     <div class="header">
-      <button class="back-btn" @click="$emit('back')">← Voltar</button>
+      <button class="back-btn" @click="$emit('back')">
+        {{ $t("selection.back_button") }}
+      </button>
       <div class="filters">
         <input
           type="text"
           v-model="searchQuery"
-          placeholder="Buscar jogo..."
+          :placeholder="$t('selection.search_placeholder')"
           class="search-input"
         />
         <select v-model="selectedCategory" class="category-select">
-          <option value="">Todas as Categorias</option>
+          <option value="">{{ $t("selection.all_categories") }}</option>
           <option v-for="cat in categories" :key="cat" :value="cat">
-            {{ cat }}
+            {{ $t(`global.categories.${cat}`) }}
           </option>
         </select>
       </div>
@@ -47,7 +49,7 @@ const filteredGames = computed(() => {
 
     <div class="game-grid-container">
       <div v-if="filteredGames.length === 0" class="no-results">
-        Nenhum jogo encontrado.
+        {{ $t("selection.no_results") }}
       </div>
       <nav v-else class="game-grid" aria-label="Available games">
         <button
@@ -57,10 +59,16 @@ const filteredGames = computed(() => {
           type="button"
           @click="$emit('select', game.id)"
         >
-          <img :src="game.previewImage" :alt="game.title" class="game-img" />
+          <img
+            :src="game.previewImage"
+            :alt="$t(`games.${game.id}.title`)"
+            class="game-img"
+          />
           <div class="game-info">
-            <span class="game-category">{{ game.category }}</span>
-            <strong>{{ game.title }}</strong>
+            <span class="game-category">{{
+              $t(`global.categories.${game.category}`)
+            }}</span>
+            <strong>{{ $t(`games.${game.id}.title`) }}</strong>
           </div>
         </button>
       </nav>

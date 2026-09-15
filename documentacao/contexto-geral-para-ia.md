@@ -33,6 +33,7 @@ O estado atual do código deve evoluir buscando sempre:
 - **Qualidade de Código**: Foco em estruturar melhor a aplicação em módulos, seguindo princípios fundamentais como **SOLID** e **DRY** (Don't Repeat Yourself).
 - **Escalabilidade da API**: O backend está dividido em `routes`, `controllers`, `services`, `middlewares` e `utils` para garantir clareza e manutenção simples.
 - **Modularidade de Jogos**: Como o projeto terá múltiplas fases independentes, a estrutura de pastas e a injeção de dependências devem favorecer o reaproveitamento de lógicas, componentes visuais e estilos.
+- **Internacionalização e Strings**: Todos os textos da interface devem ser extraídos do HTML/JS e centralizados utilizando a arquitetura do `vue-i18n`. Leia a [Documentação de Strings (i18n)](./frontend_i18n.md) para detalhes.
 
 ## Fluxo de Trabalho e Padrões
 

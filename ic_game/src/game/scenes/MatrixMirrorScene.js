@@ -1,3 +1,4 @@
+﻿import i18n from '../../i18n';
 import Phaser from "phaser";
 import { LEVELS, COLORS } from "../data/MatrixMirrorLevels";
 import AudioManager from "../managers/AudioManager";
@@ -10,7 +11,7 @@ export default class MatrixMirrorScene extends Phaser.Scene {
   constructor(onMatchUpdate, onWin) {
     super("MatrixGameScene");
     this.onMatchUpdate = onMatchUpdate;
-    this.onWinCallback = onWin; // Para evitar colisão com this.onWin do próprio Phaser
+    this.onWinCallback = onWin; // Para evitar colisÃ£o com this.onWin do prÃ³prio Phaser
     this.playerMatrix = [];
     this.originalContainer = null;
     this.playerContainer = null;
@@ -64,11 +65,11 @@ export default class MatrixMirrorScene extends Phaser.Scene {
     this.originalContainer = this.add.container(200, startY);
     this.playerContainer = this.add.container(600, startY);
 
-    // Textos (fora dos containers para não girarem)
-    this.titleLeft = this.add.text(200, startY - 80, "Matriz Original", { fontSize: '24px', fill: '#e2e8f0', fontStyle: 'bold' }).setOrigin(0.5);
-    this.titleRight = this.add.text(600, startY - 80, "Sua Matriz (Espelho)", { fontSize: '24px', fill: '#e2e8f0', fontStyle: 'bold' }).setOrigin(0.5);
+    // Textos (fora dos containers para nÃ£o girarem)
+    this.titleLeft = this.add.text(200, startY - 80, i18n.global.t('canvas.matrix.original'), { fontSize: '24px', fill: '#e2e8f0', fontStyle: 'bold' }).setOrigin(0.5);
+    this.titleRight = this.add.text(600, startY - 80, i18n.global.t('canvas.matrix.mirror'), { fontSize: '24px', fill: '#e2e8f0', fontStyle: 'bold' }).setOrigin(0.5);
     
-    // Desenha matriz Original (Estática)
+    // Desenha matriz Original (EstÃ¡tica)
     this.drawMatrix(this.originalContainer, levelData.input, levelData.dimensions, blockSize, spacing, false);
     
     // Desenha matriz do Jogador (Interativa)
@@ -232,3 +233,4 @@ export default class MatrixMirrorScene extends Phaser.Scene {
     this.generateVisuals();
   }
 }
+

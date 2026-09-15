@@ -1,4 +1,4 @@
-﻿<script setup>
+<script setup>
 import { onBeforeUnmount, onMounted, ref, shallowRef } from "vue";
 import Phaser from "phaser";
 import PlatformerScene from "../game/scenes/PlatformerScene";
@@ -78,10 +78,12 @@ const handleTouchEnd = (action) => {
   <main class="game-screen">
     <div class="ui-header">
       <button class="action-button secondary" @click="$emit('back')">
-        â† Voltar
+        {{ $t("global.buttons.back") }}
       </button>
-      <div class="score-display">Pontos: {{ score }}</div>
-      <button class="action-button warning" @click="pauseGame">Pausar</button>
+      <div class="score-display">{{ $t("test_game.score", { score }) }}</div>
+      <button class="action-button warning" @click="pauseGame">
+        {{ $t("global.buttons.pause") }}
+      </button>
     </div>
 
     <!-- Phaser container -->
@@ -98,7 +100,7 @@ const handleTouchEnd = (action) => {
           @touchstart.prevent="handleTouchStart('left')"
           @touchend.prevent="handleTouchEnd('left')"
         >
-          â†
+          ←
         </button>
         <button
           class="control-btn"
@@ -108,7 +110,7 @@ const handleTouchEnd = (action) => {
           @touchstart.prevent="handleTouchStart('right')"
           @touchend.prevent="handleTouchEnd('right')"
         >
-          â†’
+          →
         </button>
       </div>
       <button
@@ -119,14 +121,12 @@ const handleTouchEnd = (action) => {
         @touchstart.prevent="handleTouchStart('jump')"
         @touchend.prevent="handleTouchEnd('jump')"
       >
-        PULAR
+        {{ $t("test_game.jump") }}
       </button>
     </div>
 
     <PauseModal
       :isOpen="isPaused"
-      title="Jogo Pausado"
-      description="O tempo estÃ¡ parado."
       @resume="resumeGame"
       @restart="restartGame"
       @quit="$emit('back')"
@@ -134,21 +134,21 @@ const handleTouchEnd = (action) => {
 
     <VictoryModal
       :isOpen="isGameOver"
-      title="Fim de Jogo!"
-      description="VocÃª foi atingido por uma bomba."
       @next="restartGame"
       @menu="$emit('back')"
     >
       <template #stats>
         <div>
-          <p>PontuaÃ§Ã£o Final: {{ score }}</p>
+          <p>{{ $t("test_game.score", { score }) }}</p>
         </div>
       </template>
       <template #actions>
         <button @click="restartGame" class="btn btn-primary">
-          Tentar Novamente
+          {{ $t("global.buttons.restart_level") }}
         </button>
-        <button @click="$emit('back')" class="btn btn-secondary">Sair</button>
+        <button @click="$emit('back')" class="btn btn-secondary">
+          {{ $t("global.buttons.quit") }}
+        </button>
       </template>
     </VictoryModal>
   </main>
@@ -208,4 +208,3 @@ const handleTouchEnd = (action) => {
   }
 }
 </style>
-

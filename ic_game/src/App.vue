@@ -2,7 +2,6 @@
 import { ref } from "vue";
 import Home from "./components/Home.vue";
 import GameSelection from "./components/GameSelection.vue";
-import PlaceholderGame from "./components/PlaceholderGame.vue";
 import TestGame from "./components/TestGame.vue";
 import PatternRecognitionGame from "./components/PatternRecognitionGame.vue";
 import MatrixMirrorGame from "./components/MatrixMirrorGame.vue";
@@ -38,5 +37,10 @@ const activeGame = ref("home");
     v-else-if="activeGame === 'charade-game'"
     @back="activeGame = 'home'"
   />
-  <PlaceholderGame v-else @back="activeGame = 'home'" />
+  <div v-else class="game-not-found">
+    <h2>Jogo em desenvolvimento</h2>
+    <button class="btn-primary" @click="activeGame = 'home'">
+      Voltar ao Menu
+    </button>
+  </div>
 </template>
