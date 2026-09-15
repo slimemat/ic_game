@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { onBeforeUnmount, onMounted, ref, shallowRef } from "vue";
 import Phaser from "phaser";
 import PlatformerScene from "../game/scenes/PlatformerScene";
@@ -78,7 +78,7 @@ const handleTouchEnd = (action) => {
   <main class="game-screen">
     <div class="ui-header">
       <button class="action-button secondary" @click="$emit('back')">
-        ← Voltar
+        â† Voltar
       </button>
       <div class="score-display">Pontos: {{ score }}</div>
       <button class="action-button warning" @click="pauseGame">Pausar</button>
@@ -98,7 +98,7 @@ const handleTouchEnd = (action) => {
           @touchstart.prevent="handleTouchStart('left')"
           @touchend.prevent="handleTouchEnd('left')"
         >
-          ←
+          â†
         </button>
         <button
           class="control-btn"
@@ -108,7 +108,7 @@ const handleTouchEnd = (action) => {
           @touchstart.prevent="handleTouchStart('right')"
           @touchend.prevent="handleTouchEnd('right')"
         >
-          →
+          â†’
         </button>
       </div>
       <button
@@ -126,7 +126,7 @@ const handleTouchEnd = (action) => {
     <PauseModal
       :isOpen="isPaused"
       title="Jogo Pausado"
-      description="O tempo está parado."
+      description="O tempo estÃ¡ parado."
       @resume="resumeGame"
       @restart="restartGame"
       @quit="$emit('back')"
@@ -135,13 +135,13 @@ const handleTouchEnd = (action) => {
     <VictoryModal
       :isOpen="isGameOver"
       title="Fim de Jogo!"
-      description="Você foi atingido por uma bomba."
+      description="VocÃª foi atingido por uma bomba."
       @next="restartGame"
       @menu="$emit('back')"
     >
       <template #stats>
         <div>
-          <p>Pontuação Final: {{ score }}</p>
+          <p>PontuaÃ§Ã£o Final: {{ score }}</p>
         </div>
       </template>
       <template #actions>
@@ -155,54 +155,10 @@ const handleTouchEnd = (action) => {
 </template>
 
 <style scoped>
-.game-screen {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100vh;
-  background-color: #2d3748;
-  font-family: sans-serif;
-}
-
-.ui-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background-color: #1a202c;
-  color: #e2e8f0;
-}
-
 .score-display {
   font-size: 1.5rem;
   font-weight: bold;
-  color: #f6e05e;
-}
-
-.action-button {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-  background-color: #4a5568;
-  color: white;
-}
-.action-button.secondary {
-  background-color: transparent;
-  border: 1px solid #4a5568;
-}
-.action-button.warning {
-  background-color: #ed8936;
-}
-
-.game-root {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  overflow: hidden;
-  background-color: #000;
+  color: var(--color-warning);
 }
 
 /* Touch Controls */
@@ -210,8 +166,8 @@ const handleTouchEnd = (action) => {
   display: flex;
   justify-content: space-between;
   padding: 1.5rem;
-  background: #1a202c;
-  border-top: 2px solid #4a5568;
+  background: var(--bg-header);
+  border-top: 2px solid var(--bg-panel-hover);
 }
 
 .d-pad {
@@ -222,7 +178,7 @@ const handleTouchEnd = (action) => {
 .control-btn {
   width: 70px;
   height: 70px;
-  background-color: #4a5568;
+  background-color: var(--bg-panel-hover);
   border: 2px solid #718096;
   border-radius: 50%;
   color: #fff;
@@ -252,3 +208,4 @@ const handleTouchEnd = (action) => {
   }
 }
 </style>
+

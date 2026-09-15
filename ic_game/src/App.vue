@@ -5,7 +5,6 @@ import GameSelection from "./components/GameSelection.vue";
 import PlaceholderGame from "./components/PlaceholderGame.vue";
 import TestGame from "./components/TestGame.vue";
 import PatternRecognitionGame from "./components/PatternRecognitionGame.vue";
-import GenericGame from "./components/GenericGame.vue";
 import MatrixMirrorGame from "./components/MatrixMirrorGame.vue";
 import CharadeGame from "./components/CharadeGame.vue";
 
@@ -29,10 +28,6 @@ const activeGame = ref("home");
   />
   <PatternRecognitionGame
     v-else-if="activeGame === 'pattern-recognition'"
-    @back="activeGame = 'home'"
-  />
-  <GenericGame
-    v-else-if="activeGame === 'generic-game'"
     @back="activeGame = 'home'"
   />
   <MatrixMirrorGame

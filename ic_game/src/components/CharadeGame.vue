@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { onBeforeUnmount, onMounted, ref, shallowRef, computed } from "vue";
 import Phaser from "phaser";
 import CharadeGameScene from "../game/scenes/CharadeScene";
@@ -60,7 +60,7 @@ const checkAnswer = (suspect) => {
   } else {
     AudioManager.play("error");
     triggerWarning(
-      "Parece que esse não é o culpado. Revise as pistas!",
+      "Parece que esse nÃ£o Ã© o culpado. Revise as pistas!",
       "error",
     );
   }
@@ -107,7 +107,7 @@ const triggerWarning = (msg, type = "info") => {
 
 <template>
   <main class="game-screen">
-    <!-- Aviso Dinâmico (Toast) -->
+    <!-- Aviso Dinamico (Toast) -->
     <WarningCard
       :isVisible="showWarning"
       :message="warningMessage"
@@ -116,7 +116,7 @@ const triggerWarning = (msg, type = "info") => {
 
     <div class="ui-header">
       <button class="action-button secondary" @click="$emit('back')">
-        ← Voltar
+        â† Voltar
       </button>
       <button class="action-button warning" @click="pauseGame">Pausar</button>
       <h2>{{ currentCharade.title }}</h2>
@@ -144,7 +144,7 @@ const triggerWarning = (msg, type = "info") => {
         </div>
 
         <div class="answer-box">
-          <h3>Quem é o culpado?</h3>
+          <h3>Quem Ã© o culpado?</h3>
           <div class="suspects-buttons">
             <button
               v-for="suspect in currentCharade.suspects"
@@ -173,7 +173,7 @@ const triggerWarning = (msg, type = "info") => {
     <!-- Modals -->
     <PauseModal
       :isOpen="isPaused"
-      title="Dedução em Pausa"
+      title="DeduÃ§Ã£o em Pausa"
       description="Revise mentalmente as pistas coletadas."
       @resume="resumeGame"
       @restart="restartGame"
@@ -183,7 +183,7 @@ const triggerWarning = (msg, type = "info") => {
     <VictoryModal
       :isOpen="hasWon"
       title="Caso Encerrado!"
-      description="Você desvendou o mistério."
+      description="VocÃª desvendou o mistÃ©rio."
       @next="nextLevel"
       @menu="$emit('back')"
     >
@@ -191,7 +191,7 @@ const triggerWarning = (msg, type = "info") => {
         <button @click="nextLevel" class="btn btn-primary">
           {{
             currentLevel < CHARADES_LEVELS.length - 1
-              ? "Próximo Mistério"
+              ? "PrÃ³ximo MistÃ©rio"
               : "Finalizar (Voltar)"
           }}
         </button>
@@ -201,57 +201,6 @@ const triggerWarning = (msg, type = "info") => {
 </template>
 
 <style scoped>
-.game-screen {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100vh;
-  background-color: #f8fafc;
-  color: #334155;
-  font-family: sans-serif;
-}
-
-.ui-header {
-  display: flex;
-  align-items: center;
-  padding: 1rem;
-  background-color: #1e293b;
-  color: #f8fafc;
-  gap: 1rem;
-}
-
-.ui-header h2 {
-  margin: 0;
-  font-size: 1.5rem;
-}
-
-.action-button {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-  background-color: #4a5568;
-  color: white;
-}
-
-.action-button.secondary {
-  background-color: transparent;
-  border: 1px solid #94a3b8;
-  color: #f8fafc;
-}
-.action-button.secondary:hover {
-  background-color: #334155;
-}
-
-.action-button.warning {
-  background-color: #f59e0b;
-  color: #fffbeb;
-}
-.action-button.warning:hover {
-  background-color: #d97706;
-}
-
 .game-content {
   display: flex;
   flex: 1;
@@ -341,3 +290,4 @@ const triggerWarning = (msg, type = "info") => {
   text-align: center;
 }
 </style>
+

@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { onBeforeUnmount, onMounted, ref, shallowRef, computed } from "vue";
 import Phaser from "phaser";
 import PatternRecognitionScene from "../game/scenes/PatternRecognitionScene";
@@ -103,7 +103,7 @@ const triggerWarning = (msg, type = "info") => {
 
 <template>
   <main class="game-screen">
-    <!-- Aviso Dinâmico -->
+    <!-- Aviso DinÃ¢mico -->
     <WarningCard
       :isVisible="showWarning"
       :message="warningMessage"
@@ -150,8 +150,8 @@ const triggerWarning = (msg, type = "info") => {
     <!-- Modals Compartilhados -->
     <PauseModal
       :isOpen="isPaused"
-      title="Padrão em Pausa"
-      description="Pense bem na lógica da sequência."
+      title="PadrÃ£o em Pausa"
+      description="Pense bem na lÃ³gica da sequÃªncia."
       @resume="resumeGame"
       @restart="resetGame"
       @quit="$emit('back')"
@@ -159,17 +159,17 @@ const triggerWarning = (msg, type = "info") => {
 
     <VictoryModal
       :isOpen="hasWon"
-      title="Lógica Correta!"
-      description="Você encontrou o padrão com perfeição."
+      title="LÃ³gica Correta!"
+      description="VocÃª encontrou o padrÃ£o com perfeiÃ§Ã£o."
       @next="nextLevel"
       @menu="$emit('back')"
     >
       <template #stats>
         <div>
-          <p>Fase Concluída: {{ currentLevel }}</p>
+          <p>Fase ConcluÃ­da: {{ currentLevel }}</p>
           <p>
             Dificuldade:
-            {{ currentDifficulty === 1 ? "Rotação/Cores" : "Múltipla Escolha" }}
+            {{ currentDifficulty === 1 ? "RotaÃ§Ã£o/Cores" : "MÃºltipla Escolha" }}
           </p>
         </div>
       </template>
@@ -178,42 +178,6 @@ const triggerWarning = (msg, type = "info") => {
 </template>
 
 <style scoped>
-.game-screen {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100vh;
-  background-color: #1a202c;
-  font-family: sans-serif;
-}
-
-.game-root {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.ui-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background-color: #2d3748;
-  color: #e2e8f0;
-  border-top: 4px solid #4a5568;
-}
-
-.level-indicator {
-  font-weight: bold;
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
 .diff-badge {
   font-size: 0.8rem;
   background-color: #4a5568;
@@ -222,46 +186,5 @@ const triggerWarning = (msg, type = "info") => {
   color: #e2e8f0;
 }
 
-.button-group {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.action-button {
-  padding: 0.8rem 1.5rem;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  background-color: #4a5568;
-  color: white;
-  transition: all 0.2s ease;
-}
-
-.action-button:hover {
-  background-color: #718096;
-}
-
-.action-button.highlight {
-  background-color: #3182ce;
-}
-.action-button.highlight:hover {
-  background-color: #2b6cb0;
-}
-
-.action-button.warning {
-  background-color: #ed8936;
-  color: #fffaf0;
-}
-.action-button.warning:hover {
-  background-color: #dd6b20;
-}
-
-.action-button.secondary {
-  background-color: transparent;
-  border: 1px solid #4a5568;
-}
-.action-button.secondary:hover {
-  background-color: #2d3748;
-}
 </style>
+

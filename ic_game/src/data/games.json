@@ -9,15 +9,6 @@
     "previewImage": "https://placehold.co/400x300/36393B/A0ECD0?text=Star+Runner"
   },
   {
-    "id": "logic-lab",
-    "number": "02",
-    "title": "Logic Lab",
-    "description": "Um novo jogo de resolução de problemas.",
-    "status": "Play",
-    "category": "Lógica",
-    "previewImage": "https://placehold.co/400x300/36393B/0EA5E9?text=Logic+Lab"
-  },
-  {
     "id": "pattern-recognition",
     "number": "03",
     "title": "Pattern Recognition",
@@ -25,15 +16,6 @@
     "status": "Play",
     "category": "Lógica",
     "previewImage": "https://placehold.co/400x300/36393B/94DDBC?text=Pattern"
-  },
-  {
-    "id": "generic-game",
-    "number": "04",
-    "title": "Generic Game",
-    "description": "Esqueleto de um novo jogo.",
-    "status": "Play",
-    "category": "Arcade",
-    "previewImage": "https://placehold.co/400x300/36393B/BFB6BB?text=Generic"
   },
   {
     "id": "matrix-mirror",
