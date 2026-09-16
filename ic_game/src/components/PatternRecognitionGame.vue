@@ -49,6 +49,9 @@ onMounted(() => {
       autoCenter: Phaser.Scale.CENTER_BOTH,
       width: 600,
       height: 800,
+      mode: Phaser.Scale.RESIZE,
+      width: "100%",
+      height: "100%",
     },
     scene,
   });
@@ -103,7 +106,7 @@ const triggerWarning = (msg, type = "info") => {
 
 <template>
   <main class="game-screen">
-    <!-- Aviso Dinâmico -->
+    <!-- Aviso DinÃ¢mico -->
     <WarningCard
       :isVisible="showWarning"
       :message="warningMessage"
@@ -117,59 +120,38 @@ const triggerWarning = (msg, type = "info") => {
       aria-label="Pattern Recognition Game"
     ></div>
 
-    <!-- External UI Shell -->
-    <div class="ui-controls">
-      <div class="level-indicator">
-        Fase {{ currentLevel }}
-        <span class="diff-badge">Dif: {{ currentDifficulty }}</span>
-      </div>
-      <div class="button-group">
-        <button
-          class="action-button highlight"
-          type="button"
-          @click="checkAnswer"
-        >
-          Confirmar
-        </button>
-        <button class="action-button warning" type="button" @click="pauseGame">
-          Pausar
-        </button>
-        <button class="action-button" type="button" @click="resetGame">
-          Reiniciar
-        </button>
-        <button
-          class="action-button secondary"
-          type="button"
-          @click="$emit('back')"
-        >
-          Voltar
-        </button>
-      </div>
+    <!-- Floating UI -->
+    <div class="floating-ui">
+      <button
+        class="menu-button"
+        type="button"
+        @click="pauseGame"
+        aria-label="Pause Menu"
+      >
+        &#9776;
+      </button>
     </div>
 
     <!-- Modals Compartilhados -->
     <PauseModal
       :isOpen="isPaused"
-      title="Padrão em Pausa"
-      description="Pense bem na lógica da sequência."
+      :description="`${$t('pattern.level', { num: currentLevel })} - ${$t('pattern.diff', { diff: currentDifficulty === 1 ? $t('pattern.diff_1') : $t('pattern.diff_2') })}`"
       @resume="resumeGame"
       @restart="resetGame"
       @quit="$emit('back')"
     />
 
-    <VictoryModal
-      :isOpen="hasWon"
-      title="Lógica Correta!"
-      description="Você encontrou o padrão com perfeição."
-      @next="nextLevel"
-      @menu="$emit('back')"
-    >
+    <VictoryModal :isOpen="hasWon" @next="nextLevel" @menu="$emit('back')">
       <template #stats>
         <div>
-          <p>Fase Concluída: {{ currentLevel }}</p>
+          <p>{{ $t("pattern.stats_level", { num: currentLevel }) }}</p>
           <p>
-            Dificuldade:
-            {{ currentDifficulty === 1 ? "Rotação/Cores" : "Múltipla Escolha" }}
+            {{ $t("pattern.stats_diff", { diff: "" }) }}
+            {{
+              currentDifficulty === 1
+                ? $t("pattern.diff_1")
+                : $t("pattern.diff_2")
+            }}
           </p>
         </div>
       </template>
@@ -178,90 +160,34 @@ const triggerWarning = (msg, type = "info") => {
 </template>
 
 <style scoped>
-.game-screen {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100vh;
-  background-color: #1a202c;
-  font-family: sans-serif;
-}
-
 .game-root {
-  flex: 1;
-  min-height: 0;
+  padding: 0 !important;
+}
+
+.floating-ui {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  width: 100%;
+  padding: 0 15px;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
+  pointer-events: none;
 }
 
-.ui-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background-color: #2d3748;
-  color: #e2e8f0;
-  border-top: 4px solid #4a5568;
-}
-
-.level-indicator {
-  font-weight: bold;
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.diff-badge {
-  font-size: 0.8rem;
-  background-color: #4a5568;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
-  color: #e2e8f0;
-}
-
-.button-group {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.action-button {
-  padding: 0.8rem 1.5rem;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  background-color: #4a5568;
-  color: white;
-  transition: all 0.2s ease;
-}
-
-.action-button:hover {
-  background-color: #718096;
-}
-
-.action-button.highlight {
-  background-color: #3182ce;
-}
-.action-button.highlight:hover {
-  background-color: #2b6cb0;
-}
-
-.action-button.warning {
-  background-color: #ed8936;
-  color: #fffaf0;
-}
-.action-button.warning:hover {
-  background-color: #dd6b20;
-}
-
-.action-button.secondary {
-  background-color: transparent;
+.menu-button {
+  background: rgba(0, 0, 0, 0.5);
   border: 1px solid #4a5568;
+  color: white;
+  font-size: 1.5rem;
+  padding: 4px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  pointer-events: auto;
 }
-.action-button.secondary:hover {
-  background-color: #2d3748;
+
+.menu-button:hover {
+  background: rgba(0, 0, 0, 0.8);
 }
 </style>

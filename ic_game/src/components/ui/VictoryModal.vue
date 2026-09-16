@@ -5,18 +5,26 @@
         <!-- Ícone genérico de estrela/troféu. Idealmente, importaríamos um SVG. -->
         <span class="icon">⭐</span>
       </div>
-      <h2 class="modal-title">{{ title }}</h2>
-      <p v-if="description" class="modal-description">{{ description }}</p>
-      
+      <h2 class="modal-title">
+        {{ title || $t("global.modals.victory_title") }}
+      </h2>
+      <p class="modal-description">
+        {{ description || $t("global.modals.victory_desc") }}
+      </p>
+
       <!-- Slot para exibir estatísticas personalizadas de cada jogo (score, tempo, etc) -->
       <div v-if="$slots.stats" class="modal-stats">
         <slot name="stats"></slot>
       </div>
-      
+
       <div class="modal-actions">
         <slot name="actions">
-          <button @click="$emit('next')" class="btn btn-primary">Próxima Fase</button>
-          <button @click="$emit('menu')" class="btn btn-secondary">Voltar ao Menu</button>
+          <button @click="$emit('next')" class="btn btn-primary">
+            {{ $t("global.buttons.next_level") }}
+          </button>
+          <button @click="$emit('menu')" class="btn btn-secondary">
+            {{ $t("global.buttons.back_to_menu") }}
+          </button>
         </slot>
       </div>
     </div>
@@ -27,19 +35,19 @@
 defineProps({
   isOpen: {
     type: Boolean,
-    default: false
+    default: false,
   },
   title: {
     type: String,
-    default: 'Nível Concluído!'
+    default: "",
   },
   description: {
     type: String,
-    default: 'Excelente trabalho!'
-  }
+    default: "",
+  },
 });
 
-defineEmits(['next', 'menu']);
+defineEmits(["next", "menu"]);
 </script>
 
 <style scoped>
@@ -64,7 +72,9 @@ defineEmits(['next', 'menu']);
   text-align: center;
   color: white;
   min-width: 320px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.25);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.5),
+    0 4px 6px -2px rgba(0, 0, 0, 0.25);
   border: 2px solid #ecc94b;
 }
 
@@ -75,8 +85,12 @@ defineEmits(['next', 'menu']);
 }
 
 @keyframes popIn {
-  0% { transform: scale(0); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(0);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .modal-title {
@@ -130,4 +144,3 @@ defineEmits(['next', 'menu']);
   background: #2d3748;
 }
 </style>
-
