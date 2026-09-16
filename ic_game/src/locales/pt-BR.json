@@ -1,0 +1,104 @@
+{
+  "global": {
+    "buttons": {
+      "play": "Jogar",
+      "choose_games": "Escolher Jogos",
+      "back": "Voltar",
+      "pause": "Pausar",
+      "restart": "Reiniciar",
+      "confirm": "Confirmar",
+      "continue": "Continuar",
+      "restart_level": "Reiniciar Fase",
+      "quit": "Sair",
+      "next_level": "Próxima Fase",
+      "back_to_menu": "Voltar ao Menu"
+    },
+    "modals": {
+      "pause_title": "Jogo Pausado",
+      "pause_desc": "Você pausou a partida.",
+      "victory_title": "Fase Concluída!",
+      "victory_desc": "Você mandou muito bem."
+    },
+    "categories": {
+      "platform": "Plataforma",
+      "logic": "Lógica",
+      "educational": "Educacional",
+      "arcade": "Arcade"
+    },
+    "game_status": {
+      "play": "Jogar"
+    }
+  },
+  "home": {
+    "welcome": "Bem-vindo(a) de volta",
+    "title": "Logic Hub",
+    "available_games": "{count} jogos disponíveis",
+    "level": "Nível:",
+    "beginner": "Iniciante"
+  },
+  "selection": {
+    "back_button": "← Voltar",
+    "search_placeholder": "Buscar jogo...",
+    "all_categories": "Todas as Categorias",
+    "no_results": "Nenhum jogo encontrado."
+  },
+  "games": {
+    "test-platformer": {
+      "title": "Star Runner",
+      "description": "Teste do phaser com plataforma e coleta de itens."
+    },
+    "pattern-recognition": {
+      "title": "Pattern Recognition",
+      "description": "Reconhecimento de padrões."
+    },
+    "matrix-mirror": {
+      "title": "Matrix Mirroring",
+      "description": "Aprenda manipulação de arrays Python."
+    },
+    "charade-game": {
+      "title": "Detetive de Charadas",
+      "description": "Resolva charadas de lógica montando esquemas no canvas."
+    }
+  },
+  "matrix": {
+    "clear_matrix": "Limpar Matriz",
+    "sync": "Sincronização: {correct} / {total}",
+    "level_title": "Fase {num}: {title}",
+    "stats_level": "Fase Concluída: {num}",
+    "stats_blocks": "Blocos Sincronizados: {total}"
+  },
+  "pattern": {
+    "level": "Fase {num}",
+    "diff": "Dif: {diff}",
+    "diff_1": "Rotação/Cores",
+    "diff_2": "Múltipla Escolha",
+    "stats_level": "Fase Concluída: {num}",
+    "stats_diff": "Dificuldade: {diff}",
+    "question_diff_1": "Qual é o próximo padrão?",
+    "click_to_change": "Clique para\nmudar",
+    "question_diff_2": "Selecione o próximo padrão",
+    "err_select_first": "Selecione uma opção antes de confirmar!",
+    "err_incorrect": "Padrão incorreto! Observe com mais atenção."
+  },
+  "charade": {
+    "level_title": "Fase {num}: {title}",
+    "clue": "Dica {num}",
+    "suspects": "Suspeitos",
+    "instructions": "Verifique as pistas e atribua as características aos suspeitos corretos.",
+    "stats_level": "Fase Concluída: {num}"
+  },
+  "test_game": {
+    "score": "Score: {score}",
+    "jump": "Pular"
+  },
+  "canvas": {
+    "matrix": {
+      "original": "Matriz Original",
+      "mirror": "Sua Matriz (Espelho)"
+    },
+    "charade": {
+      "library": "Biblioteca",
+      "canvas": "Canvas"
+    }
+  }
+}

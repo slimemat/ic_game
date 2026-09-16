@@ -1,0 +1,38 @@
+[
+  {
+    "id": "test-platformer",
+    "number": "01",
+    "title": "Star Runner",
+    "description": "Teste do phaser com plataforma e coleta de itens.",
+    "status": "Play",
+    "category": "platform",
+    "previewImage": "https://placehold.co/400x300/36393B/A0ECD0?text=Star+Runner"
+  },
+  {
+    "id": "pattern-recognition",
+    "number": "03",
+    "title": "Pattern Recognition",
+    "description": "Reconhecimento de padrões.",
+    "status": "Play",
+    "category": "logic",
+    "previewImage": "https://placehold.co/400x300/36393B/94DDBC?text=Pattern"
+  },
+  {
+    "id": "matrix-mirror",
+    "number": "05",
+    "title": "Matrix Mirroring",
+    "description": "Aprenda manipulação de arrays Python.",
+    "status": "Play",
+    "category": "educational",
+    "previewImage": "https://placehold.co/400x300/36393B/A0ECD0?text=Matrix"
+  },
+  {
+    "id": "charade-game",
+    "number": "06",
+    "title": "Detetive de Charadas",
+    "description": "Resolva charadas de lógica montando esquemas no canvas.",
+    "status": "Play",
+    "category": "logic",
+    "previewImage": "https://placehold.co/400x300/36393B/0EA5E9?text=Charadas"
+  }
+]

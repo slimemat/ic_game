@@ -1,14 +1,28 @@
 <template>
   <div v-if="isOpen" class="modal-overlay">
     <div class="modal-content">
-      <h2 class="modal-title">{{ title }}</h2>
-      <p v-if="description" class="modal-description">{{ description }}</p>
-      
+      <h2 class="modal-title">
+        {{ title || $t("global.modals.pause_title") }}
+      </h2>
+      <p class="modal-description">
+        {{ description || $t("global.modals.pause_desc") }}
+      </p>
+
       <div class="modal-actions">
         <slot name="actions">
-          <button @click="$emit('resume')" class="btn btn-primary">Continuar</button>
-          <button v-if="showRestart" @click="$emit('restart')" class="btn btn-secondary">Recomeçar</button>
-          <button @click="$emit('quit')" class="btn btn-danger">Sair</button>
+          <button @click="$emit('resume')" class="btn btn-primary">
+            {{ $t("global.buttons.continue") }}
+          </button>
+          <button
+            v-if="showRestart"
+            @click="$emit('restart')"
+            class="btn btn-secondary"
+          >
+            {{ $t("global.buttons.restart_level") }}
+          </button>
+          <button @click="$emit('quit')" class="btn btn-danger">
+            {{ $t("global.buttons.quit") }}
+          </button>
         </slot>
       </div>
     </div>
@@ -19,23 +33,23 @@
 defineProps({
   isOpen: {
     type: Boolean,
-    default: false
+    default: false,
   },
   title: {
     type: String,
-    default: 'Jogo Pausado'
+    default: "",
   },
   description: {
     type: String,
-    default: ''
+    default: "",
   },
   showRestart: {
     type: Boolean,
-    default: true
-  }
+    default: true,
+  },
 });
 
-defineEmits(['resume', 'restart', 'quit']);
+defineEmits(["resume", "restart", "quit"]);
 </script>
 
 <style scoped>
@@ -116,4 +130,3 @@ defineEmits(['resume', 'restart', 'quit']);
   background: #f56565;
 }
 </style>
-

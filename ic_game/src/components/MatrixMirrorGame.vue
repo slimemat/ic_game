@@ -48,10 +48,9 @@ onMounted(() => {
     parent: gameRoot.value,
     backgroundColor: "#1a202c",
     scale: {
-      mode: Phaser.Scale.FIT,
-      autoCenter: Phaser.Scale.CENTER_BOTH,
-      width: 800,
-      height: 500,
+      mode: Phaser.Scale.RESIZE,
+      width: "100%",
+      height: "100%",
     },
     scene,
   });
@@ -94,62 +93,51 @@ const triggerWarning = (msg, type = "info") => {
   warningMessage.value = msg;
   warningType.value = type;
   showWarning.value = true;
-  setTimeout(() => showWarning.value = false, 3000);
+  setTimeout(() => (showWarning.value = false), 3000);
 };
 </script>
 
 <template>
   <main class="game-screen">
-    <WarningCard 
-      :isVisible="showWarning" 
-      :message="warningMessage" 
-      :type="warningType" 
+    <WarningCard
+      :isVisible="showWarning"
+      :message="warningMessage"
+      :type="warningType"
     />
 
-    <div class="level-header">
-      <h2>Fase {{ currentLevel }}: {{ currentLevelData.title }}</h2>
-      <p class="description">{{ currentLevelData.description }}</p>
-    </div>
-
-    <div class="status-bar" :class="{ 'all-correct': correctBlocks === totalBlocks && totalBlocks > 0 }">
-      <div class="progress-text">
-        Sincronização: <strong>{{ correctBlocks }}</strong> / <strong>{{ totalBlocks }}</strong>
-      </div>
-      <div class="progress-bar-container">
-        <div class="progress-bar-fill" :style="{ width: (totalBlocks > 0 ? (correctBlocks / totalBlocks) * 100 : 0) + '%' }"></div>
-      </div>
+    <!-- Floating UI -->
+    <div class="floating-ui">
+      <button
+        class="menu-button"
+        type="button"
+        @click="pauseGame"
+        aria-label="Pause Menu"
+      >
+        &#9776;
+      </button>
     </div>
 
     <!-- Phaser Visualizer -->
-    <div ref="gameRoot" class="game-root" aria-label="Matrix Mirror Game Visuals"></div>
-
-    <div class="controls-area">
-      <button class="action-button" @click="resetLevel">Limpar Matriz</button>
-      <button class="action-button warning" @click="pauseGame">Pausar</button>
-      <button class="action-button secondary" @click="$emit('back')">Voltar ao Menu</button>
-    </div>
+    <div
+      ref="gameRoot"
+      class="game-root"
+      aria-label="Matrix Mirror Game Visuals"
+    ></div>
 
     <!-- Modals Compartilhados -->
-    <PauseModal 
-      :isOpen="isPaused" 
-      title="Matrix Pausada"
-      description="Faça uma pausa e analise o padrão."
-      @resume="resumeGame" 
-      @restart="resetLevel" 
-      @quit="$emit('back')" 
+    <PauseModal
+      :isOpen="isPaused"
+      :description="`${$t('matrix.level_title').replace('{num}', currentLevel).replace('{title}', currentLevelData.title)}`"
+      @resume="resumeGame"
+      @restart="resetLevel"
+      @quit="$emit('back')"
     />
 
-    <VictoryModal 
-      :isOpen="hasWon"
-      title="Espelhamento Perfeito!"
-      description="A prova real confirmou: os índices se encaixam exatamente."
-      @next="nextLevel"
-      @menu="$emit('back')"
-    >
+    <VictoryModal :isOpen="hasWon" @next="nextLevel" @menu="$emit('back')">
       <template #stats>
         <div>
-          <p>Fase Concluída: {{ currentLevel }}</p>
-          <p>Blocos Sincronizados: {{ totalBlocks }}</p>
+          <p>{{ $t("matrix.stats_level").replace("{num}", currentLevel) }}</p>
+          <p>{{ $t("matrix.stats_blocks").replace("{total}", totalBlocks) }}</p>
         </div>
       </template>
     </VictoryModal>
@@ -157,129 +145,35 @@ const triggerWarning = (msg, type = "info") => {
 </template>
 
 <style scoped>
-.game-screen {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  height: 100vh;
-  background-color: #1a202c;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.level-header {
-  padding: 1.5rem;
-  background-color: #2d3748;
-  color: #e2e8f0;
-  text-align: center;
-  border-bottom: 4px solid #4a5568;
-}
-
-.level-header h2 {
-  margin: 0 0 0.5rem 0;
-  font-size: 2rem;
-  color: #f6e05e;
-}
-
-.description {
-  margin: 0;
-  font-size: 1.1rem;
-  color: #a0aec0;
-}
-
-.status-bar {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 1rem;
-  background-color: #1a202c;
-  border-bottom: 2px solid #2d3748;
-}
-
-.progress-text {
-  color: #e2e8f0;
-  font-size: 1.2rem;
-  margin-bottom: 0.5rem;
-}
-
-.progress-bar-container {
-  width: 300px;
-  height: 12px;
-  background-color: #2d3748;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.progress-bar-fill {
-  height: 100%;
-  background-color: #f6e05e;
-  transition: width 0.3s ease;
-}
-
-.status-bar.all-correct .progress-text {
-  color: #f6e05e;
-  font-weight: bold;
-}
-
 .game-root {
-  flex: 1;
+  padding: 0 !important;
+}
+
+.floating-ui {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  width: 100%;
+  padding: 0 15px;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
-  overflow: hidden;
-  padding: 1rem;
+  pointer-events: none;
+  z-index: 50;
 }
 
-.controls-area {
-  padding: 1rem;
-  background-color: #2d3748;
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  border-top: 4px solid #4a5568;
-}
-
-.action-button {
-  padding: 0.8rem 1.5rem;
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: #1a202c;
-  background-color: #e2e8f0;
-  border: none;
+.menu-button {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid #4a5568;
+  color: white;
+  font-size: 1.5rem;
+  padding: 4px 12px;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  pointer-events: auto;
 }
 
-.action-button:hover {
-  background-color: #cbd5e0;
-  transform: translateY(-2px);
-}
-
-.action-button.primary {
-  background-color: #f6e05e;
-}
-
-.action-button.primary:hover {
-  background-color: #ecc94b;
-}
-
-.action-button.secondary {
-  background-color: #4a5568;
-  color: #e2e8f0;
-}
-
-.action-button.secondary:hover {
-  background-color: #2d3748;
-}
-
-.action-button.warning {
-  background-color: #ed8936;
-  color: #fffaf0;
-}
-
-.action-button.warning:hover {
-  background-color: #dd6b20;
+.menu-button:hover {
+  background: rgba(0, 0, 0, 0.8);
 }
 </style>
-
