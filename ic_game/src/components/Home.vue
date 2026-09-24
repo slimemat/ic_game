@@ -2,45 +2,62 @@
 import { computed } from "vue";
 import gamesData from "../data/games.json";
 
-const emit = defineEmits(["play", "choose-games"]);
+const emit = defineEmits(["play", "choose-games", "back"]);
 
-const suggestedGame = computed(() => gamesData[0]);
+/**
+ * "Pick of the day" — always surfaces pattern-recognition.
+ * Falls back to the first game if the ID is ever removed from games.json.
+ */
+const featuredGame = computed(
+  () => gamesData.find((g) => g.id === "pattern-recognition") ?? gamesData[0],
+);
+
 const totalGames = gamesData.length;
 </script>
 
 <template>
   <main class="home-screen">
     <div class="home-content">
+      <!-- Back button -->
+      <button class="btn-back" @click="$emit('back')">
+        {{ $t("global.buttons.back_to_menu") }}
+      </button>
+
+      <!-- Header -->
       <div class="header">
-        <p class="eyebrow">{{ $t("home.welcome") }}</p>
+        <p class="eyebrow">{{ $t("home.pick_of_day") }}</p>
         <h1>{{ $t("home.title") }}</h1>
+        <p class="pick-subtitle">{{ $t("home.pick_subtitle") }}</p>
       </div>
 
+      <!-- Featured game card -->
       <div class="suggested-game">
         <img
-          :src="suggestedGame.previewImage"
-          :alt="$t(`games.${suggestedGame.id}.title`)"
+          :src="featuredGame.previewImage"
+          :alt="$t(`games.${featuredGame.id}.title`)"
           class="preview-image"
         />
         <div class="game-info">
-          <h2>{{ $t(`games.${suggestedGame.id}.title`) }}</h2>
-          <p>{{ $t(`global.categories.${suggestedGame.category}`) }}</p>
+          <h2>{{ $t(`games.${featuredGame.id}.title`) }}</h2>
+          <p>{{ $t(`global.categories.${featuredGame.category}`) }}</p>
         </div>
       </div>
 
+      <!-- Actions -->
       <div class="actions">
-        <button class="btn-primary" @click="$emit('play', suggestedGame.id)">
+        <button class="btn-primary" @click="$emit('play', featuredGame.id)">
           {{ $t("global.buttons.play") }}
         </button>
         <button class="btn-secondary" @click="$emit('choose-games')">
-          {{ $t("global.buttons.choose_games") }}
+          {{ $t("home.cta_choose") }}
         </button>
       </div>
 
+      <!-- Stats footer -->
       <div class="stats">
         <p>
           <strong>{{ totalGames }}</strong>
-          {{ $t("home.available_games").replace("{count}", "") }}
+          {{ $t("home.available_games", { count: totalGames }) }}
         </p>
         <p>
           {{ $t("home.level") }}
@@ -70,6 +87,23 @@ const totalGames = gamesData.length;
   gap: 32px;
 }
 
+/* ── Back button ────────────────────────────────────────────────────────── */
+.btn-back {
+  align-self: flex-start;
+  background: transparent;
+  border: none;
+  color: var(--background-light, #94a3b8);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.15s;
+}
+
+.btn-back:hover {
+  color: var(--light-green, #4ade80);
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
 .header {
   text-align: center;
 }
@@ -79,6 +113,13 @@ const totalGames = gamesData.length;
   margin-top: 8px;
 }
 
+.pick-subtitle {
+  margin: 4px 0 0;
+  color: var(--background-light, #94a3b8);
+  font-size: 0.9rem;
+}
+
+/* ── Featured game card ─────────────────────────────────────────────────── */
 .suggested-game {
   background: var(--background-dark);
   border: 1px solid #36535b;
@@ -111,6 +152,7 @@ const totalGames = gamesData.length;
   font-weight: 500;
 }
 
+/* ── Actions ────────────────────────────────────────────────────────────── */
 .actions {
   display: flex;
   gap: 16px;
@@ -155,6 +197,7 @@ const totalGames = gamesData.length;
   border: 1px solid var(--light-green);
 }
 
+/* ── Stats footer ───────────────────────────────────────────────────────── */
 .stats {
   margin-top: auto;
   display: flex;
