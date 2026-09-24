@@ -29,12 +29,29 @@
       "play": "Jogar"
     }
   },
+  "mainMenu": {
+    "title": "Logic Hub",
+    "subtitle": "Bem-vindo(a)! Escolha como quer jogar.",
+    "level_label": "Nível:",
+    "nav_aria_label": "Modos de jogo",
+    "buttons": {
+      "story_mode": "Modo História",
+      "level_select": "Selecionar Fase"
+    },
+    "active_mode": {
+      "story": "Modo História ativado",
+      "level_select": "Seleção de Fase ativada"
+    }
+  },
   "home": {
     "welcome": "Bem-vindo(a) de volta",
     "title": "Logic Hub",
     "available_games": "{count} jogos disponíveis",
     "level": "Nível:",
-    "beginner": "Iniciante"
+    "beginner": "Iniciante",
+    "pick_of_day": "Jogo do dia",
+    "pick_subtitle": "Nossa sugestão baseada no seu perfil",
+    "cta_choose": "Escolher outro jogo"
   },
   "selection": {
     "back_button": "← Voltar",
