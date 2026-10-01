@@ -8,6 +8,8 @@ import TestGame from "./components/TestGame.vue";
 import PatternRecognitionGame from "./components/PatternRecognitionGame.vue";
 import MatrixMirrorGame from "./components/MatrixMirrorGame.vue";
 import CharadeGame from "./components/CharadeGame.vue";
+import StoryMode from "./components/StoryMode.vue";
+import StoryDashboard from "./components/StoryDashboard.vue";
 
 const session = useGameSessionStore();
 
@@ -32,6 +34,8 @@ watch(
   (mode) => {
     if (mode === "story") {
       activeScreen.value = "story";
+    } else if (mode === "story-dashboard") {
+      activeScreen.value = "story-dashboard";
     } else if (mode === "level-select") {
       activeScreen.value = "home";
     } else if (mode === "menu") {
@@ -52,11 +56,13 @@ function goToMenu() {
   <MainMenu v-if="activeScreen === 'main-menu'" @mode-selected="() => {}" />
 
   <!-- ── Story Mode (Phase 2 placeholder) ──────────────────────────────── -->
-  <div v-else-if="activeScreen === 'story'" class="placeholder-screen">
-    <h2>Modo História</h2>
-    <p>Em breve…</p>
-    <button class="btn-primary" @click="goToMenu()">Voltar ao Menu</button>
-  </div>
+  <StoryMode v-else-if="activeScreen === 'story'" />
+
+  <StoryDashboard
+    v-else-if="activeScreen === 'story-dashboard'"
+    @play="activeScreen = $event"
+    @back="goToMenu()"
+  />
 
   <!-- ── Existing Hub flow ──────────────────────────────────────────────── -->
   <Home
