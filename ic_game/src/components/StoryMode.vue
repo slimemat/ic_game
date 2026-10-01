@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import { useGameSessionStore } from "../stores/gameSession";
 import PauseModal from "./ui/PauseModal.vue";
@@ -8,6 +8,8 @@ const { t } = useI18n();
 const session = useGameSessionStore();
 
 const isPaused = ref(false);
+const chatContainer = ref(null);
+const chatLog = ref([]);
 
 const storyVariables = computed(() => ({
   assistantName: t("story.variables.assistantName"),
@@ -15,70 +17,51 @@ const storyVariables = computed(() => ({
   companyName: t("story.variables.companyName"),
 }));
 
-// O fluxo de cena agora descreve exatamente quem está em tela (activeCharacters)
-// e quem é o orador atual (speaker).
 const sceneFlow = {
   intro: {
     speaker: "assistant",
-    activeCharacters: [
-      { char: "assistant", emotion: "neutral", position: "right" },
-    ],
+    emotion: "neutral",
     choices: [
       { id: "choiceA", next: "replyA" },
       { id: "choiceB", next: "replyB" },
     ],
   },
-  replyA: {
-    speaker: "assistant",
-    activeCharacters: [
-      { char: "assistant", emotion: "explaining", position: "right" },
-    ],
-    next: "call_manager",
-  },
-  replyB: {
-    speaker: "assistant",
-    activeCharacters: [
-      { char: "assistant", emotion: "explaining", position: "right" },
-    ],
-    next: "call_manager",
-  },
+  replyA: { speaker: "assistant", emotion: "explaining", next: "call_manager" },
+  replyB: { speaker: "assistant", emotion: "explaining", next: "call_manager" },
   call_manager: {
     speaker: "assistant",
-    activeCharacters: [
-      { char: "assistant", emotion: "neutral", position: "right" },
-    ],
+    emotion: "neutral",
     next: "manager_enters",
   },
   manager_enters: {
     speaker: "manager",
-    activeCharacters: [
-      { char: "assistant", emotion: "neutral", position: "right" },
-      { char: "manager", emotion: "explaining", position: "left" },
-    ],
+    emotion: "explaining",
     next: "manager_explains",
   },
   manager_explains: {
     speaker: "manager",
-    activeCharacters: [
-      { char: "assistant", emotion: "neutral", position: "right" },
-      { char: "manager", emotion: "neutral", position: "left" },
-    ],
+    emotion: "neutral",
     next: "assistant_finish",
   },
   assistant_finish: {
     speaker: "assistant",
-    activeCharacters: [
-      { char: "assistant", emotion: "explaining", position: "right" },
-      { char: "manager", emotion: "neutral", position: "left" },
-    ],
+    emotion: "explaining",
     next: "end_scene",
   },
 };
 
-const currentNodeId = ref("intro");
-const currentDialogue = computed(() => sceneFlow[currentNodeId.value]);
+const currentNodeId = ref(null);
+const currentDialogue = computed(() =>
+  currentNodeId.value ? sceneFlow[currentNodeId.value] : null,
+);
 
-// Resolve o caminho dinâmico da imagem
+// --- ESTADOS DE DIGITAÇÃO ---
+const isTyping = ref(false);
+const typingChar = ref("");
+const typingEmotion = ref("");
+const typingName = ref("");
+let typingTimeout = null;
+
 function getSpriteUrl(char, emotion) {
   return new URL(
     `../assets/sprites/${char}_${emotion || "neutral"}.png`,
@@ -86,11 +69,88 @@ function getSpriteUrl(char, emotion) {
   ).href;
 }
 
-function advance(nextNodeId) {
-  if (nextNodeId === "end_scene") {
+function scrollToBottom() {
+  nextTick(() => {
+    if (chatContainer.value) {
+      chatContainer.value.scrollTop = chatContainer.value.scrollHeight;
+    }
+  });
+}
+
+function processNode(nodeId) {
+  currentNodeId.value = nodeId;
+
+  if (nodeId === "end_scene") {
     session.setActiveMode("story-dashboard");
-  } else {
-    currentNodeId.value = nextNodeId;
+    return;
+  }
+
+  const node = sceneFlow[nodeId];
+
+  // 1. Inicia a Animação de Digitação
+  isTyping.value = true;
+  typingChar.value = node.speaker;
+  typingEmotion.value = node.emotion;
+  typingName.value = t(
+    `story.characters.${node.speaker}`,
+    storyVariables.value,
+  );
+
+  scrollToBottom();
+
+  // 2. Aguarda um tempo (1.5s) para simular digitação antes de mostrar a mensagem real
+  typingTimeout = setTimeout(() => {
+    commitMessage(nodeId);
+  }, 1500);
+}
+
+// Conclui a digitação e injeta o texto final
+function commitMessage(nodeId) {
+  if (!isTyping.value) return; // Previne dupla execução se o usuário pular
+
+  clearTimeout(typingTimeout);
+  isTyping.value = false;
+
+  const node = sceneFlow[nodeId];
+
+  chatLog.value.push({
+    id: Date.now() + Math.random(),
+    isPlayer: false,
+    char: node.speaker,
+    emotion: node.emotion,
+    name: typingName.value,
+    text: t(`story.scene1.${nodeId}`, storyVariables.value),
+  });
+
+  scrollToBottom();
+}
+
+// Acelerador: Se o usuário tocar na tela, a digitação termina imediatamente
+function skipTyping() {
+  if (isTyping.value && currentNodeId.value) {
+    commitMessage(currentNodeId.value);
+  }
+}
+
+function handleChoice(choice) {
+  chatLog.value.push({
+    id: Date.now() + Math.random(),
+    isPlayer: true,
+    text: t(`story.scene1.${choice.id}`, storyVariables.value),
+  });
+
+  currentNodeId.value = null;
+  scrollToBottom();
+
+  setTimeout(() => {
+    processNode(choice.next);
+  }, 500);
+}
+
+function handleNext() {
+  // Apenas avança se não estiver digitando
+  if (!isTyping.value) {
+    processNode(currentDialogue.value.next);
   }
 }
 
@@ -98,6 +158,10 @@ function quitStory() {
   isPaused.value = false;
   session.setActiveMode("menu");
 }
+
+onMounted(() => {
+  processNode("intro");
+});
 </script>
 
 <template>
@@ -113,70 +177,90 @@ function quitStory() {
       :showRestart="false"
     />
 
-    <!-- Área Visual: Espaço onde os personagens ficam em pé -->
-    <div class="visual-area">
+    <!-- HISTÓRICO DE CHAT COM EVENTO DE SKIP NO CLIQUE -->
+    <div class="chat-history" ref="chatContainer" @click="skipTyping">
+      <div class="system-message">
+        Criptografia Ativada. Você entrou na rede corporativa.
+      </div>
+
+      <!-- Mensagens já renderizadas -->
       <div
-        v-for="actor in currentDialogue.activeCharacters"
-        :key="actor.char"
-        class="character-container"
-        :class="[
-          `pos-${actor.position}`,
-          { 'is-speaking': currentDialogue.speaker === actor.char },
-        ]"
+        v-for="msg in chatLog"
+        :key="msg.id"
+        class="message-row anim-fade-in"
+        :class="msg.isPlayer ? 'player-row' : 'npc-row'"
       >
-        <!-- O uso do :key reativo recria a div toda vez que o orador muda a fala, engatilhando a animação CSS pop-bounce -->
-        <div
-          class="sprite-wrapper"
-          :class="{ 'anim-bounce': currentDialogue.speaker === actor.char }"
-          :key="currentDialogue.speaker === actor.char ? currentNodeId : 'idle'"
-        >
+        <template v-if="!msg.isPlayer">
+          <div class="avatar-container anim-bounce">
+            <img
+              :src="getSpriteUrl(msg.char, msg.emotion)"
+              class="avatar-icon"
+              :alt="msg.char"
+            />
+          </div>
+          <!-- A classe de borda dinâmica foi adicionada aqui -->
+          <div
+            class="message-bubble notebook-paper npc-bubble"
+            :class="`border-${msg.char}`"
+          >
+            <span class="sender-name" :class="`color-${msg.char}`">{{
+              msg.name
+            }}</span>
+            <div class="text-content">{{ msg.text }}</div>
+          </div>
+        </template>
+
+        <template v-else>
+          <div class="message-bubble notebook-paper player-bubble">
+            <div class="text-content">{{ msg.text }}</div>
+          </div>
+        </template>
+      </div>
+
+      <!-- INDICADOR DE DIGITAÇÃO ANIMADO ("...") -->
+      <div v-if="isTyping" class="message-row npc-row anim-fade-in">
+        <div class="avatar-container anim-bounce">
           <img
-            :src="getSpriteUrl(actor.char, actor.emotion)"
-            :alt="actor.char"
-            class="character-sprite"
+            :src="getSpriteUrl(typingChar, typingEmotion)"
+            class="avatar-icon"
+            :alt="typingChar"
           />
+        </div>
+        <div
+          class="message-bubble notebook-paper npc-bubble"
+          :class="`border-${typingChar}`"
+        >
+          <span class="sender-name" :class="`color-${typingChar}`">{{
+            typingName
+          }}</span>
+
+          <div class="typing-indicator">
+            <span></span><span></span><span></span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Caixa de Diálogo Fixa no Estilo Visual Novel -->
-    <div
-      class="dialogue-box"
-      :class="`speaker-border-${currentDialogue.speaker}`"
-    >
-      <div class="dialogue-header">
-        <span
-          class="character-name"
-          :class="`color-${currentDialogue.speaker}`"
+    <!-- ÁREA DE INPUT / OPÇÕES -->
+    <div class="reply-area" v-if="currentDialogue && !isTyping">
+      <template v-if="currentDialogue.choices">
+        <button
+          v-for="choice in currentDialogue.choices"
+          :key="choice.id"
+          class="reply-btn notebook-paper anim-slide-up"
+          @click="handleChoice(choice)"
         >
-          {{
-            $t("story.characters." + currentDialogue.speaker, storyVariables)
-          }}
-        </span>
-      </div>
-
-      <div class="dialogue-text">
-        {{ $t("story.scene1." + currentNodeId, storyVariables) }}
-      </div>
-
-      <div class="dialogue-actions">
-        <template v-if="currentDialogue.choices">
-          <button
-            v-for="choice in currentDialogue.choices"
-            :key="choice.id"
-            class="btn-choice"
-            @click="advance(choice.next)"
-          >
-            {{ $t("story.scene1." + choice.id, storyVariables) }}
-          </button>
-        </template>
-        <template v-else>
-          <!-- Botão genérico de prosseguir, pode até cobrir a tela inteira se desejar como no Ren'Py, mas por ora usamos um botão claro -->
-          <button class="btn-primary" @click="advance(currentDialogue.next)">
-            {{ $t("global.buttons.continue") }} ➔
-          </button>
-        </template>
-      </div>
+          {{ $t("story.scene1." + choice.id, storyVariables) }}
+        </button>
+      </template>
+      <template v-else>
+        <button
+          class="reply-btn notebook-paper btn-continue anim-slide-up"
+          @click="handleNext"
+        >
+          {{ $t("global.buttons.continue") }} ➔
+        </button>
+      </template>
     </div>
   </div>
 </template>
@@ -186,192 +270,259 @@ function quitStory() {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #1a1a2e; /* Fundo do cenário - pode colocar uma imagem aqui depois */
-  color: #fff;
+  background-color: #d1c0a8;
   position: relative;
   overflow: hidden;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .btn-pause {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background-color: #0f0f1a;
-  color: white;
-  border: 2px solid #555;
+  background-color: #fff;
+  color: #333;
+  border: 2px solid #aaa;
   padding: 0.5rem 1rem;
   border-radius: 4px;
   cursor: pointer;
   z-index: 100;
   font-weight: bold;
-}
-.btn-pause:hover {
-  background-color: #333;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* ── LAYOUT DOS PERSONAGENS EM TELA ── */
-.visual-area {
-  flex-grow: 1; /* Ocupa toda a tela sobrando acima da caixa de diálogo */
-  position: relative;
-}
-
-.character-container {
-  position: absolute;
-  bottom: 0; /* Cola os personagens exatamente na linha superior da caixa de texto */
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  transition: filter 0.3s ease;
-}
-
-/* Personagem que não está falando fica levemente escuro para dar foco ao orador */
-.character-container:not(.is-speaking) {
-  filter: brightness(0.6);
-}
-
-.pos-left {
-  left: 10%;
-}
-.pos-right {
-  right: 10%;
-}
-.pos-center {
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.sprite-wrapper {
-  display: flex;
-  align-items: flex-end;
-}
-
-/* Tratamento de Pixel Art e Escala */
-.character-sprite {
-  image-rendering: pixelated; /* CRÍTICO: Mantém 64x64 nítido */
-  width: min(45vw, 320px); /* Responsivo para Celular e Web */
-  height: auto;
-  object-fit: contain;
-}
-
-/* Animação do Pulinho na Fala */
-.anim-bounce {
-  animation: pop-bounce 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-@keyframes pop-bounce {
-  0% {
-    transform: translateY(0) scale(1);
-  }
-  50% {
-    transform: translateY(-20px) scale(1.05);
-  }
-  100% {
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* ── CAIXA DE DIÁLOGO VISUAL NOVEL ── */
-.dialogue-box {
-  height: 250px;
-  flex-shrink: 0; /* Impede a caixa de espremer o resto */
-  background-color: rgba(15, 15, 26, 0.95);
-  padding: 1.5rem 3%;
+.chat-history {
+  flex-grow: 1;
+  padding: 5rem 1rem 1rem 1rem;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  position: relative;
-  z-index: 10;
-  box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
+  gap: 1.5rem;
+  scroll-behavior: smooth;
 }
 
-/* Cores Dinâmicas e Bordas por Personagem */
-.speaker-border-assistant {
-  border-top: 5px solid #4a90e2;
-}
-.speaker-border-manager {
-  border-top: 5px solid #e24a4a;
-}
-
-.color-assistant {
-  color: #4a90e2;
-}
-.color-manager {
-  color: #e24a4a;
+.system-message {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #666;
+  background: rgba(255, 255, 255, 0.4);
+  padding: 4px 12px;
+  border-radius: 12px;
+  align-self: center;
+  margin-bottom: 1rem;
 }
 
-.dialogue-header {
-  margin-bottom: 0.5rem;
-}
-.character-name {
-  font-size: 1.4rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.dialogue-text {
-  font-size: 1.2rem;
-  line-height: 1.6;
-  flex-grow: 1;
-  color: #e2e8f0;
-}
-
-.dialogue-actions {
+.message-row {
   display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
+  width: 100%;
   align-items: flex-end;
 }
+.npc-row {
+  justify-content: flex-start;
+}
+.player-row {
+  justify-content: flex-end;
+}
 
-.btn-primary {
-  background: transparent;
-  color: #4fd1c5;
-  border: 2px solid #4fd1c5;
-  padding: 0.8rem 1.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
+.avatar-container {
+  width: 70px;
+  height: 70px;
+  flex-shrink: 0;
+  margin-right: 10px;
+  background-color: #fff;
+  border-radius: 8px;
+  border: 2px solid #ccc;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.avatar-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.notebook-paper {
+  background-color: #fcfcfc;
+  background-image: linear-gradient(
+    transparent,
+    transparent 27px,
+    rgba(200, 200, 200, 0.4) 27px,
+    rgba(200, 200, 200, 0.4) 28px
+  );
+  background-size: 100% 28px;
+  /* Margem Padrão (substituída dinamicamente via classes border-char) */
+  border-left: 3px solid rgba(200, 200, 200, 0.5);
+  border-radius: 6px;
+  box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+
+.message-bubble {
+  max-width: 75%;
+  padding: 10px 15px;
+  line-height: 28px;
   font-size: 1.1rem;
-  transition: all 0.2s;
-}
-.btn-primary:hover {
-  background: #4fd1c5;
-  color: #1a202c;
 }
 
-.btn-choice {
-  background-color: #2d3748;
-  color: #fff;
-  border: 2px solid #4a5568;
-  padding: 0.8rem 1.5rem;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 1.1rem;
+.npc-bubble {
+  border-bottom-left-radius: 0;
 }
-.btn-choice:hover {
-  background-color: #4a5568;
-  border-color: #90c0f0;
+.player-bubble {
+  border-bottom-right-radius: 0;
+  background-color: #f0f7f0;
+  border-left: 3px solid rgba(80, 200, 80, 0.6);
 }
 
-/* Adaptação em Celulares */
-@media (max-width: 768px) {
-  .dialogue-box {
-    height: 280px;
-    padding: 1rem;
+/* ── CORES DINÂMICAS DE PERSONAGENS ── */
+.sender-name {
+  font-weight: 900;
+  font-size: 0.9rem;
+  display: block;
+  margin-bottom: 2px;
+  line-height: 1.2;
+}
+
+/* Assistente: Azul */
+.color-assistant {
+  color: #2b6cb0;
+}
+.border-assistant {
+  border-left-color: #2b6cb0 !important;
+}
+
+/* Gerente: Vermelho */
+.color-manager {
+  color: #c53030;
+}
+.border-manager {
+  border-left-color: #c53030 !important;
+}
+
+.text-content {
+  font-family: "Comic Sans MS", "Chalkboard SE", sans-serif;
+}
+
+/* ── ANIMAÇÃO DE DIGITAÇÃO (WhatsApp Style) ── */
+.typing-indicator {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  height: 28px;
+  padding: 0 5px;
+}
+.typing-indicator span {
+  width: 8px;
+  height: 8px;
+  background-color: currentColor;
+  border-radius: 50%;
+  animation: typing-bounce 1.4s infinite ease-in-out both;
+  opacity: 0.6;
+}
+.typing-indicator span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+.typing-indicator span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes typing-bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
   }
-  .dialogue-text {
+  40% {
+    transform: scale(1);
+  }
+}
+
+/* ── ÁREA DE ESCOLHAS / INPUT ── */
+.reply-area {
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.05);
+  border-top: 1px dashed rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.reply-btn {
+  width: 100%;
+  text-align: left;
+  padding: 15px 20px;
+  cursor: pointer;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  font-size: 1.1rem;
+  font-family: inherit;
+  transition: transform 0.2s;
+}
+.reply-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 2px 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-continue {
+  text-align: center;
+  font-weight: bold;
+  color: #2b6cb0;
+  border-left-color: #2b6cb0;
+}
+
+/* ── ANIMAÇÕES ── */
+.anim-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+.anim-slide-up {
+  animation: slide-up 0.4s ease-out;
+}
+.anim-bounce {
+  animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes pop-in {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .message-bubble {
+    max-width: 85%;
     font-size: 1rem;
   }
-  .character-name {
-    font-size: 1.2rem;
-  }
-  .btn-choice {
-    width: 100%;
-    text-align: center;
-  }
-  .dialogue-actions {
-    flex-direction: column;
-    width: 100%;
+  .avatar-container {
+    width: 55px;
+    height: 55px;
   }
 }
 </style>
