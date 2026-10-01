@@ -108,6 +108,28 @@
     "score": "Score: {score}",
     "jump": "Pular"
   },
+  "story": {
+    "variables": {
+      "assistantName": "Malu",
+      "managerName": "Sérgio W.",
+      "companyName": "LogicHub"
+    },
+    "characters": {
+      "assistant": "{assistantName}",
+      "manager": "{managerName}"
+    },
+    "scene1": {
+      "intro": "Olá! Bem-vindo(a) à {companyName}! Eu sou a {assistantName}, vou ajudar você com seu <i>onboarding</i>. Tô vendo aqui no sistema que hoje é seu primeiro dia como estagiário. Seja bem-vindo(a)! Foi tranquilo chegar aqui?",
+      "choiceA": "Eu quase me perdi no metrô, mas cheguei!",
+      "choiceB": "Foi sim, eu moro perto!",
+      "replyA": "Haha, que bom que chegou inteiro(a)! Mas só não vá se atrasar amanhã, hein? Hahaha!",
+      "replyB": "ÓTIMO! Ser pontual é muito importante, ainda mais pra quem tá começando. Hahaha!",
+      "call_manager": "E pode ficar tranquilo: você não estará sozinho. Ah, espere um segundo, o nosso Gerente de Operações está chamando na linha central...",
+      "manager_enters": "{assistantName}! Ainda bem que te achei! O sistema da matriz tá pegando fogo, temos uma fila de chamados pendentes e... oh, você deve ser o(a) novato(a)! Seja muito bem-vindo(a) à equipe!",
+      "manager_explains": "Olha, vou ser direto: nós recebemos dezenas de chamados por dia. Sua missão é entender o problema e usar a lógica para resolvê-lo. Confio no seu potencial. {assistantName}, mostre o painel para o nosso novo talento!",
+      "assistant_finish": "Pode deixar, Chefe! Vamos lá, meu bem? Abra seu Painel de Chamados e escolha seu primeiro atendimento."
+    }
+  },
   "canvas": {
     "matrix": {
       "original": "Matriz Original",
