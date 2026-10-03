@@ -55,14 +55,17 @@ function goToMenu() {
   <!-- ── Main Menu ─────────────────────────────────────────────────────── -->
   <MainMenu v-if="activeScreen === 'main-menu'" @mode-selected="() => {}" />
 
-  <!-- ── Story Mode (Phase 2 placeholder) ──────────────────────────────── -->
-  <StoryMode v-else-if="activeScreen === 'story'" />
-
-  <StoryDashboard
-    v-else-if="activeScreen === 'story-dashboard'"
-    @play="activeScreen = $event"
-    @back="goToMenu()"
-  />
+  <!-- ── Telas do Modo História Agrupadas ── -->
+  <template
+    v-else-if="activeScreen === 'story' || activeScreen === 'story-dashboard'"
+  >
+    <StoryMode />
+    <!-- O Dashboard agora só aparece como overlay quando solicitado -->
+    <StoryDashboard
+      v-if="activeScreen === 'story-dashboard'"
+      @play="activeScreen = $event"
+    />
+  </template>
 
   <!-- ── Existing Hub flow ──────────────────────────────────────────────── -->
   <Home
