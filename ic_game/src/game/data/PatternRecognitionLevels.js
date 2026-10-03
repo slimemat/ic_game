@@ -17,18 +17,21 @@ export const COLORS = {
 
 /**
  * Cada objeto representa uma fase do jogo.
- * difficulty 1: O jogador clica na forma resposta para alternar seu estado.
- * difficulty 2: O jogador escolhe a resposta a partir de opções estáticas na tela.
+ *
+ * Em todas as fases o jogador ARRASTA uma das `answerOptions` até o slot "?".
+ * `difficulty` é apenas um rótulo de progressão (exibido nos modais) e define
+ * qual texto de pergunta é usado; não altera mais a mecânica de interação.
+ *
+ * correctOptionIndex: índice (em answerOptions) da opção correta.
  */
 export const LEVEL_CONFIGS = [
-  // --- DIFICULDADE 1 (Rotação por clique) ---
+  // --- DIFICULDADE 1 ---
   {
     difficulty: 1,
     type: "rotation",
     sequence: [0, 90, 180],
     answerOptions: [0, 90, 180, 270],
     correctOptionIndex: 3, // 270 graus
-    initialOptionIndex: 0,
   },
   {
     difficulty: 1,
@@ -36,17 +39,15 @@ export const LEVEL_CONFIGS = [
     sequence: [COLORS.RED, COLORS.BLUE, COLORS.RED, COLORS.BLUE],
     answerOptions: [COLORS.RED, COLORS.BLUE, COLORS.GREEN, COLORS.YELLOW],
     correctOptionIndex: 0, // Vermelho
-    initialOptionIndex: 1,
   },
   {
     difficulty: 1,
     type: "rotation",
     sequence: [0, 45, 90, 135],
-    answerOptions: [0, 45, 90, 135, 180, 225, 270, 315],
+    answerOptions: [0, 45, 90, 135, 180, 225, 270, 315], // grade 4x2
     correctOptionIndex: 4, // 180 graus
-    initialOptionIndex: 0,
   },
-  // --- DIFICULDADE 2 (Seleção a partir de lista) ---
+  // --- DIFICULDADE 2 ---
   {
     difficulty: 2,
     type: "color",
@@ -59,14 +60,12 @@ export const LEVEL_CONFIGS = [
       COLORS.PURPLE,
     ],
     correctOptionIndex: 2, // Verde
-    initialOptionIndex: -1, // -1 indica nenhuma seleção
   },
   {
     difficulty: 2,
     type: "rotation",
     sequence: [0, 180, 0, 180, 0], // Cima, Baixo, Cima, Baixo, Cima, [Baixo]
-    answerOptions: [0, 45, 90, 135, 180], // 5 opções possíveis
+    answerOptions: [0, 45, 90, 135, 180],
     correctOptionIndex: 4, // 180 graus (Baixo)
-    initialOptionIndex: -1,
   },
 ];

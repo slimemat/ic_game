@@ -106,7 +106,7 @@ const triggerWarning = (msg, type = "info") => {
 
 <template>
   <main class="game-screen">
-    <!-- Aviso DinÃ¢mico -->
+    <!-- Aviso Dinâmico -->
     <WarningCard
       :isVisible="showWarning"
       :message="warningMessage"
