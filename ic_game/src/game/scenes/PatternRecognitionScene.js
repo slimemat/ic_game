@@ -1,5 +1,17 @@
 import Phaser from "phaser";
 import { COLORS, LEVEL_CONFIGS } from "../data/PatternRecognitionLevels";
+import {
+  AnswerSlot,
+  AnswerStatus,
+  NO_ANSWER,
+  evaluateAnswer,
+  isOverSlot,
+} from "../logic/PatternRecognitionRules";
+import {
+  computeColumns,
+  computeGridPositions,
+  getCellWidth,
+} from "../utils/gridLayout";
 import AudioManager from "../managers/AudioManager";
 import i18n from "../../i18n";
 
@@ -9,12 +21,33 @@ import winAudio from "../../assets/audio/win.mp3";
 
 const t = i18n.global.t;
 
+const MAX_OPTIONS_PER_ROW = 5;
+const HIT_AREA_SCALE = 1.2; // área de toque maior que o desenho
+const DRAG_SCALE = 1.1;
+const DEPTH_DRAGGING = 10;
+const MOVE_MS = 160;
+
+const QUESTION_KEY_BY_DIFFICULTY = {
+  1: "pattern.question_diff_1",
+  2: "pattern.question_diff_2",
+};
+
 export default class PatternRecognitionScene extends Phaser.Scene {
   constructor(onWinCallback, onErrorCallback) {
     super("PatternRecognitionScene");
     this.onWinCallback = onWinCallback;
     this.onErrorCallback = onErrorCallback;
+
+    this.slot = new AnswerSlot();
+    this.levelObjects = []; // tudo que é recriado a cada render
+    this.options = []; // peças arrastáveis, indexadas como answerOptions
+    this.slotInfo = null;
+    this.slotHot = false;
+    this.isDragging = false;
+    this.isSolved = false;
   }
+
+  // --- LIFECYCLE ---------------------------------------------------------
 
   preload() {
     this.load.audio("connect", connectAudio);
@@ -24,176 +57,199 @@ export default class PatternRecognitionScene extends Phaser.Scene {
 
   create() {
     AudioManager.init(this);
-    this.input.on("gameobjectdown", this.onObjectClicked, this);
 
-    this.scale.on("resize", this.resize, this);
-    this.generateLevel();
+    this.input.on("dragstart", this.onDragStart, this);
+    this.input.on("drag", this.onDrag, this);
+    this.input.on("dragend", this.onDragEnd, this);
+    this.scale.on("resize", this.onResize, this);
+    this.events.once("shutdown", this.onShutdown, this);
+
+    this.loadLevel();
   }
 
-  resize(gameSize, baseSize, displaySize, resolution) {
+  onShutdown() {
+    this.input.off("dragstart", this.onDragStart, this);
+    this.input.off("drag", this.onDrag, this);
+    this.input.off("dragend", this.onDragEnd, this);
+    this.scale.off("resize", this.onResize, this);
+    this.destroyLevelObjects();
+  }
+
+  // --- ESTADO DO NÍVEL ---------------------------------------------------
+
+  loadLevel() {
+    const level = this.registry.get("level") ?? 1;
+    this.levelData = LEVEL_CONFIGS[(level - 1) % LEVEL_CONFIGS.length];
+    this.slot.clear();
+    this.isDragging = false;
+    this.isSolved = false;
+    this.renderLevel();
+  }
+
+  resetLevel() {
+    this.loadLevel();
+  }
+
+  /** No resize o nível é redesenhado, mas a resposta do jogador é mantida. */
+  onResize(gameSize) {
     this.cameras.main.setViewport(0, 0, gameSize.width, gameSize.height);
-    this.generateLevel();
+    this.isDragging = false;
+    this.renderLevel();
   }
 
-  generateLevel() {
-    this.children.removeAll();
+  // --- RENDER ------------------------------------------------------------
 
-    const width = this.scale.width;
-    const height = this.scale.height;
+  track(gameObject) {
+    this.levelObjects.push(gameObject);
+    return gameObject;
+  }
+
+  destroyLevelObjects() {
+    this.levelObjects.forEach((obj) => {
+      this.tweens.killTweensOf(obj);
+      obj.destroy();
+    });
+    this.levelObjects = [];
+    this.options = [];
+    this.slotInfo = null;
+    this.slotHot = false;
+  }
+
+  renderLevel() {
+    this.destroyLevelObjects();
+
+    const { width, height } = this.scale;
     const baseSize = Math.min(width, height);
 
-    const levelIdx = (this.registry.get("level") - 1) % LEVEL_CONFIGS.length;
-    this.levelData = LEVEL_CONFIGS[levelIdx];
-    this.currentOptionIndex = this.levelData.initialOptionIndex;
-
-    this.optionBoxes = [];
-
-    const totalItems = this.levelData.sequence.length + 1;
-    const spacing = width / (totalItems + 1);
-
-    // Adjusted yPos higher up to give more room for options and buttons
-    const yPos = height * 0.4;
-
-    this.levelData.sequence.forEach((itemVal, i) => {
-      const x = spacing * (i + 1);
-      this.createShape(x, yPos, itemVal, baseSize);
-    });
-
-    this.ansX = spacing * totalItems;
-    this.ansY = yPos;
-
-    const slotSize = baseSize * 0.18;
-
-    this.add
-      .rectangle(this.ansX, this.ansY, slotSize, slotSize, COLORS.SLOT_BG)
-      .setStrokeStyle(2, COLORS.SLOT_BORDER);
-    this.questionMark = this.add
-      .text(this.ansX, this.ansY, "?", {
-        fontSize: `${baseSize * 0.06}px`,
-        fill: "#a0aec0",
-      })
-      .setOrigin(0.5);
-
-    if (this.levelData.difficulty === 1) {
-      this.setupDifficulty1Mechanics(width, height, baseSize);
-    } else {
-      this.setupDifficulty2Mechanics(width, height, baseSize);
-    }
-
-    this.createConfirmButton(width, height, baseSize);
+    this.drawTexts(width, height, baseSize);
+    this.drawSequence(width, height, baseSize);
+    this.drawSlot(width, height, baseSize);
+    this.drawOptions(width, height, baseSize);
+    this.drawConfirmButton(width, height, baseSize);
   }
 
-  createConfirmButton(width, height, baseSize) {
-    const btnWidth = Math.min(250, width * 0.7);
-    const btnHeight = baseSize * 0.12;
-    const btnX = width / 2;
-    // Lowered slightly to use the vertical space
-    const btnY = height * 0.88;
+  drawTexts(width, height, baseSize) {
+    const questionKey = QUESTION_KEY_BY_DIFFICULTY[this.levelData.difficulty];
 
-    const btnBg = this.add
-      .rectangle(btnX, btnY, btnWidth, btnHeight, 0x48bb78)
-      .setInteractive({ useHandCursor: true })
-      .setStrokeStyle(2, 0x2f855a);
-
-    btnBg.input.isConfirmBtn = true;
-
-    const btnText = this.add
-      .text(btnX, btnY, t("global.buttons.confirm"), {
-        fontSize: `${Math.min(24, baseSize * 0.05)}px`,
-        fill: "#ffffff",
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5);
-
-    // Add visual feedback to button
-    btnBg.on("pointerdown", () => {
-      btnBg.setFillStyle(0x38a169);
-      btnText.setY(btnY + 2);
-    });
-    btnBg.on("pointerup", () => {
-      btnBg.setFillStyle(0x48bb78);
-      btnText.setY(btnY);
-    });
-    btnBg.on("pointerout", () => {
-      btnBg.setFillStyle(0x48bb78);
-      btnText.setY(btnY);
-    });
-  }
-
-  setupDifficulty1Mechanics(width, height, baseSize) {
-    this.questionMark.setVisible(false);
-    this.answerShape = this.createShape(
-      this.ansX,
-      this.ansY,
-      this.levelData.answerOptions[this.currentOptionIndex],
-      baseSize,
+    this.track(
+      this.add
+        .text(width / 2, height * 0.12, t(questionKey), {
+          fontSize: `${Math.min(24, width * 0.06)}px`,
+          fill: "#e2e8f0",
+          align: "center",
+          wordWrap: { width: width * 0.9 },
+        })
+        .setOrigin(0.5),
     );
 
-    this.answerShape.setInteractive({ useHandCursor: true });
-    this.answerShape.input.isCycleSlot = true;
-
-    const fontSize = Math.min(24, width * 0.06);
-
-    this.add
-      .text(width / 2, height * 0.2, t("pattern.question_diff_1"), {
-        fontSize: `${fontSize}px`,
-        fill: "#e2e8f0",
-      })
-      .setOrigin(0.5);
-
-    this.add
-      .text(
-        this.ansX,
-        this.ansY + baseSize * 0.12,
-        t("pattern.click_to_change"),
-        {
+    this.track(
+      this.add
+        .text(width / 2, height * 0.19, t("pattern.drag_hint"), {
           fontSize: `${Math.max(12, baseSize * 0.03)}px`,
           fill: "#a0aec0",
           align: "center",
-        },
-      )
-      .setOrigin(0.5);
+          wordWrap: { width: width * 0.9 },
+        })
+        .setOrigin(0.5),
+    );
   }
 
-  setupDifficulty2Mechanics(width, height, baseSize) {
-    this.answerShape = null;
+  /** Linha da sequência: N formas + 1 slot, com espaçamento uniforme. */
+  getSequenceRow(width, height) {
+    const totalItems = this.levelData.sequence.length + 1;
+    return {
+      totalItems,
+      spacing: width / (totalItems + 1),
+      y: height * 0.34,
+    };
+  }
 
-    const fontSize = Math.min(24, width * 0.06);
+  drawSequence(width, height, baseSize) {
+    const { spacing, y } = this.getSequenceRow(width, height);
 
-    this.add
-      .text(width / 2, height * 0.18, t("pattern.question_diff_2"), {
-        fontSize: `${fontSize}px`,
-        fill: "#e2e8f0",
-      })
-      .setOrigin(0.5);
-
-    const optionsCount = this.levelData.answerOptions.length;
-    const optionSpacing = width / (optionsCount + 1);
-    const optionsY = height * 0.65;
-    const boxSize = baseSize * 0.14;
-
-    this.levelData.answerOptions.forEach((optVal, i) => {
-      const optX = optionSpacing * (i + 1);
-
-      const box = this.add
-        .rectangle(optX, optionsY, boxSize, boxSize, COLORS.OPTION_BG)
-        .setStrokeStyle(2, COLORS.OPTION_BORDER)
-        .setInteractive({ useHandCursor: true });
-
-      box.input.isOptionBox = true;
-      box.input.optionIndex = i;
-      this.optionBoxes.push(box);
-
-      this.createShape(optX, optionsY, optVal, baseSize);
+    this.levelData.sequence.forEach((value, i) => {
+      this.track(this.createShape(spacing * (i + 1), y, value, baseSize));
     });
   }
 
+  drawSlot(width, height, baseSize) {
+    const { spacing, totalItems, y } = this.getSequenceRow(width, height);
+    const x = spacing * totalItems;
+    const size = baseSize * 0.18;
+
+    this.slotBox = this.track(
+      this.add
+        .rectangle(x, y, size, size, COLORS.SLOT_BG)
+        .setStrokeStyle(2, COLORS.SLOT_BORDER),
+    );
+    this.questionMark = this.track(
+      this.add
+        .text(x, y, "?", {
+          fontSize: `${baseSize * 0.06}px`,
+          fill: "#a0aec0",
+        })
+        .setOrigin(0.5),
+    );
+
+    this.slotInfo = { x, y, size };
+    this.updateSlotVisuals();
+  }
+
+  drawOptions(width, height, baseSize) {
+    const values = this.levelData.answerOptions;
+    const columns = computeColumns(values.length, MAX_OPTIONS_PER_ROW);
+    const boxSize = Math.min(
+      baseSize * 0.14,
+      getCellWidth(width, columns) * 0.85,
+    );
+
+    const positions = computeGridPositions({
+      count: values.length,
+      columns,
+      width,
+      startY: height * 0.54,
+      rowGap: boxSize * 1.3,
+    });
+
+    this.options = values.map((value, index) =>
+      this.createOption(value, index, positions[index], boxSize, baseSize),
+    );
+
+    // Restaura a peça que já estava no slot (ex.: após resize).
+    if (!this.slot.isEmpty) {
+      const piece = this.options[this.slot.occupant];
+      if (piece) piece.setPosition(this.slotInfo.x, this.slotInfo.y);
+    }
+  }
+
+  createOption(value, index, home, boxSize, baseSize) {
+    // Moldura fixa na posição de origem: indica a "vaga" da peça.
+    this.track(
+      this.add
+        .rectangle(home.x, home.y, boxSize, boxSize, COLORS.OPTION_BG)
+        .setStrokeStyle(2, COLORS.OPTION_BORDER),
+    );
+
+    const hit = boxSize * HIT_AREA_SCALE;
+    const shape = this.createShape(0, 0, value, baseSize);
+    const piece = this.add.container(home.x, home.y, [shape]);
+    piece.setSize(hit, hit);
+    piece.setInteractive({
+      hitArea: new Phaser.Geom.Rectangle(0, 0, hit, hit),
+      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+      draggable: true,
+      useHandCursor: true,
+    });
+    piece.setData({ optionIndex: index, home });
+
+    return this.track(piece);
+  }
+
   createShape(x, y, value, baseSize) {
+    const r = baseSize * 0.06;
     let shape;
-    const r = baseSize * 0.06; // ratio for radius
 
     if (this.levelData.type === "rotation") {
-      // Create an isosceles triangle scaled by baseSize
       shape = this.add.triangle(
         x,
         y,
@@ -212,87 +268,155 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     return shape;
   }
 
-  onObjectClicked(pointer, gameObject) {
-    AudioManager.play("connect");
+  drawConfirmButton(width, height, baseSize) {
+    const btnWidth = Math.min(250, width * 0.7);
+    const btnHeight = baseSize * 0.12;
+    const btnX = width / 2;
+    const btnY = height * 0.88;
 
-    // Feedback visual do clique
-    if (gameObject.type !== "Text" && !gameObject.input?.isConfirmBtn) {
-      this.tweens.add({
-        targets: gameObject,
-        scaleX: 0.9,
-        scaleY: 0.9,
-        duration: 50,
-        yoyo: true,
-      });
-    }
+    const btnBg = this.track(
+      this.add
+        .rectangle(btnX, btnY, btnWidth, btnHeight, 0x48bb78)
+        .setInteractive({ useHandCursor: true })
+        .setStrokeStyle(2, 0x2f855a),
+    );
 
-    if (gameObject.input && gameObject.input.isConfirmBtn) {
+    const btnText = this.track(
+      this.add
+        .text(btnX, btnY, t("global.buttons.confirm"), {
+          fontSize: `${Math.min(24, baseSize * 0.05)}px`,
+          fill: "#ffffff",
+          fontStyle: "bold",
+        })
+        .setOrigin(0.5),
+    );
+
+    const release = () => {
+      btnBg.setFillStyle(0x48bb78);
+      btnText.setY(btnY);
+    };
+
+    btnBg.on("pointerdown", () => {
+      btnBg.setFillStyle(0x38a169);
+      btnText.setY(btnY + 2);
       this.checkAnswer();
-      return;
-    }
+    });
+    btnBg.on("pointerup", release);
+    btnBg.on("pointerout", release);
+  }
 
-    if (this.levelData.difficulty === 1) {
-      if (gameObject.input && gameObject.input.isCycleSlot) {
-        this.currentOptionIndex =
-          (this.currentOptionIndex + 1) % this.levelData.answerOptions.length;
-        const newVal = this.levelData.answerOptions[this.currentOptionIndex];
+  // --- DRAG & DROP -------------------------------------------------------
 
-        if (this.levelData.type === "rotation") {
-          this.answerShape.setAngle(newVal);
-        } else if (this.levelData.type === "color") {
-          this.answerShape.setFillStyle(newVal);
-        }
-      }
-    } else if (this.levelData.difficulty === 2) {
-      if (gameObject.input && gameObject.input.isOptionBox) {
-        this.currentOptionIndex = gameObject.input.optionIndex;
+  isOption(gameObject) {
+    return this.options.includes(gameObject);
+  }
 
-        this.optionBoxes.forEach((box, i) => {
-          if (i === this.currentOptionIndex) {
-            box.setStrokeStyle(3, COLORS.OPTION_BORDER_ACTIVE);
-            box.setFillStyle(COLORS.SLOT_BG);
-          } else {
-            box.setStrokeStyle(2, COLORS.OPTION_BORDER);
-            box.setFillStyle(COLORS.OPTION_BG);
-          }
-        });
+  isPieceOverSlot(piece) {
+    const { x, y, size } = this.slotInfo;
+    return isOverSlot(piece.x, piece.y, x, y, size);
+  }
 
-        this.questionMark.setVisible(false);
-        if (this.answerShape) {
-          this.answerShape.destroy();
-        }
-        const baseSize = Math.min(this.scale.width, this.scale.height);
-        this.answerShape = this.createShape(
-          this.ansX,
-          this.ansY,
-          this.levelData.answerOptions[this.currentOptionIndex],
-          baseSize,
-        );
-      }
+  onDragStart(pointer, piece) {
+    if (!this.isOption(piece)) return;
+
+    this.isDragging = true;
+    this.tweens.killTweensOf(piece);
+    this.slot.release(piece.getData("optionIndex"));
+    this.updateSlotVisuals();
+
+    piece.setDepth(DEPTH_DRAGGING);
+    piece.setScale(DRAG_SCALE);
+    AudioManager.play("connect", { volume: 0.5 });
+  }
+
+  onDrag(pointer, piece, dragX, dragY) {
+    if (!this.isOption(piece)) return;
+
+    piece.setPosition(dragX, dragY);
+    this.setSlotHighlight(this.isPieceOverSlot(piece));
+  }
+
+  onDragEnd(pointer, piece) {
+    if (!this.isOption(piece)) return;
+
+    this.isDragging = false;
+    this.setSlotHighlight(false);
+    piece.setDepth(0);
+
+    if (this.isPieceOverSlot(piece)) {
+      this.dropIntoSlot(piece);
+    } else {
+      this.sendHome(piece);
     }
   }
+
+  dropIntoSlot(piece) {
+    const displacedIndex = this.slot.place(piece.getData("optionIndex"));
+
+    if (displacedIndex !== NO_ANSWER) {
+      this.sendHome(this.options[displacedIndex]);
+    }
+
+    this.moveTo(piece, this.slotInfo.x, this.slotInfo.y);
+    this.updateSlotVisuals();
+    AudioManager.play("connect");
+  }
+
+  sendHome(piece) {
+    const { x, y } = piece.getData("home");
+    this.moveTo(piece, x, y);
+  }
+
+  moveTo(piece, x, y) {
+    this.tweens.killTweensOf(piece);
+    this.tweens.add({
+      targets: piece,
+      x,
+      y,
+      scale: 1,
+      duration: MOVE_MS,
+      ease: "Cubic.easeOut",
+    });
+  }
+
+  setSlotHighlight(isHot) {
+    if (!this.slotBox || this.slotHot === isHot) return;
+    this.slotHot = isHot;
+    this.slotBox.setStrokeStyle(
+      isHot ? 3 : 2,
+      isHot ? COLORS.OPTION_BORDER_ACTIVE : COLORS.SLOT_BORDER,
+    );
+  }
+
+  updateSlotVisuals() {
+    this.questionMark?.setVisible(this.slot.isEmpty);
+  }
+
+  // --- RESULTADO ---------------------------------------------------------
 
   checkAnswer() {
-    if (this.currentOptionIndex === -1) {
-      AudioManager.play("error");
-      this.cameras.main.shake(150, 0.01);
-      if (this.onErrorCallback)
-        this.onErrorCallback(t("pattern.err_select_first"));
+    if (this.isDragging || this.isSolved) return;
+
+    const status = evaluateAnswer(
+      this.slot.occupant,
+      this.levelData.correctOptionIndex,
+    );
+
+    if (status === AnswerStatus.CORRECT) {
+      this.isSolved = true;
+      AudioManager.play("win");
+      this.onWinCallback?.();
       return;
     }
 
-    if (this.currentOptionIndex === this.levelData.correctOptionIndex) {
-      AudioManager.play("win");
-      if (this.onWinCallback) this.onWinCallback();
-    } else {
-      AudioManager.play("error");
-      this.cameras.main.shake(200, 0.015);
-      if (this.onErrorCallback)
-        this.onErrorCallback(t("pattern.err_incorrect"));
-    }
-  }
+    AudioManager.play("error");
 
-  resetLevel() {
-    this.generateLevel();
+    if (status === AnswerStatus.EMPTY) {
+      this.cameras.main.shake(150, 0.01);
+      this.onErrorCallback?.(t("pattern.err_select_first"));
+    } else {
+      this.cameras.main.shake(200, 0.015);
+      this.onErrorCallback?.(t("pattern.err_incorrect"));
+    }
   }
 }
