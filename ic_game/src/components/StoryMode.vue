@@ -55,7 +55,6 @@ const currentDialogue = computed(() =>
   currentNodeId.value ? sceneFlow[currentNodeId.value] : null,
 );
 
-// --- ESTADOS DE DIGITAÇÃO ---
 const isTyping = ref(false);
 const typingChar = ref("");
 const typingEmotion = ref("");
@@ -87,7 +86,6 @@ function processNode(nodeId) {
 
   const node = sceneFlow[nodeId];
 
-  // 1. Inicia a Animação de Digitação
   isTyping.value = true;
   typingChar.value = node.speaker;
   typingEmotion.value = node.emotion;
@@ -98,15 +96,13 @@ function processNode(nodeId) {
 
   scrollToBottom();
 
-  // 2. Aguarda um tempo (1.5s) para simular digitação antes de mostrar a mensagem real
   typingTimeout = setTimeout(() => {
     commitMessage(nodeId);
   }, 1500);
 }
 
-// Conclui a digitação e injeta o texto final
 function commitMessage(nodeId) {
-  if (!isTyping.value) return; // Previne dupla execução se o usuário pular
+  if (!isTyping.value) return;
 
   clearTimeout(typingTimeout);
   isTyping.value = false;
@@ -125,7 +121,6 @@ function commitMessage(nodeId) {
   scrollToBottom();
 }
 
-// Acelerador: Se o usuário tocar na tela, a digitação termina imediatamente
 function skipTyping() {
   if (isTyping.value && currentNodeId.value) {
     commitMessage(currentNodeId.value);
@@ -148,7 +143,6 @@ function handleChoice(choice) {
 }
 
 function handleNext() {
-  // Apenas avança se não estiver digitando
   if (!isTyping.value) {
     processNode(currentDialogue.value.next);
   }
@@ -177,13 +171,11 @@ onMounted(() => {
       :showRestart="false"
     />
 
-    <!-- HISTÓRICO DE CHAT COM EVENTO DE SKIP NO CLIQUE -->
     <div class="chat-history" ref="chatContainer" @click="skipTyping">
       <div class="system-message">
         Criptografia Ativada. Você entrou na rede corporativa.
       </div>
 
-      <!-- Mensagens já renderizadas -->
       <div
         v-for="msg in chatLog"
         :key="msg.id"
@@ -191,18 +183,19 @@ onMounted(() => {
         :class="msg.isPlayer ? 'player-row' : 'npc-row'"
       >
         <template v-if="!msg.isPlayer">
-          <div class="avatar-container anim-bounce">
-            <img
-              :src="getSpriteUrl(msg.char, msg.emotion)"
-              class="avatar-icon"
-              :alt="msg.char"
-            />
-          </div>
-          <!-- A classe de borda dinâmica foi adicionada aqui -->
+          <!-- Avatar e Nome movidos para DENTRO do balão -->
           <div
             class="message-bubble notebook-paper npc-bubble"
             :class="`border-${msg.char}`"
           >
+            <div class="avatar-container anim-bounce">
+              <img
+                :src="getSpriteUrl(msg.char, msg.emotion)"
+                class="avatar-icon"
+                :alt="msg.char"
+              />
+            </div>
+
             <span class="sender-name" :class="`color-${msg.char}`">{{
               msg.name
             }}</span>
@@ -217,15 +210,8 @@ onMounted(() => {
         </template>
       </div>
 
-      <!-- INDICADOR DE DIGITAÇÃO ANIMADO ("...") -->
+      <!-- Indicador de Digitação -->
       <div v-if="isTyping" class="message-row npc-row anim-fade-in">
-        <div class="avatar-container anim-bounce">
-          <img
-            :src="getSpriteUrl(typingChar, typingEmotion)"
-            class="avatar-icon"
-            :alt="typingChar"
-          />
-        </div>
         <div
           class="message-bubble notebook-paper npc-bubble"
           :class="`border-${typingChar}`"
@@ -273,7 +259,7 @@ onMounted(() => {
   background-color: #d1c0a8;
   position: relative;
   overflow: hidden;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "consolas", "Courier New", monospace;
 }
 
 .btn-pause {
@@ -324,11 +310,16 @@ onMounted(() => {
   justify-content: flex-end;
 }
 
+/* ── AVATAR FLUTUANTE SOBREPOSTO ── */
 .avatar-container {
-  width: 70px;
-  height: 70px;
-  flex-shrink: 0;
-  margin-right: 10px;
+  float: left; /* Permite que o texto abrace a imagem */
+  width: 65px;
+  height: 65px;
+  /* Sobreposição com margens negativas */
+  margin-top: -15px; /* Sobe o ícone acima da borda do papel */
+  margin-left: -25px; /* Empurra o ícone para a esquerda */
+  margin-right: 15px; /* Margem direita para o texto não colar */
+  margin-bottom: 5px;
   background-color: #fff;
   border-radius: 8px;
   border: 2px solid #ccc;
@@ -337,6 +328,8 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 2; /* Mantém acima das bordas do balão */
 }
 
 .avatar-icon {
@@ -346,6 +339,7 @@ onMounted(() => {
   image-rendering: pixelated;
 }
 
+/* ── BALÕES DE TEXTO ── */
 .notebook-paper {
   background-color: #fcfcfc;
   background-image: linear-gradient(
@@ -355,7 +349,6 @@ onMounted(() => {
     rgba(200, 200, 200, 0.4) 28px
   );
   background-size: 100% 28px;
-  /* Margem Padrão (substituída dinamicamente via classes border-char) */
   border-left: 3px solid rgba(200, 200, 200, 0.5);
   border-radius: 6px;
   box-shadow: 2px 4px 10px rgba(0, 0, 0, 0.1);
@@ -363,22 +356,32 @@ onMounted(() => {
 }
 
 .message-bubble {
-  max-width: 75%;
+  max-width: 90%; /* Pode ocupar mais área agora que salvamos espaço horizontal */
   padding: 10px 15px;
   line-height: 28px;
   font-size: 1.1rem;
+  text-align: left;
+}
+
+/* Clearfix para balões muito curtos, garantindo que o fundo do papel abrace o avatar */
+.message-bubble::after {
+  content: "";
+  display: table;
+  clear: both;
 }
 
 .npc-bubble {
+  margin-left: 20px; /* Compensa a margem negativa do avatar */
   border-bottom-left-radius: 0;
 }
+
 .player-bubble {
   border-bottom-right-radius: 0;
   background-color: #f0f7f0;
   border-left: 3px solid rgba(80, 200, 80, 0.6);
 }
 
-/* ── CORES DINÂMICAS DE PERSONAGENS ── */
+/* ── NOMES E CORES ── */
 .sender-name {
   font-weight: 900;
   font-size: 0.9rem;
@@ -387,7 +390,6 @@ onMounted(() => {
   line-height: 1.2;
 }
 
-/* Assistente: Azul */
 .color-assistant {
   color: #2b6cb0;
 }
@@ -395,7 +397,6 @@ onMounted(() => {
   border-left-color: #2b6cb0 !important;
 }
 
-/* Gerente: Vermelho */
 .color-manager {
   color: #c53030;
 }
@@ -404,10 +405,11 @@ onMounted(() => {
 }
 
 .text-content {
-  font-family: "Comic Sans MS", "Chalkboard SE", sans-serif;
+  font-family: "consolas", "Courier New", monospace;
+  display: block;
 }
 
-/* ── ANIMAÇÃO DE DIGITAÇÃO (WhatsApp Style) ── */
+/* ── INDICADOR DE DIGITAÇÃO ── */
 .typing-indicator {
   display: flex;
   gap: 6px;
@@ -441,7 +443,7 @@ onMounted(() => {
   }
 }
 
-/* ── ÁREA DE ESCOLHAS / INPUT ── */
+/* ── ÁREA DE ESCOLHAS ── */
 .reply-area {
   padding: 1rem;
   background: rgba(0, 0, 0, 0.05);
@@ -517,12 +519,16 @@ onMounted(() => {
 
 @media (max-width: 600px) {
   .message-bubble {
-    max-width: 85%;
+    max-width: 95%;
     font-size: 1rem;
   }
   .avatar-container {
     width: 55px;
     height: 55px;
+    margin-left: -20px;
+  }
+  .npc-bubble {
+    margin-left: 15px;
   }
 }
 </style>
