@@ -1,15 +1,36 @@
 <script setup>
-import { ref, computed, onMounted, nextTick } from "vue";
+import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
-import { useGameSessionStore } from "../stores/gameSession";
+import { scenes } from "../data/dialogues";
+import { characters } from "../data/characters";
 import PauseModal from "./ui/PauseModal.vue";
 
+/**
+ * StoryMode: tela de diálogo estilo chat, genérica e reutilizável.
+ * Usada na abertura do Modo História e em briefings antes de desafios.
+ *
+ * Props:
+ *   sceneId – id da cena em src/data/dialogues/index.js
+ *
+ * Eventos:
+ *   finished – a cena chegou ao fim (next: null)
+ *   quit     – o jogador escolheu sair pelo menu de pausa
+ *
+ * O componente não sabe o que vem depois: quem decide é o pai.
+ */
+const props = defineProps({
+  sceneId: { type: String, required: true },
+});
+const emit = defineEmits(["finished", "quit"]);
+
 const { t } = useI18n();
-const session = useGameSessionStore();
 
 const isPaused = ref(false);
 const chatContainer = ref(null);
 const chatLog = ref([]);
+
+const scene = computed(() => scenes[props.sceneId]);
+const i18nKey = (id) => `story.scenes.${props.sceneId}.${id}`;
 
 const storyVariables = computed(() => ({
   assistantName: t("story.variables.assistantName"),
@@ -17,55 +38,35 @@ const storyVariables = computed(() => ({
   companyName: t("story.variables.companyName"),
 }));
 
-const sceneFlow = {
-  intro: {
-    speaker: "assistant",
-    emotion: "neutral",
-    choices: [
-      { id: "choiceA", next: "replyA" },
-      { id: "choiceB", next: "replyB" },
-    ],
-  },
-  replyA: { speaker: "assistant", emotion: "explaining", next: "call_manager" },
-  replyB: { speaker: "assistant", emotion: "explaining", next: "call_manager" },
-  call_manager: {
-    speaker: "assistant",
-    emotion: "neutral",
-    next: "manager_enters",
-  },
-  manager_enters: {
-    speaker: "manager",
-    emotion: "explaining",
-    next: "manager_explains",
-  },
-  manager_explains: {
-    speaker: "manager",
-    emotion: "neutral",
-    next: "assistant_finish",
-  },
-  assistant_finish: {
-    speaker: "assistant",
-    emotion: "explaining",
-    next: "end_scene",
-  },
-};
-
 const currentNodeId = ref(null);
 const currentDialogue = computed(() =>
-  currentNodeId.value ? sceneFlow[currentNodeId.value] : null,
+  currentNodeId.value && scene.value
+    ? scene.value.nodes[currentNodeId.value]
+    : null,
 );
 
 const isTyping = ref(false);
 const typingChar = ref("");
-const typingEmotion = ref("");
 const typingName = ref("");
 let typingTimeout = null;
+let choiceTimeout = null;
+
+// ── Sprites (com fallback para <personagem>_neutral.png) ──────────────────
+const sprites = import.meta.glob("../assets/sprites/*.png", {
+  eager: true,
+  import: "default",
+});
 
 function getSpriteUrl(char, emotion) {
-  return new URL(
-    `../assets/sprites/${char}_${emotion || "neutral"}.png`,
-    import.meta.url,
-  ).href;
+  return (
+    sprites[`../assets/sprites/${char}_${emotion || "neutral"}.png`] ??
+    sprites[`../assets/sprites/${char}_neutral.png`]
+  );
+}
+
+// ── Cor do personagem via CSS variable ────────────────────────────────────
+function charStyle(char) {
+  return { "--char-color": characters[char]?.color ?? "#555" };
 }
 
 function scrollToBottom() {
@@ -77,18 +78,18 @@ function scrollToBottom() {
 }
 
 function processNode(nodeId) {
-  currentNodeId.value = nodeId;
-
-  if (nodeId === "end_scene") {
-    session.setActiveMode("story-dashboard");
+  // next: null → fim da cena
+  if (nodeId === null || nodeId === undefined) {
+    currentNodeId.value = null;
+    emit("finished");
     return;
   }
 
-  const node = sceneFlow[nodeId];
+  currentNodeId.value = nodeId;
+  const node = scene.value.nodes[nodeId];
 
   isTyping.value = true;
   typingChar.value = node.speaker;
-  typingEmotion.value = node.emotion;
   typingName.value = t(
     `story.characters.${node.speaker}`,
     storyVariables.value,
@@ -107,7 +108,7 @@ function commitMessage(nodeId) {
   clearTimeout(typingTimeout);
   isTyping.value = false;
 
-  const node = sceneFlow[nodeId];
+  const node = scene.value.nodes[nodeId];
 
   chatLog.value.push({
     id: Date.now() + Math.random(),
@@ -115,7 +116,7 @@ function commitMessage(nodeId) {
     char: node.speaker,
     emotion: node.emotion,
     name: typingName.value,
-    text: t(`story.scene1.${nodeId}`, storyVariables.value),
+    text: t(i18nKey(nodeId), storyVariables.value),
   });
 
   scrollToBottom();
@@ -131,30 +132,36 @@ function handleChoice(choice) {
   chatLog.value.push({
     id: Date.now() + Math.random(),
     isPlayer: true,
-    text: t(`story.scene1.${choice.id}`, storyVariables.value),
+    text: t(i18nKey(choice.id), storyVariables.value),
   });
 
   currentNodeId.value = null;
   scrollToBottom();
 
-  setTimeout(() => {
+  choiceTimeout = setTimeout(() => {
     processNode(choice.next);
   }, 500);
 }
 
 function handleNext() {
   if (!isTyping.value) {
-    processNode(currentDialogue.value.next);
+    processNode(currentDialogue.value?.next ?? null);
   }
 }
 
-function quitStory() {
-  isPaused.value = false;
-  session.setActiveMode("menu");
-}
-
 onMounted(() => {
-  processNode("intro");
+  if (!scene.value) {
+    console.warn(`[StoryMode] Cena "${props.sceneId}" não encontrada.`);
+    emit("finished");
+    return;
+  }
+  processNode(scene.value.start);
+});
+
+// Evita timers órfãos se o jogador sair no meio da cena
+onUnmounted(() => {
+  clearTimeout(typingTimeout);
+  clearTimeout(choiceTimeout);
 });
 </script>
 
@@ -167,13 +174,16 @@ onMounted(() => {
     <PauseModal
       :isOpen="isPaused"
       @resume="isPaused = false"
-      @quit="quitStory"
+      @quit="
+        isPaused = false;
+        emit('quit');
+      "
       :showRestart="false"
     />
 
     <div class="chat-history" ref="chatContainer" @click="skipTyping">
-      <div class="system-message">
-        Criptografia Ativada. Você entrou na rede corporativa.
+      <div v-if="scene?.systemMessage" class="system-message">
+        {{ $t(i18nKey("_system")) }}
       </div>
 
       <div
@@ -183,10 +193,9 @@ onMounted(() => {
         :class="msg.isPlayer ? 'player-row' : 'npc-row'"
       >
         <template v-if="!msg.isPlayer">
-          <!-- Avatar e Nome movidos para DENTRO do balão -->
           <div
             class="message-bubble notebook-paper npc-bubble"
-            :class="`border-${msg.char}`"
+            :style="charStyle(msg.char)"
           >
             <div class="avatar-container anim-bounce">
               <img
@@ -196,9 +205,7 @@ onMounted(() => {
               />
             </div>
 
-            <span class="sender-name" :class="`color-${msg.char}`">{{
-              msg.name
-            }}</span>
+            <span class="sender-name">{{ msg.name }}</span>
             <div class="text-content">{{ msg.text }}</div>
           </div>
         </template>
@@ -214,11 +221,9 @@ onMounted(() => {
       <div v-if="isTyping" class="message-row npc-row anim-fade-in">
         <div
           class="message-bubble notebook-paper npc-bubble"
-          :class="`border-${typingChar}`"
+          :style="charStyle(typingChar)"
         >
-          <span class="sender-name" :class="`color-${typingChar}`">{{
-            typingName
-          }}</span>
+          <span class="sender-name">{{ typingName }}</span>
 
           <div class="typing-indicator">
             <span></span><span></span><span></span>
@@ -236,7 +241,7 @@ onMounted(() => {
           class="reply-btn notebook-paper anim-slide-up"
           @click="handleChoice(choice)"
         >
-          {{ $t("story.scene1." + choice.id, storyVariables) }}
+          {{ $t(i18nKey(choice.id), storyVariables) }}
         </button>
       </template>
       <template v-else>
@@ -312,13 +317,12 @@ onMounted(() => {
 
 /* ── AVATAR FLUTUANTE SOBREPOSTO ── */
 .avatar-container {
-  float: left; /* Permite que o texto abrace a imagem */
+  float: left;
   width: 65px;
   height: 65px;
-  /* Sobreposição com margens negativas */
-  margin-top: -15px; /* Sobe o ícone acima da borda do papel */
-  margin-left: -25px; /* Empurra o ícone para a esquerda */
-  margin-right: 15px; /* Margem direita para o texto não colar */
+  margin-top: -15px;
+  margin-left: -25px;
+  margin-right: 15px;
   margin-bottom: 5px;
   background-color: #fff;
   border-radius: 8px;
@@ -329,7 +333,7 @@ onMounted(() => {
   justify-content: center;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   position: relative;
-  z-index: 2; /* Mantém acima das bordas do balão */
+  z-index: 2;
 }
 
 .avatar-icon {
@@ -356,23 +360,24 @@ onMounted(() => {
 }
 
 .message-bubble {
-  max-width: 90%; /* Pode ocupar mais área agora que salvamos espaço horizontal */
+  max-width: 90%;
   padding: 10px 15px;
   line-height: 28px;
   font-size: 1.1rem;
   text-align: left;
 }
 
-/* Clearfix para balões muito curtos, garantindo que o fundo do papel abrace o avatar */
 .message-bubble::after {
   content: "";
   display: table;
   clear: both;
 }
 
+/* A cor do personagem chega pela CSS variable --char-color (via :style) */
 .npc-bubble {
-  margin-left: 20px; /* Compensa a margem negativa do avatar */
+  margin-left: 20px;
   border-bottom-left-radius: 0;
+  border-left-color: var(--char-color, #888);
 }
 
 .player-bubble {
@@ -381,27 +386,14 @@ onMounted(() => {
   border-left: 3px solid rgba(80, 200, 80, 0.6);
 }
 
-/* ── NOMES E CORES ── */
+/* ── NOMES ── */
 .sender-name {
   font-weight: 900;
   font-size: 0.9rem;
   display: block;
   margin-bottom: 2px;
   line-height: 1.2;
-}
-
-.color-assistant {
-  color: #2b6cb0;
-}
-.border-assistant {
-  border-left-color: #2b6cb0 !important;
-}
-
-.color-manager {
-  color: #c53030;
-}
-.border-manager {
-  border-left-color: #c53030 !important;
+  color: var(--char-color, #555);
 }
 
 .text-content {
