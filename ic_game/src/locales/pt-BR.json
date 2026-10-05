@@ -118,16 +118,23 @@
       "assistant": "{assistantName}",
       "manager": "{managerName}"
     },
-    "scene1": {
-      "intro": "Olá! Bem-vindo(a) à {companyName}! Eu sou a {assistantName}, vou ajudar você com seu <i>onboarding</i>. Tô vendo aqui no sistema que hoje é o seu primeiro dia como estagiário. Seja bem-vindo(a)!",
-      "choiceA": "Eu quase me perdi no metrô, mas cheguei!",
-      "choiceB": "Foi sim, eu moro perto!",
-      "replyA": "Haha, que bom que chegou inteiro(a)! Mas só não vá se atrasar amanhã, hein? Hahaha!",
-      "replyB": "ÓTIMO! Ser pontual é muito importante, ainda mais pra quem tá começando. Hahaha!",
-      "call_manager": "Ai, só um segundo, o Gerente tá me ligando",
-      "manager_enters": "{assistantName}! Ainda bem que atendeu! O sistema geométrico tá uma bagunça, parece que não... oh!",
-      "manager_explains": "Esse é o novo estagiário? ÓTIMO! VOCÊ VAI ADORAR TRABALHAR NESSE SISTEMA. {assistantName}, mostre o painel para o nosso novo talento A.S.A.P.",
-      "assistant_finish": "Tá bom, Chefe! Vamos lá, meu bem? Abra seu Painel de Chamados para iniciar sua primeira tarefa."
+    "scenes": {
+      "intro": {
+        "_system": "Criptografia Ativada. Você entrou na rede corporativa.",
+        "intro": "Olá! Bem-vindo(a) à {companyName}! Eu sou a {assistantName}, vou ajudar você com seu onboarding. Tô vendo aqui no sistema que hoje é o seu primeiro dia como estagiário. Seja bem-vindo(a)!",
+        "choiceA": "Eu quase me perdi no metrô, mas cheguei!",
+        "choiceB": "Foi sim, eu moro perto!",
+        "replyA": "Haha, que bom que chegou inteiro(a)! Mas só não vá se atrasar amanhã, hein? Hahaha!",
+        "replyB": "ÓTIMO! Ser pontual é muito importante, ainda mais pra quem tá começando. Hahaha!",
+        "call_manager": "Ai, só um segundo, o Gerente tá me ligando",
+        "manager_enters": "{assistantName}! Ainda bem que atendeu! O sistema geométrico tá uma bagunça, parece que não... oh!",
+        "manager_explains": "Esse é o novo estagiário? ÓTIMO! VOCÊ VAI ADORAR TRABALHAR NESSE SISTEMA. {assistantName}, mostre o painel para o nosso novo talento A.S.A.P.",
+        "assistant_finish": "Tá bom, Chefe! Vamos lá, meu bem? Abra seu Painel de Chamados para iniciar sua primeira tarefa."
+      },
+      "pre-pattern-recognition": {
+        "briefing": "O cliente deste chamado perdeu o controle das sequências de formas do sistema dele. Os padrões ficaram corrompidos e alguém precisa restaurá-los.",
+        "tip": "Dica: observe o que muda de uma forma para a próxima. Depois, arraste a resposta certa para o espaço vazio e confirme!"
+      }
     }
   },
   "canvas": {
