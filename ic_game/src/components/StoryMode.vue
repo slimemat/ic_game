@@ -38,7 +38,8 @@ const storyVariables = computed(() => ({
   assistantName: t("story.variables.assistantName"),
   managerName: t("story.variables.managerName"),
   companyName: t("story.variables.companyName"),
-  // Nome do aluno; se ainda não foi definido, usa o nome da empresa
+  taskGiver01Name: t("story.variables.taskGiver01Name"),
+  // Nome do estagiário; se ainda não foi definido, usa o nome da empresa
   playerName: session.playerName || t("story.variables.companyName"),
 }));
 
