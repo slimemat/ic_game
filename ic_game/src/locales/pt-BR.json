@@ -112,12 +112,13 @@
     "variables": {
       "assistantName": "Malu",
       "managerName": "Sérgio W.",
-      "companyName": "LogicHub"
+      "companyName": "LogicHub",
+      "taskGiver01Name": "Dra. Helena"
     },
     "characters": {
       "assistant": "{assistantName}",
       "manager": "{managerName}",
-      "helena": "Dra. Helena"
+      "taskGiver01": "{taskGiver01Name}"
     },
     "scenes": {
       "intro": {
@@ -135,7 +136,7 @@
       "pre-pattern-recognition": {
         "briefing": "O cliente deste chamado perdeu o controle das sequências de formas do sistema dele. Os padrões ficaram corrompidos, e alguém precisa restaurá-los. O cliente está ligando. Vamos ouvir!",
         "client_call": "Socorro, {playerName}! Eu estava restaurando um banco de dados milenar quando o sistema travou exigindo a continuação de uma sequência de símbolos!",
-        "analysis": "Analisando os dados... Olhe com atenção para as figuras, recruta! Algumas mudam de formato, outras giram como os ponteiros de um relógio (0°, 90°, 180°...). Encontre a regra que comanda essa transformação e selecione o símbolo correto para restaurar o arquivo da Dra. Helena.",
+        "analysis": "Analisando os dados... Olhe com atenção para as figuras, recruta! Algumas mudam de formato, outras giram como os ponteiros de um relógio (0°, 90°, 180°...). Encontre a regra que comanda essa transformação e selecione o símbolo correto para restaurar o arquivo da {taskGiver01Name}.",
         "tip": "Dica: observe o que muda de uma forma para a próxima. Depois, arraste a resposta certa para o espaço vazio e confirme!"
       }
     }
