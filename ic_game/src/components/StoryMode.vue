@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import { scenes } from "../data/dialogues";
 import { characters } from "../data/characters";
+import { useGameSessionStore } from "../stores/gameSession";
 import PauseModal from "./ui/PauseModal.vue";
 
 /**
@@ -24,6 +25,7 @@ const props = defineProps({
 const emit = defineEmits(["finished", "quit"]);
 
 const { t } = useI18n();
+const session = useGameSessionStore();
 
 const isPaused = ref(false);
 const chatContainer = ref(null);
@@ -36,6 +38,8 @@ const storyVariables = computed(() => ({
   assistantName: t("story.variables.assistantName"),
   managerName: t("story.variables.managerName"),
   companyName: t("story.variables.companyName"),
+  // Nome do aluno; se ainda não foi definido, usa o nome da empresa
+  playerName: session.playerName || t("story.variables.companyName"),
 }));
 
 const currentNodeId = ref(null);
