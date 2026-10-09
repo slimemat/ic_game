@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { scenes } from "../data/dialogues";
 import { characters } from "../data/characters";
 import { useGameSessionStore } from "../stores/gameSession";
+import AudioManager from "../game/managers/AudioManager";
 import PauseModal from "./ui/PauseModal.vue";
 
 /**
@@ -102,6 +103,9 @@ function processNode(nodeId) {
 
   scrollToBottom();
 
+  // Inicia som da máquina de escrever em loop
+  AudioManager.play("keyboard_sfx", { loop: true, volume: 0.5 });
+
   typingTimeout = setTimeout(() => {
     commitMessage(nodeId);
   }, 1500);
@@ -112,6 +116,10 @@ function commitMessage(nodeId) {
 
   clearTimeout(typingTimeout);
   isTyping.value = false;
+
+  // Interrompe o typing e toca a notificação
+  AudioManager.stop("keyboard_sfx");
+  AudioManager.play("message_neutral", { volume: 1.0 });
 
   const node = scene.value.nodes[nodeId];
 
@@ -134,6 +142,8 @@ function skipTyping() {
 }
 
 function handleChoice(choice) {
+  AudioManager.play("reply_sfx", { volume: 1.0 });
+
   chatLog.value.push({
     id: Date.now() + Math.random(),
     isPlayer: true,
@@ -167,6 +177,7 @@ onMounted(() => {
 onUnmounted(() => {
   clearTimeout(typingTimeout);
   clearTimeout(choiceTimeout);
+  AudioManager.stop("keyboard_sfx");
 });
 </script>
 
