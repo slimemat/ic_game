@@ -17,7 +17,7 @@ import i18n from "../../i18n";
 
 import connectAudio from "../../assets/audio/connect.mp3";
 import errorAudio from "../../assets/audio/error.mp3";
-import winAudio from "../../assets/audio/win.mp3";
+import winAudio from "../../assets/audio/success_guitar.mp3";
 
 const t = i18n.global.t;
 

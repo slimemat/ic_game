@@ -9,5 +9,5 @@
 export const characters = {
   assistant: { color: "#2b6cb0" },
   manager: { color: "#c53030" },
-  helena: { color: "#2f855a" },
+  taskGiver01: { color: "#2f855a" },
 };
