@@ -158,36 +158,3 @@ const triggerWarning = (msg, type = "info") => {
     </VictoryModal>
   </main>
 </template>
-
-<style scoped>
-.game-root {
-  padding: 0 !important;
-}
-
-.floating-ui {
-  position: absolute;
-  top: 10px;
-  left: 0;
-  width: 100%;
-  padding: 0 15px;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  pointer-events: none;
-}
-
-.menu-button {
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid #4a5568;
-  color: white;
-  font-size: 1.5rem;
-  padding: 4px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  pointer-events: auto;
-}
-
-.menu-button:hover {
-  background: rgba(0, 0, 0, 0.8);
-}
-</style>

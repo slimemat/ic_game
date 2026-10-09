@@ -30,6 +30,11 @@
 
   --font-main: "Space Grotesk", sans-serif;
   --font-mono: "DM Mono", monospace;
+
+  /* Overlays e bordas de UI flutuante */
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+  --bg-overlay-hover: rgba(0, 0, 0, 0.8);
+  --border-strong: #4a5568;
 }
 
 * {
@@ -188,6 +193,40 @@ button {
   display: block;
   max-width: 100%;
   max-height: 100%;
+}
+
+/* Os jogos Phaser ocupam a tela inteira (sem o padding padrão do .game-root) */
+.game-screen .game-root {
+  padding: 0;
+}
+
+/* UI flutuante dos jogos (botão de pausa) */
+.floating-ui {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  width: 100%;
+  padding: 0 15px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.menu-button {
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-strong);
+  color: var(--text-main);
+  font-size: 1.5rem;
+  padding: 4px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.menu-button:hover {
+  background: var(--bg-overlay-hover);
 }
 
 /* Overlay de Vitória */
