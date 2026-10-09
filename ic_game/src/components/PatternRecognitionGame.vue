@@ -43,12 +43,8 @@ onMounted(() => {
   game.value = new Phaser.Game({
     type: Phaser.AUTO,
     parent: gameRoot.value,
-    backgroundColor: "#1a202c",
+    backgroundColor: "#101820", // a Scene sobrescreve com a cor do tema
     scale: {
-      mode: Phaser.Scale.FIT,
-      autoCenter: Phaser.Scale.CENTER_BOTH,
-      width: 600,
-      height: 800,
       mode: Phaser.Scale.RESIZE,
       width: "100%",
       height: "100%",
