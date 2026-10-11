@@ -127,19 +127,23 @@ function playWithBriefing(gameId) {
   />
   <TestGame
     v-else-if="activeScreen === 'test-platformer'"
-    @back="activeScreen = 'home'"
+    @back="goToMenu()"
+    @quit="goToMenu()"
   />
   <PatternRecognitionGame
     v-else-if="activeScreen === 'pattern-recognition'"
-    @back="activeScreen = 'home'"
+    @back="goToMenu()"
+    @quit="goToMenu()"
   />
   <MatrixMirrorGame
     v-else-if="activeScreen === 'matrix-mirror'"
-    @back="activeScreen = 'home'"
+    @back="goToMenu()"
+    @quit="goToMenu()"
   />
   <CharadeGame
     v-else-if="activeScreen === 'charade-game'"
-    @back="activeScreen = 'home'"
+    @back="goToMenu()"
+    @quit="goToMenu()"
   />
 
   <!-- ── Fallback ───────────────────────────────────────────────────────── -->

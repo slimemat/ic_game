@@ -2,6 +2,7 @@
 import { ref } from "vue";
 import { useGameSessionStore } from "../stores/gameSession";
 import PauseModal from "./ui/PauseModal.vue";
+import PauseButton from "./ui/PauseButton.vue";
 
 const emit = defineEmits(["play"]);
 const session = useGameSessionStore();
@@ -25,9 +26,7 @@ function getSpriteUrl(char, emotion) {
 <template>
   <!-- O dashboard agora volta a ser um overlay (sobreposição) -->
   <div class="dashboard-overlay">
-    <button class="btn-pause" @click="isPaused = true">
-      {{ $t("global.buttons.pause") }}
-    </button>
+    <PauseButton class="pause-btn-fixed" @click="isPaused = true" />
 
     <PauseModal
       :isOpen="isPaused"
@@ -129,19 +128,11 @@ function getSpriteUrl(char, emotion) {
   backdrop-filter: blur(6px); /* Esse é o efeito de vidro lindo no fundo! */
 }
 
-.btn-pause {
+.pause-btn-fixed {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background-color: #fff;
-  color: #333;
-  border: 2px solid #aaa;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
   z-index: 1050;
-  font-weight: bold;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .os-window {
