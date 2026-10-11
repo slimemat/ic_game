@@ -6,6 +6,7 @@ import { characters } from "../data/characters";
 import { useGameSessionStore } from "../stores/gameSession";
 import AudioManager from "../game/managers/AudioManager";
 import PauseModal from "./ui/PauseModal.vue";
+import PauseButton from "./ui/PauseButton.vue";
 
 /**
  * StoryMode: tela de diálogo estilo chat, genérica e reutilizável.
@@ -183,9 +184,7 @@ onUnmounted(() => {
 
 <template>
   <div class="story-mode-container">
-    <button class="btn-pause" @click="isPaused = true">
-      {{ $t("global.buttons.pause") }}
-    </button>
+    <PauseButton class="pause-btn-fixed" @click="isPaused = true" />
 
     <PauseModal
       :isOpen="isPaused"
@@ -283,19 +282,11 @@ onUnmounted(() => {
   font-family: "consolas", "Courier New", monospace;
 }
 
-.btn-pause {
+.pause-btn-fixed {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background-color: #fff;
-  color: #333;
-  border: 2px solid #aaa;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
   z-index: 100;
-  font-weight: bold;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .chat-history {

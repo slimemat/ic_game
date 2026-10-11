@@ -4,6 +4,7 @@ import Phaser from "phaser";
 import MatrixMirrorScene from "../game/scenes/MatrixMirrorScene";
 import { LEVELS } from "../game/data/MatrixMirrorLevels";
 import PauseModal from "./ui/PauseModal.vue";
+import PauseButton from "./ui/PauseButton.vue";
 import VictoryModal from "./ui/VictoryModal.vue";
 import WarningCard from "./ui/WarningCard.vue";
 
@@ -105,16 +106,9 @@ const triggerWarning = (msg, type = "info") => {
       :type="warningType"
     />
 
-    <!-- Floating UI -->
+    <!-- Floating UI pause button -->
     <div class="floating-ui">
-      <button
-        class="menu-button"
-        type="button"
-        @click="pauseGame"
-        aria-label="Pause Menu"
-      >
-        &#9776;
-      </button>
+      <PauseButton @click="pauseGame" />
     </div>
 
     <!-- Phaser Visualizer -->

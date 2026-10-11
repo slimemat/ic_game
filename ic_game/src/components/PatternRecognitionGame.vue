@@ -4,6 +4,7 @@ import Phaser from "phaser";
 import PatternRecognitionScene from "../game/scenes/PatternRecognitionScene";
 import { LEVEL_CONFIGS } from "../game/data/PatternRecognitionLevels";
 import PauseModal from "./ui/PauseModal.vue";
+import PauseButton from "./ui/PauseButton.vue";
 import VictoryModal from "./ui/VictoryModal.vue";
 import WarningCard from "./ui/WarningCard.vue";
 
@@ -116,16 +117,9 @@ const triggerWarning = (msg, type = "info") => {
       aria-label="Pattern Recognition Game"
     ></div>
 
-    <!-- Floating UI -->
+    <!-- Floating UI pause button -->
     <div class="floating-ui">
-      <button
-        class="menu-button"
-        type="button"
-        @click="pauseGame"
-        aria-label="Pause Menu"
-      >
-        &#9776;
-      </button>
+      <PauseButton @click="pauseGame" />
     </div>
 
     <!-- Modals Compartilhados -->
