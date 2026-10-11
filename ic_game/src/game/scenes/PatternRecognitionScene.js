@@ -1,5 +1,3 @@
-// CAMINHO EXATO: ic_game\src\game\scenes\PatternRecognitionScene.js
-
 import Phaser from "phaser";
 import { LEVEL_CONFIGS } from "../data/PatternRecognitionLevels";
 import {
@@ -22,20 +20,31 @@ import connectAudio from "../../assets/audio/connect.mp3";
 import errorAudio from "../../assets/audio/error.mp3";
 import winAudio from "../../assets/audio/success_guitar.mp3";
 import scene1Clean from "../../assets/images/scene1_clean.png";
+import defaultCloudSprite from "../../assets/images/cloud.png";
 
 const t = i18n.global.t;
 
 const MAX_OPTIONS_PER_ROW = 5;
 const HIT_AREA_SCALE = 1.35;
 const DRAG_SCALE = 1.15;
-const DEPTH_DRAGGING = 10;
+const DEPTH_CLOUDS = -11;
 const DEPTH_BACKGROUND = -10;
+const DEPTH_DIMMER = -9;
+const DEPTH_DRAGGING = 10;
 const MOVE_MS = 160;
 const SVG_TEXTURE_SIZE = 128;
 const SPRITE_TYPES = ["rotation", "color"];
 
 const SKY_COLOR = "#87ceeb";
 const BG_DIM_ALPHA = 0.2;
+
+const CLOUD_CONFIG = {
+  count: 3,
+  baseSpeed: 4,
+  alpha: 0.6,
+  minScale: 0.9,
+  maxScale: 3.1,
+};
 
 const POST_IT_BG = 0xfef9c3;
 const POST_IT_TAPE = 0xfde047;
@@ -51,12 +60,12 @@ const QUESTION_KEY_BY_DIFFICULTY = {
 };
 
 /**
- * Cena principal do minijogo de Reconhecimento de Padrões.
+ * Cena principal do jogo de Reconhecimento de Padrões.
  */
 export default class PatternRecognitionScene extends Phaser.Scene {
   /**
-   * @param {Function} onWinCallback Callback disparado na vitória da fase.
-   * @param {Function} onErrorCallback Callback disparado em caso de erro na resposta.
+   * @param {Function} onWinCallback Callback executado ao acertar a resposta.
+   * @param {Function} onErrorCallback Callback executado em caso de erro na resposta.
    */
   constructor(onWinCallback, onErrorCallback) {
     super("PatternRecognitionScene");
@@ -66,6 +75,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     this.slot = new AnswerSlot();
     this.levelObjects = [];
     this.options = [];
+    this.clouds = [];
     this.slotInfo = null;
     this.slotHot = false;
     this.isDragging = false;
@@ -85,6 +95,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
 
   preload() {
     this.load.image("scene1_clean", scene1Clean);
+    this.load.image("cloud_sprite", defaultCloudSprite);
     this.load.audio("connect", connectAudio);
     this.load.audio("error", errorAudio);
     this.load.audio("win", winAudio);
@@ -102,7 +113,31 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     this.events.on(Phaser.Scenes.Events.RESUME, this.handleResume);
     this.events.once("shutdown", this.onShutdown, this);
 
+    this.initClouds();
     this.loadLevel();
+  }
+
+  /**
+   * Atualiza continuamente o deslocamento das nuvens no céu exterior.
+   * @param {number} time
+   * @param {number} delta
+   */
+  update(time, delta) {
+    if (this.isShutdown || !this.clouds.length) return;
+    const { width, height } = this.scale;
+    const deltaSeconds = delta / 1000;
+
+    for (let i = 0; i < this.clouds.length; i++) {
+      const cloud = this.clouds[i];
+      cloud.x += cloud.speed * deltaSeconds;
+
+      if (cloud.x > width + cloud.displayWidth) {
+        cloud.x = -cloud.displayWidth;
+        cloud.y = Phaser.Math.Between(height * 0.04, height * 0.26);
+        cloud.speed =
+          CLOUD_CONFIG.baseSpeed * Phaser.Math.FloatBetween(0.7, 1.4);
+      }
+    }
   }
 
   onShutdown() {
@@ -114,6 +149,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     this.events.off(Phaser.Scenes.Events.PAUSE, this.handlePause);
     this.events.off(Phaser.Scenes.Events.RESUME, this.handleResume);
     this.stopMusic();
+    this.destroyClouds();
     this.destroyLevelObjects();
   }
 
@@ -147,19 +183,50 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   }
 
   /**
-   * Trata o redimensionamento da janela mantendo a resposta atual.
    * @param {Phaser.Structs.Size} gameSize
    */
   onResize(gameSize) {
     this.cameras.main.setViewport(0, 0, gameSize.width, gameSize.height);
     this.isDragging = false;
+    this.initClouds();
     this.renderLevel();
+  }
+
+  // --- NUVENS EM MOVIMENTO -----------------------------------------------
+
+  /**
+   * Inicializa o pool de nuvens posicionadas no céu exterior.
+   */
+  initClouds() {
+    this.destroyClouds();
+    const { width, height } = this.scale;
+
+    for (let i = 0; i < CLOUD_CONFIG.count; i++) {
+      const x = Phaser.Math.Between(-50, width);
+      const y = Phaser.Math.Between(height * 0.04, height * 0.26);
+      const cloud = this.add.image(x, y, "cloud_sprite");
+      const scale = Phaser.Math.FloatBetween(
+        CLOUD_CONFIG.minScale,
+        CLOUD_CONFIG.maxScale,
+      );
+
+      cloud.setScale(scale);
+      cloud.setAlpha(CLOUD_CONFIG.alpha);
+      cloud.setDepth(DEPTH_CLOUDS);
+      cloud.speed = CLOUD_CONFIG.baseSpeed * Phaser.Math.FloatBetween(0.7, 1.4);
+
+      this.clouds.push(cloud);
+    }
+  }
+
+  destroyClouds() {
+    this.clouds.forEach((cloud) => cloud.destroy());
+    this.clouds = [];
   }
 
   // --- TEMA E ASSETS -----------------------------------------------------
 
   /**
-   * Garante o carregamento dos assets do tema corrente antes de renderizar.
    * @param {Object} theme
    * @param {Function} onReady
    */
@@ -174,9 +241,8 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   }
 
   /**
-   * Adiciona assets não cacheados à fila de carregamento.
    * @param {Object} theme
-   * @returns {number} Quantidade de itens enfileirados.
+   * @returns {number} Itens na fila.
    */
   queueThemeAssets(theme) {
     let queued = 0;
@@ -247,7 +313,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   }
 
   /**
-   * @returns {string|null} Chave de textura registrada ou null para fallback.
+   * @returns {string|null}
    */
   getDragSpriteKey() {
     const key = assetKey(this.theme.id, `sprite-${this.levelData.type}`);
@@ -257,7 +323,6 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   // --- RENDER ------------------------------------------------------------
 
   /**
-   * Registra um GameObject para descarte no próximo ciclo de render.
    * @template T
    * @param {T} gameObject
    * @returns {T}
@@ -285,6 +350,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     const baseSize = Math.min(width, height);
 
     this.drawBackground(width, height);
+    this.drawProgressBar(width, height, baseSize);
     this.drawTexts(width, height, baseSize);
     this.drawSequence(width, height, baseSize);
     this.drawSlot(width, height, baseSize);
@@ -292,11 +358,6 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     this.drawConfirmButton(width, height, baseSize);
   }
 
-  /**
-   * Renderiza a imagem de fundo em modo cover acompanhada de um dimmer sutil.
-   * @param {number} width
-   * @param {number} height
-   */
   drawBackground(width, height) {
     const level = this.registry.get("level") ?? 1;
     const isFirstStage = level <= 10;
@@ -336,9 +397,53 @@ export default class PatternRecognitionScene extends Phaser.Scene {
             0x000000,
             BG_DIM_ALPHA,
           )
-          .setDepth(DEPTH_BACKGROUND + 1),
+          .setDepth(DEPTH_DIMMER),
       );
     }
+  }
+
+  /**
+   * Componente visual da barra de progresso no topo da tela.
+   * @param {number} width
+   * @param {number} height
+   * @param {number} baseSize
+   */
+  drawProgressBar(width, height, baseSize) {
+    const level = this.registry.get("level") ?? 1;
+    const stageLevel = ((level - 1) % 10) + 1;
+    const totalLevels = 10;
+    const progress = stageLevel / totalLevels;
+
+    const barWidth = Math.min(width * 0.78, 320);
+    const barHeight = Math.max(8, baseSize * 0.022);
+    const x = (width - barWidth) / 2;
+    const y = height * 0.04;
+    const radius = barHeight / 2;
+
+    const track = this.add.graphics();
+    track.fillStyle(0x0f172a, 0.55);
+    track.lineStyle(1.5, 0x334155, 0.75);
+    track.fillRoundedRect(x, y, barWidth, barHeight, radius);
+    track.strokeRoundedRect(x, y, barWidth, barHeight, radius);
+    this.track(track);
+
+    const fillWidth = Math.max(radius * 2, barWidth * progress);
+    const fill = this.add.graphics();
+    fill.fillStyle(0x38bdf8, 0.95);
+    fill.fillRoundedRect(x, y, fillWidth, barHeight, radius);
+    this.track(fill);
+
+    const labelText = `${t("pattern.level", { num: stageLevel })} / ${totalLevels}`;
+    const label = this.add
+      .text(width / 2, y + barHeight + 6, labelText, {
+        fontSize: `${Math.max(10, baseSize * 0.026)}px`,
+        fill: "#cbd5e1",
+        stroke: "#0f172a",
+        strokeThickness: 2,
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5, 0);
+    this.track(label);
   }
 
   drawTexts(width, height, baseSize) {
@@ -346,7 +451,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
 
     this.track(
       this.add
-        .text(width / 2, height * 0.11, t(questionKey), {
+        .text(width / 2, height * 0.12, t(questionKey), {
           fontSize: `${Math.min(22, width * 0.055)}px`,
           fill: this.theme.text.title,
           stroke: "#0f172a",
@@ -359,7 +464,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
 
     this.track(
       this.add
-        .text(width / 2, height * 0.18, t("pattern.drag_hint"), {
+        .text(width / 2, height * 0.19, t("pattern.drag_hint"), {
           fontSize: `${Math.max(12, baseSize * 0.03)}px`,
           fill: this.theme.text.hint,
           stroke: "#0f172a",
@@ -470,7 +575,6 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   }
 
   /**
-   * Constrói o container da opção arrastável com estilo de post-it.
    * @param {*} value
    * @param {number} index
    * @param {{x: number, y: number}} home
@@ -527,7 +631,6 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   }
 
   /**
-   * Cria o sprite ou forma geométrica correspondente ao valor.
    * @param {number} x
    * @param {number} y
    * @param {*} value
@@ -622,9 +725,9 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   // --- DRAG & DROP -------------------------------------------------------
 
   /**
-   * Altera dinamicamente as cores do post-it da peça.
+   * Altera a paleta da peça entre post-it amarelo e branco.
    * @param {Phaser.GameObjects.Container} piece
-   * @param {boolean} isPlacedInSlot True aplica a cor amarela; False restaura a cor branca.
+   * @param {boolean} isPlacedInSlot
    */
   setPiecePostItStyle(piece, isPlacedInSlot) {
     const tileBg = piece.getData("tileBg");
@@ -706,7 +809,6 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     }
 
     this.setPiecePostItStyle(piece, true);
-
     this.moveTo(piece, this.slotInfo.x, this.slotInfo.y);
     this.updateSlotVisuals();
     AudioManager.play("connect");
