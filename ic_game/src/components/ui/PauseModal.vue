@@ -41,39 +41,48 @@
 
       <!-- ── Corpo do Memorando / Ficha de Escritório ── -->
       <div class="card-body">
-        <!-- Badge / Sprite Consistente de Pausa -->
-        <div class="pause-badge-container" aria-hidden="true">
-          <div class="pause-badge">
-            <svg class="pause-badge-icon" viewBox="0 0 24 24" fill="none">
-              <rect
-                x="6"
-                y="5"
-                width="4"
-                height="14"
-                rx="1.5"
-                fill="currentColor"
-              />
-              <rect
-                x="14"
-                y="5"
-                width="4"
-                height="14"
-                rx="1.5"
-                fill="currentColor"
-              />
-            </svg>
-          </div>
+        <!-- ── Sprite Central de Pausa (Foco Visual Principal - 76px) ── -->
+        <div class="pause-sprite-wrapper" aria-hidden="true">
+          <slot name="sprite">
+            <img
+              v-if="spriteSrc"
+              :src="spriteSrc"
+              alt="Pause"
+              class="pause-custom-sprite"
+            />
+            <div v-else class="pause-sprite-placeholder">
+              <svg class="pause-icon" viewBox="0 0 24 24" fill="none">
+                <rect
+                  x="6"
+                  y="4"
+                  width="4"
+                  height="16"
+                  rx="1.75"
+                  fill="currentColor"
+                />
+                <rect
+                  x="14"
+                  y="4"
+                  width="4"
+                  height="16"
+                  rx="1.75"
+                  fill="currentColor"
+                />
+              </svg>
+            </div>
+          </slot>
         </div>
 
-        <!-- Frase de status divertida / aleatória -->
-        <div class="pause-eyebrow">{{ currentMemo }}</div>
+        <!-- Frase sutil de memorando / sistema (menos intrusiva) -->
+        <div v-if="currentMemo" class="pause-eyebrow">{{ currentMemo }}</div>
 
+        <!-- Textos compactos com foco reduzido para priorizar o reconhecimento visual imediato -->
         <h2 class="modal-title">
           {{ title || $t("global.modals.pause_title") }}
         </h2>
 
-        <p class="modal-description">
-          {{ description || $t("global.modals.pause_desc") }}
+        <p v-if="description" class="modal-description">
+          {{ description }}
         </p>
 
         <!-- Ações do Modal com Hierarquia de Botões Mobile-First -->
@@ -122,6 +131,7 @@
 <script setup>
 import { ref, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import ptBR from "../../locales/pt-BR.json";
 import paperclipImg from "../../assets/images/paperclip.png";
 import cloudImg from "../../assets/images/cloud.png";
 
@@ -129,6 +139,11 @@ const props = defineProps({
   isOpen: {
     type: Boolean,
     default: false,
+  },
+  /** Caminho ou URL de um sprite personalizado para a pausa (opcional) */
+  spriteSrc: {
+    type: String,
+    default: "",
   },
   title: {
     type: String,
@@ -164,28 +179,25 @@ defineEmits(["resume", "restart", "quit"]);
 
 const { tm } = useI18n();
 
-const DEFAULT_MEMOS = [
-  "MEMO // PAUSA TÉCNICA AUTORIZADA",
-  "CAFÉ ESFRIANDO NA COPA...",
-  "PROCESSO SUSPENSO EM SEGUNDO PLANO",
-  "ORGANIZANDO AS GAVETAS DO ESCRITÓRIO...",
-  "ARQUIVANDO RELATÓRIOS TEMPORÁRIOS...",
-  "SISTEMA EM MODO DE ESPERA...",
-  "DESCARREGANDO MEMÓRIA VOLÁTIL...",
-];
+// Obtém as frases diretamente do locale pt-BR.json sem hardcode
+const DEFAULT_MEMOS = ptBR.global?.modals?.pause_memos || [];
 
-const currentMemo = ref(DEFAULT_MEMOS[0]);
+const currentMemo = ref(DEFAULT_MEMOS[0] || "");
 
 function pickRandomMemo() {
   try {
     const memos = tm("global.modals.pause_memos");
     const list =
       Array.isArray(memos) && memos.length > 0 ? memos : DEFAULT_MEMOS;
-    const randomIndex = Math.floor(Math.random() * list.length);
-    currentMemo.value = list[randomIndex];
+    if (list.length > 0) {
+      const randomIndex = Math.floor(Math.random() * list.length);
+      currentMemo.value = list[randomIndex];
+    }
   } catch {
-    currentMemo.value =
-      DEFAULT_MEMOS[Math.floor(Math.random() * DEFAULT_MEMOS.length)];
+    if (DEFAULT_MEMOS.length > 0) {
+      currentMemo.value =
+        DEFAULT_MEMOS[Math.floor(Math.random() * DEFAULT_MEMOS.length)];
+    }
   }
 }
 
@@ -254,7 +266,7 @@ const customThemeStyle = computed(() => {
 
   position: relative;
   width: 100%;
-  max-width: 390px;
+  max-width: 380px;
   max-height: 92vh;
   background-color: #f8fafc;
   /* Textura de papel pautado corporativo */
@@ -293,7 +305,7 @@ const customThemeStyle = computed(() => {
   --theme-accent-subtle: rgba(16, 185, 129, 0.14);
 }
 
-/* ── Placeholders para Sprites (pointer-events: none) ── */
+/* ── Placeholders para Sprites Decorativos ── */
 .sprite-placeholder {
   position: absolute;
   pointer-events: none;
@@ -403,65 +415,88 @@ const customThemeStyle = computed(() => {
 
 /* ── Corpo do Memorando ── */
 .card-body {
-  padding: 1.4rem 1.4rem 1.6rem;
+  padding: 1.2rem 1.4rem 1.5rem;
   text-align: center;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
-/* Badge / Sprite de Pausa */
-.pause-badge-container {
+/* ── Container do Sprite Central de Pausa (Foco Visual) ── */
+.pause-sprite-wrapper {
   display: flex;
   justify-content: center;
-  margin-bottom: 0.5rem;
+  align-items: center;
+  margin: 0.2rem auto 0.6rem;
+  width: 76px;
+  height: 76px;
 }
 
-.pause-badge {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
-  border: 1px solid rgba(255, 255, 255, 0.9);
+.pause-custom-sprite {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(0 6px 12px var(--theme-accent-subtle));
+}
+
+.pause-sprite-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  background: linear-gradient(
+    145deg,
+    #ffffff 0%,
+    rgba(255, 255, 255, 0.9) 40%,
+    #e2e8f0 100%
+  );
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--theme-accent);
   box-shadow:
-    0 4px 12px var(--theme-accent-subtle),
+    0 8px 22px var(--theme-accent-glow),
     inset 0 1px 0 rgba(255, 255, 255, 1),
-    0 2px 4px rgba(0, 0, 0, 0.05);
+    0 2px 5px rgba(0, 0, 0, 0.06);
+  transition: transform 0.2s ease;
 }
 
-.pause-badge-icon {
-  width: 22px;
-  height: 22px;
+.pause-icon {
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(0 2px 4px var(--theme-accent-glow));
 }
 
+/* Frase sutil de memorando */
 .pause-eyebrow {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   font-weight: 600;
   color: var(--theme-accent);
   letter-spacing: 0.08em;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.2rem;
   text-transform: uppercase;
+  opacity: 0.85;
 }
 
+/* Título e descrição enxutos (menos carga cognitiva de texto) */
 .modal-title {
-  margin: 0 0 0.35rem 0;
-  font-size: 1.45rem;
-  font-weight: 700;
-  color: #1e293b;
-  letter-spacing: -0.02em;
+  margin: 0 0 0.2rem 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #334155;
+  letter-spacing: -0.01em;
   line-height: 1.2;
 }
 
 .modal-description {
-  margin: 0 0 1.3rem 0;
-  font-size: 0.9rem;
+  margin: 0 0 1.1rem 0;
+  font-size: 0.82rem;
   color: #64748b;
   font-family: var(--font-mono);
-  line-height: 1.35;
+  line-height: 1.3;
 }
 
 /* ── Ações do Modal (Mobile-First) ── */
@@ -603,10 +638,7 @@ const customThemeStyle = computed(() => {
     border-radius: 12px;
   }
   .card-body {
-    padding: 1.2rem 1rem 1.4rem;
-  }
-  .modal-title {
-    font-size: 1.35rem;
+    padding: 1rem 1rem 1.3rem;
   }
   .placeholder-cloud {
     top: -28px;
@@ -622,6 +654,14 @@ const customThemeStyle = computed(() => {
   .pixelart-clip {
     width: 48px;
     height: 48px;
+  }
+  .pause-sprite-wrapper {
+    width: 68px;
+    height: 68px;
+  }
+  .pause-icon {
+    width: 28px;
+    height: 28px;
   }
 }
 </style>

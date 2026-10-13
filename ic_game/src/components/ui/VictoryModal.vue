@@ -37,21 +37,48 @@
 
       <!-- ── Corpo do Relatório / Certificado de Vitória ── -->
       <div class="card-body">
-        <!-- Badge / Selo de Aprovação Frutiger Aero -->
+        <!-- ── Sprite Central de Vitória (Preparado para Asset/Sprite - 76px) ── -->
+        <div class="victory-sprite-wrapper" aria-hidden="true">
+          <slot name="sprite">
+            <img
+              v-if="spriteSrc"
+              :src="spriteSrc"
+              alt="Vitória"
+              class="victory-custom-sprite"
+            />
+            <div v-else class="victory-sprite-placeholder">
+              <svg class="victory-trophy-icon" viewBox="0 0 24 24" fill="none">
+                <!-- Ícone de Troféu / Conquista estilizado -->
+                <path
+                  d="M7 4h10v3a5 5 0 0 1-10 0V4z"
+                  fill="currentColor"
+                  opacity="0.9"
+                />
+                <path
+                  d="M5 6H3a2 2 0 0 0-2 2v1a4 4 0 0 0 4 4h2M19 6h2a2 2 0 0 1 2 2v1a4 4 0 0 1-4 4h-2"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M12 12v5M8 21h8M10 17h4"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+          </slot>
+        </div>
+
+        <!-- ── Badge / Carimbo APROVADO com Animação Stamp Slam ── -->
         <div class="stamp-container" aria-hidden="true">
           <div class="victory-stamp">
-            <svg
-              class="stamp-star-icon"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path
-                d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"
-              />
-            </svg>
+            <span class="stamp-dot">★</span>
             <span class="stamp-text">{{
               $t("global.modals.victory_tag")
             }}</span>
+            <span class="stamp-dot">★</span>
           </div>
         </div>
 
@@ -114,6 +141,11 @@ const props = defineProps({
   isOpen: {
     type: Boolean,
     default: false,
+  },
+  /** Caminho ou URL de um sprite personalizado de vitória (opcional) */
+  spriteSrc: {
+    type: String,
+    default: "",
   },
   title: {
     type: String,
@@ -197,7 +229,7 @@ const customThemeStyle = computed(() => {
 
   position: relative;
   width: 100%;
-  max-width: 400px;
+  max-width: 390px;
   max-height: 92vh;
   background-color: #f8fafc;
   /* Textura de papel pautado corporativo */
@@ -230,7 +262,7 @@ const customThemeStyle = computed(() => {
 }
 
 .victory-card.theme-default {
-  --theme-accent: #10b981; /* Verde de sucesso radiante como default */
+  --theme-accent: #10b981; /* Verde esmeralda de sucesso radiante */
   --theme-accent-hover: #059669;
   --theme-accent-glow: rgba(16, 185, 129, 0.38);
   --theme-accent-subtle: rgba(16, 185, 129, 0.12);
@@ -338,13 +370,60 @@ const customThemeStyle = computed(() => {
 
 /* ── Corpo do Modal ── */
 .card-body {
-  padding: 1.4rem 1.4rem 1.6rem;
+  padding: 1.2rem 1.4rem 1.5rem;
   text-align: center;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
-/* Selo / Carimbo de Vitória Frutiger Aero */
+/* ── Sprite Central de Vitória (Preparado para Imagem/Sprite 76px) ── */
+.victory-sprite-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0.2rem auto 0.6rem;
+  width: 76px;
+  height: 76px;
+}
+
+.victory-custom-sprite {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(0 6px 12px var(--theme-accent-subtle));
+}
+
+.victory-sprite-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 18px;
+  background: linear-gradient(
+    145deg,
+    #ffffff 0%,
+    rgba(255, 255, 255, 0.9) 40%,
+    #fef3c7 100%
+  );
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f59e0b;
+  box-shadow:
+    0 8px 22px rgba(245, 158, 11, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    0 2px 5px rgba(0, 0, 0, 0.06);
+}
+
+.victory-trophy-icon {
+  width: 38px;
+  height: 38px;
+  filter: drop-shadow(0 2px 4px rgba(217, 119, 6, 0.3));
+}
+
+/* ── Badge / Carimbo APROVADO com Efeito Carimbado (Stamp Slam) ── */
 .stamp-container {
   display: flex;
   justify-content: center;
@@ -355,43 +434,45 @@ const customThemeStyle = computed(() => {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
-  border: 1.5px solid var(--theme-accent);
+  padding: 5px 14px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 2px solid var(--theme-accent);
   color: var(--theme-accent);
   box-shadow:
-    0 4px 12px var(--theme-accent-subtle),
-    inset 0 1px 0 rgba(255, 255, 255, 1);
-  animation: stamp-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    0 3px 8px var(--theme-accent-subtle),
+    inset 0 0 0 1px var(--theme-accent-subtle);
+  transform: rotate(-3deg);
+  animation: stamp-slam 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  user-select: none;
 }
 
-.stamp-star-icon {
-  width: 18px;
-  height: 18px;
-  color: #f59e0b;
+.stamp-dot {
+  font-size: 0.72rem;
+  color: var(--theme-accent);
 }
 
 .stamp-text {
   font-family: var(--font-mono);
-  font-size: 0.75rem;
+  font-size: 0.76rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
 }
 
 .victory-eyebrow {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 600;
   color: var(--theme-accent);
   letter-spacing: 0.08em;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.25rem;
   text-transform: uppercase;
+  opacity: 0.9;
 }
 
 .modal-title {
-  margin: 0 0 0.35rem 0;
-  font-size: 1.55rem;
+  margin: 0 0 0.25rem 0;
+  font-size: 1.45rem;
   font-weight: 700;
   color: #1e293b;
   letter-spacing: -0.02em;
@@ -399,8 +480,8 @@ const customThemeStyle = computed(() => {
 }
 
 .modal-description {
-  margin: 0 0 1.2rem 0;
-  font-size: 0.92rem;
+  margin: 0 0 1rem 0;
+  font-size: 0.88rem;
   color: #64748b;
   font-family: var(--font-mono);
   line-height: 1.35;
@@ -411,11 +492,11 @@ const customThemeStyle = computed(() => {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 10px;
-  padding: 0.85rem 1rem;
-  margin-bottom: 1.2rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.1rem;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.03);
   font-family: var(--font-mono);
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   color: #334155;
   text-align: left;
 }
@@ -525,14 +606,22 @@ const customThemeStyle = computed(() => {
   }
 }
 
-@keyframes stamp-pop {
+/* Animação Carimbado (Stamp Slam com impacto elástico) */
+@keyframes stamp-slam {
   0% {
-    transform: scale(0.7) rotate(-4deg);
     opacity: 0;
+    transform: scale(2.4) rotate(-14deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.94) rotate(-4deg);
+  }
+  80% {
+    transform: scale(1.04) rotate(-2deg);
   }
   100% {
-    transform: scale(1) rotate(0deg);
     opacity: 1;
+    transform: scale(1) rotate(-3deg);
   }
 }
 
@@ -551,10 +640,7 @@ const customThemeStyle = computed(() => {
     border-radius: 12px;
   }
   .card-body {
-    padding: 1.2rem 1rem 1.4rem;
-  }
-  .modal-title {
-    font-size: 1.4rem;
+    padding: 1rem 1rem 1.3rem;
   }
   .placeholder-cloud {
     top: -28px;
@@ -570,6 +656,14 @@ const customThemeStyle = computed(() => {
   .pixelart-clip {
     width: 48px;
     height: 48px;
+  }
+  .victory-sprite-wrapper {
+    width: 68px;
+    height: 68px;
+  }
+  .victory-trophy-icon {
+    width: 32px;
+    height: 32px;
   }
 }
 </style>

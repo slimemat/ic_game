@@ -7,6 +7,7 @@ import {
   computed,
   watch,
 } from "vue";
+import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import Phaser from "phaser";
 import PatternRecognitionScene from "../game/scenes/PatternRecognitionScene";
@@ -45,11 +46,20 @@ function getStartLevel() {
     : 1;
 }
 
+const { t } = useI18n();
+
 const currentLevel = ref(getStartLevel());
 
-const currentDifficulty = computed(() => {
+const currentLevelConfig = computed(() => {
   const idx = (currentLevel.value - 1) % LEVEL_CONFIGS.length;
-  return LEVEL_CONFIGS[idx].difficulty;
+  return LEVEL_CONFIGS[idx];
+});
+
+const currentTypeName = computed(() => {
+  const type = currentLevelConfig.value?.type;
+  return type === "rotation"
+    ? t("pattern.type_rotation")
+    : t("pattern.type_color");
 });
 
 const currentTheme = computed(() => getThemeIdForLevel(currentLevel.value));
@@ -183,7 +193,7 @@ const triggerWarning = (msg, type = "info") => {
     <PauseModal
       :isOpen="isPaused"
       :theme="currentTheme"
-      :description="`${$t('pattern.level', { num: currentLevel })} - ${$t('pattern.diff', { diff: currentDifficulty === 1 ? $t('pattern.diff_1') : $t('pattern.diff_2') })}`"
+      :description="`${$t('pattern.level', { num: currentLevel })}: ${currentTypeName}`"
       :restartLabel="$t('pattern.restart_game')"
       @resume="resumeGame"
       @restart="resetGame"
@@ -199,14 +209,7 @@ const triggerWarning = (msg, type = "info") => {
       <template #stats>
         <div>
           <p>{{ $t("pattern.stats_level", { num: currentLevel }) }}</p>
-          <p>
-            {{ $t("pattern.stats_diff", { diff: "" }) }}
-            {{
-              currentDifficulty === 1
-                ? $t("pattern.diff_1")
-                : $t("pattern.diff_2")
-            }}
-          </p>
+          <p>{{ $t("pattern.stats_type", { type: currentTypeName }) }}</p>
         </div>
       </template>
     </VictoryModal>
