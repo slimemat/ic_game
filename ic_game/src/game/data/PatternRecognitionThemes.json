@@ -1,0 +1,54 @@
+{
+  "stages": [
+    { "theme": "drHelena", "fromLevel": 1 },
+    { "theme": "taskGiver02", "fromLevel": 11 }
+  ],
+  "themes": {
+    "default": {
+      "background": { "color": "#101820", "image": null },
+      "music": null,
+      "dragSprites": { "rotation": null, "color": null },
+      "colors": {
+        "slotBg": "#36393b",
+        "slotBorder": "#a8bcc2",
+        "optionBg": "#101820",
+        "optionBorder": "#36535b",
+        "optionBorderActive": "#0ea5e9",
+        "shape": "#0ea5e9",
+        "button": "#94ddbc",
+        "buttonPressed": "#a0ecd0",
+        "buttonBorder": "#36535b"
+      },
+      "text": {
+        "title": "#edf2f4",
+        "hint": "#a8bcc2",
+        "button": "#101820"
+      }
+    },
+
+    "drHelena": {
+      "background": { "color": "#101820", "image": null },
+      "music": null,
+      "dragSprites": {
+        "rotation": "assets/pattern/placeholder/arrow.svg",
+        "color": "assets/pattern/placeholder/dot.svg"
+      }
+    },
+
+    "taskGiver02": {
+      "background": { "color": "#1f1530", "image": null },
+      "music": null,
+      "dragSprites": {
+        "rotation": "assets/pattern/placeholder/arrow.svg",
+        "color": "assets/pattern/placeholder/dot.svg"
+      },
+      "colors": {
+        "slotBg": "#2d2040",
+        "optionBg": "#1f1530",
+        "optionBorder": "#4c3a6b",
+        "optionBorderActive": "#b794f4",
+        "shape": "#b794f4"
+      }
+    }
+  }
+}

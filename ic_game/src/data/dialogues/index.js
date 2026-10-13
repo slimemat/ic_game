@@ -49,8 +49,18 @@ export const scenes = {
   "pre-pattern-recognition": {
     start: "briefing",
     nodes: {
-      briefing: { speaker: "assistant", emotion: "explaining", next: "tip" },
-      tip: { speaker: "assistant", emotion: "neutral", next: null },
+      briefing: {
+        speaker: "assistant",
+        emotion: "neutral",
+        next: "client_call",
+      },
+      client_call: {
+        speaker: "taskGiver01",
+        emotion: "neutral",
+        next: "analysis",
+      },
+      analysis: { speaker: "assistant", emotion: "explaining", next: "tip" },
+      tip: { speaker: "assistant", emotion: "explaining", next: null },
     },
   },
 };

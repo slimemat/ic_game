@@ -3,14 +3,20 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import { scenes } from "../data/dialogues";
 import { characters } from "../data/characters";
+import { useGameSessionStore } from "../stores/gameSession";
+import { useStoryStore } from "../stores/story";
+import AudioManager from "../game/managers/AudioManager";
 import PauseModal from "./ui/PauseModal.vue";
+import PauseButton from "./ui/PauseButton.vue";
 
 /**
  * StoryMode: tela de diálogo estilo chat, genérica e reutilizável.
  * Usada na abertura do Modo História e em briefings antes de desafios.
  *
  * Props:
- *   sceneId – id da cena em src/data/dialogues/index.js
+ *   sceneId     – id da cena em src/data/dialogues/index.js
+ *   interactive – false = só pano de fundo (sem reproduzir a cena nem pausa);
+ *                 usado quando o Painel de Chamados é restaurado de um save
  *
  * Eventos:
  *   finished – a cena chegou ao fim (next: null)
@@ -20,12 +26,14 @@ import PauseModal from "./ui/PauseModal.vue";
  */
 const props = defineProps({
   sceneId: { type: String, required: true },
+  interactive: { type: Boolean, default: true },
 });
 const emit = defineEmits(["finished", "quit"]);
 
 const { t } = useI18n();
+const session = useGameSessionStore();
+const story = useStoryStore();
 
-const isPaused = ref(false);
 const chatContainer = ref(null);
 const chatLog = ref([]);
 
@@ -36,6 +44,9 @@ const storyVariables = computed(() => ({
   assistantName: t("story.variables.assistantName"),
   managerName: t("story.variables.managerName"),
   companyName: t("story.variables.companyName"),
+  taskGiver01Name: t("story.variables.taskGiver01Name"),
+  // Nome do estagiário; se ainda não foi definido, usa o nome da empresa
+  playerName: session.playerName || t("story.variables.companyName"),
 }));
 
 const currentNodeId = ref(null);
@@ -97,6 +108,9 @@ function processNode(nodeId) {
 
   scrollToBottom();
 
+  // Inicia som da máquina de escrever em loop
+  AudioManager.play("keyboard_sfx", { loop: true, volume: 0.5 });
+
   typingTimeout = setTimeout(() => {
     commitMessage(nodeId);
   }, 1500);
@@ -107,6 +121,10 @@ function commitMessage(nodeId) {
 
   clearTimeout(typingTimeout);
   isTyping.value = false;
+
+  // Interrompe o typing e toca a notificação
+  AudioManager.stop("keyboard_sfx");
+  AudioManager.play("message_neutral", { volume: 1.0 });
 
   const node = scene.value.nodes[nodeId];
 
@@ -129,6 +147,8 @@ function skipTyping() {
 }
 
 function handleChoice(choice) {
+  AudioManager.play("reply_sfx", { volume: 1.0 });
+
   chatLog.value.push({
     id: Date.now() + Math.random(),
     isPlayer: true,
@@ -150,6 +170,9 @@ function handleNext() {
 }
 
 onMounted(() => {
+  if (!props.interactive) return;
+  story.setPaused(false);
+
   if (!scene.value) {
     console.warn(`[StoryMode] Cena "${props.sceneId}" não encontrada.`);
     emit("finished");
@@ -162,24 +185,25 @@ onMounted(() => {
 onUnmounted(() => {
   clearTimeout(typingTimeout);
   clearTimeout(choiceTimeout);
+  AudioManager.stop("keyboard_sfx");
 });
 </script>
 
 <template>
   <div class="story-mode-container">
-    <button class="btn-pause" @click="isPaused = true">
-      {{ $t("global.buttons.pause") }}
-    </button>
+    <template v-if="interactive">
+      <PauseButton class="pause-btn-fixed" @click="story.setPaused(true)" />
 
-    <PauseModal
-      :isOpen="isPaused"
-      @resume="isPaused = false"
-      @quit="
-        isPaused = false;
-        emit('quit');
-      "
-      :showRestart="false"
-    />
+      <PauseModal
+        :isOpen="story.isPaused"
+        @resume="story.setPaused(false)"
+        @quit="
+          story.setPaused(false);
+          emit('quit');
+        "
+        :showRestart="false"
+      />
+    </template>
 
     <div class="chat-history" ref="chatContainer" @click="skipTyping">
       <div v-if="scene?.systemMessage" class="system-message">
@@ -267,19 +291,11 @@ onUnmounted(() => {
   font-family: "consolas", "Courier New", monospace;
 }
 
-.btn-pause {
+.pause-btn-fixed {
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background-color: #fff;
-  color: #333;
-  border: 2px solid #aaa;
-  padding: 0.5rem 1rem;
-  border-radius: 4px;
-  cursor: pointer;
   z-index: 100;
-  font-weight: bold;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .chat-history {

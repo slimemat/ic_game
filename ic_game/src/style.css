@@ -30,6 +30,11 @@
 
   --font-main: "Space Grotesk", sans-serif;
   --font-mono: "DM Mono", monospace;
+
+  /* Overlays e bordas de UI flutuante */
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+  --bg-overlay-hover: rgba(0, 0, 0, 0.8);
+  --border-strong: #4a5568;
 }
 
 * {
@@ -190,6 +195,40 @@ button {
   max-height: 100%;
 }
 
+/* Os jogos Phaser ocupam a tela inteira (sem o padding padrão do .game-root) */
+.game-screen .game-root {
+  padding: 0;
+}
+
+/* UI flutuante dos jogos (botão de pausa) */
+.floating-ui {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  width: 100%;
+  padding: 0 15px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.menu-button {
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-strong);
+  color: var(--text-main);
+  font-size: 1.5rem;
+  padding: 4px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.menu-button:hover {
+  background: var(--bg-overlay-hover);
+}
+
 /* Overlay de Vitória */
 .win-overlay {
   position: absolute;
@@ -233,4 +272,45 @@ h1 {
   margin: 22px 0 0;
   color: var(--text-muted);
   font-size: 1.05rem;
+}
+
+/* ── Botão de Pausa Padronizado (Frutiger Aero / Glass) ── */
+.pause-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: var(--bg-overlay);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  color: var(--text-main);
+  cursor: pointer;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: auto;
+  user-select: none;
+}
+
+.pause-button:hover {
+  background: var(--bg-overlay-hover);
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.pause-button:active {
+  transform: translateY(0) scale(0.95);
+}
+
+.pause-icon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
 }

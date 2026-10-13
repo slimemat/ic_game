@@ -4,6 +4,7 @@ import Phaser from "phaser";
 import CharadeGameScene from "../game/scenes/CharadeScene";
 import { CHARADES_LEVELS } from "../game/data/CharadeLevels";
 import PauseModal from "./ui/PauseModal.vue";
+import PauseButton from "./ui/PauseButton.vue";
 import VictoryModal from "./ui/VictoryModal.vue";
 import WarningCard from "./ui/WarningCard.vue";
 import AudioManager from "../game/managers/AudioManager";
@@ -113,16 +114,9 @@ const triggerWarning = (msg, type = "info") => {
       :type="warningType"
     />
 
-    <!-- Floating UI -->
+    <!-- Floating UI pause button -->
     <div class="floating-ui">
-      <button
-        class="menu-button"
-        type="button"
-        @click="pauseGame"
-        aria-label="Pause Menu"
-      >
-        &#9776;
-      </button>
+      <PauseButton @click="pauseGame" />
     </div>
 
     <!-- Phaser Visualizer -->
@@ -155,37 +149,3 @@ const triggerWarning = (msg, type = "info") => {
     </VictoryModal>
   </main>
 </template>
-
-<style scoped>
-.game-root {
-  padding: 0 !important;
-}
-
-.floating-ui {
-  position: absolute;
-  top: 10px;
-  left: 0;
-  width: 100%;
-  padding: 0 15px;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  pointer-events: none;
-  z-index: 50;
-}
-
-.menu-button {
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid #4a5568;
-  color: white;
-  font-size: 1.5rem;
-  padding: 4px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  pointer-events: auto;
-}
-
-.menu-button:hover {
-  background: rgba(0, 0, 0, 0.8);
-}
-</style>

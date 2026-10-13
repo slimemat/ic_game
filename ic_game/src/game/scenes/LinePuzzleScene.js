@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import AudioManager from "../managers/AudioManager";
 import connectAudio from "../../assets/audio/connect.mp3";
 import errorAudio from "../../assets/audio/error.mp3";
-import winAudio from "../../assets/audio/win.mp3";
+import winAudio from "../../assets/audio/success_guitar.mp3";
 
 // --- DOMAIN LOGIC: Math & Intersection ---
 const orientation = (p, q, r) => {

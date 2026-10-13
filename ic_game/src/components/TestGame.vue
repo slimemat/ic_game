@@ -3,6 +3,7 @@ import { onBeforeUnmount, onMounted, ref, shallowRef } from "vue";
 import Phaser from "phaser";
 import PlatformerScene from "../game/scenes/PlatformerScene";
 import PauseModal from "./ui/PauseModal.vue";
+import PauseButton from "./ui/PauseButton.vue";
 import VictoryModal from "./ui/VictoryModal.vue";
 
 const emit = defineEmits(["back"]);
@@ -81,9 +82,7 @@ const handleTouchEnd = (action) => {
         {{ $t("global.buttons.back") }}
       </button>
       <div class="score-display">{{ $t("test_game.score", { score }) }}</div>
-      <button class="action-button warning" @click="pauseGame">
-        {{ $t("global.buttons.pause") }}
-      </button>
+      <PauseButton @click="pauseGame" />
     </div>
 
     <!-- Phaser container -->
