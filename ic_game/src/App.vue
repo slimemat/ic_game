@@ -1,6 +1,7 @@
 <script setup>
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useGameSessionStore } from "./stores/gameSession";
+import { useStoryStore, STORY_CHECKPOINTS } from "./stores/story";
 import { scenes } from "./data/dialogues";
 import MainMenu from "./components/MainMenu.vue";
 import Home from "./components/Home.vue";
@@ -13,44 +14,68 @@ import StoryMode from "./components/StoryMode.vue";
 import StoryDashboard from "./components/StoryDashboard.vue";
 
 const session = useGameSessionStore();
+const story = useStoryStore();
 
 /**
  * Top-level navigation state.
  *
  * 'main-menu'       → MainMenu entry screen
- * 'story'           → Story Mode (cena de abertura "intro")
- * 'story-dashboard' → Painel de Chamados sobre a cena de abertura
- * 'dialogue'        → StoryMode reutilizado para outras cenas (ver `dialogue`)
+ * 'story'           → Modo História: cutscene inicial / Painel de Chamados
+ * 'dialogue'        → Modo História: cutscene de introdução da tarefa
  * 'home'            → existing Home / hub screen
  * 'selection'       → GameSelection component
  * <game-id>         → a specific mini-game
+ *
+ * No Modo História a tela é derivada de `story.checkpoint`.
  */
 const activeScreen = ref("main-menu");
 
-/**
- * Estado da tela de diálogo genérica.
- *   sceneId – cena em src/data/dialogues
- *   next    – tela para onde ir quando a cena terminar
- */
-const dialogue = ref({ sceneId: null, next: null });
+/** Cena da cutscene de introdução da tarefa ativa (padrão: pre-<tarefaId>). */
+const taskIntroSceneId = computed(() => `pre-${story.activeTaskId}`);
+
+/** Converte o checkpoint salvo na tela correspondente. */
+function syncScreenWithCheckpoint() {
+  switch (story.checkpoint) {
+    case STORY_CHECKPOINTS.INTRO_CUTSCENE:
+    case STORY_CHECKPOINTS.DASHBOARD:
+      activeScreen.value = "story";
+      break;
+    case STORY_CHECKPOINTS.TASK_INTRO_CUTSCENE:
+      activeScreen.value = story.activeTaskId ? "dialogue" : "story";
+      break;
+    case STORY_CHECKPOINTS.MINIGAME:
+      if (story.activeTaskId) {
+        activeScreen.value = story.activeTaskId;
+      } else {
+        // Save inconsistente: volta ao painel
+        story.advanceCheckpoint(STORY_CHECKPOINTS.DASHBOARD);
+      }
+      break;
+  }
+}
 
 /**
  * Keep activeScreen in sync whenever the Pinia activeMode changes.
- * This means any part of the app can navigate by calling
- * session.setActiveMode('story'), and App.vue reacts automatically.
+ * Entrar no Modo História retoma o último checkpoint salvo.
  */
 watch(
   () => session.activeMode,
   (mode) => {
     if (mode === "story") {
-      activeScreen.value = "story";
-    } else if (mode === "story-dashboard") {
-      activeScreen.value = "story-dashboard";
+      syncScreenWithCheckpoint();
     } else if (mode === "level-select") {
       activeScreen.value = "home";
     } else if (mode === "menu") {
       activeScreen.value = "main-menu";
     }
+  },
+);
+
+/** Qualquer avanço de checkpoint durante o Modo História troca de tela. */
+watch(
+  () => [story.checkpoint, story.activeTaskId],
+  () => {
+    if (session.activeMode === "story") syncScreenWithCheckpoint();
   },
 );
 
@@ -60,28 +85,12 @@ function goToMenu() {
   activeScreen.value = "main-menu";
 }
 
-/** Abre o StoryMode com uma cena e define a tela seguinte. */
-function startDialogue(sceneId, next) {
-  dialogue.value = { sceneId, next };
-  activeScreen.value = "dialogue";
-}
-
-/** Fim da cena: segue para a tela definida em startDialogue. */
-function onDialogueFinished() {
-  activeScreen.value = dialogue.value.next;
-}
-
 /**
- * Inicia um jogo pelo Modo História.
+ * Inicia uma tarefa pelo Painel de Chamados.
  * Se existir a cena "pre-<gameId>", toca o briefing antes do jogo.
  */
-function playWithBriefing(gameId) {
-  const sceneId = `pre-${gameId}`;
-  if (scenes[sceneId]) {
-    startDialogue(sceneId, gameId);
-  } else {
-    activeScreen.value = gameId;
-  }
+function startTask(gameId) {
+  story.startTask(gameId, { withBriefing: Boolean(scenes[`pre-${gameId}`]) });
 }
 </script>
 
@@ -89,27 +98,27 @@ function playWithBriefing(gameId) {
   <!-- ── Main Menu ─────────────────────────────────────────────────────── -->
   <MainMenu v-if="activeScreen === 'main-menu'" @mode-selected="() => {}" />
 
-  <!-- ── Modo História: cena de abertura + Painel de Chamados (overlay) ── -->
-  <template
-    v-else-if="activeScreen === 'story' || activeScreen === 'story-dashboard'"
-  >
+  <!-- ── Modo História: cutscene inicial + Painel de Chamados (overlay) ── -->
+  <template v-else-if="activeScreen === 'story'">
+    <!-- Fora do checkpoint da cutscene fica só como pano de fundo (sem replay) -->
     <StoryMode
       sceneId="intro"
-      @finished="session.setActiveMode('story-dashboard')"
+      :interactive="story.checkpoint === STORY_CHECKPOINTS.INTRO_CUTSCENE"
+      @finished="story.advanceCheckpoint(STORY_CHECKPOINTS.DASHBOARD)"
       @quit="goToMenu"
     />
     <StoryDashboard
-      v-if="activeScreen === 'story-dashboard'"
-      @play="playWithBriefing"
+      v-if="story.checkpoint === STORY_CHECKPOINTS.DASHBOARD"
+      @play="startTask"
     />
   </template>
 
-  <!-- ── Diálogo genérico (ex.: briefing antes de um desafio) ──────────── -->
+  <!-- ── Cutscene de introdução da tarefa ──────────────────────────────── -->
   <StoryMode
     v-else-if="activeScreen === 'dialogue'"
-    :key="dialogue.sceneId"
-    :sceneId="dialogue.sceneId"
-    @finished="onDialogueFinished"
+    :key="taskIntroSceneId"
+    :sceneId="taskIntroSceneId"
+    @finished="story.advanceCheckpoint(STORY_CHECKPOINTS.MINIGAME)"
     @quit="goToMenu"
   />
 
@@ -132,6 +141,7 @@ function playWithBriefing(gameId) {
   />
   <PatternRecognitionGame
     v-else-if="activeScreen === 'pattern-recognition'"
+    :story-mode="session.activeMode === 'story'"
     @back="goToMenu()"
     @quit="goToMenu()"
   />

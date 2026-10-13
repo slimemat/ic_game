@@ -1,17 +1,20 @@
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useGameSessionStore } from "../stores/gameSession";
+import { useStoryStore } from "../stores/story";
 import PauseModal from "./ui/PauseModal.vue";
 import PauseButton from "./ui/PauseButton.vue";
 
 const emit = defineEmits(["play"]);
 const session = useGameSessionStore();
+const story = useStoryStore();
 
-const isPaused = ref(false);
 const showAssistant = ref(true);
 
+onMounted(() => story.setPaused(false));
+
 function quitDashboard() {
-  isPaused.value = false;
+  story.setPaused(false);
   session.setActiveMode("menu");
 }
 
@@ -26,11 +29,11 @@ function getSpriteUrl(char, emotion) {
 <template>
   <!-- O dashboard agora volta a ser um overlay (sobreposição) -->
   <div class="dashboard-overlay">
-    <PauseButton class="pause-btn-fixed" @click="isPaused = true" />
+    <PauseButton class="pause-btn-fixed" @click="story.setPaused(true)" />
 
     <PauseModal
-      :isOpen="isPaused"
-      @resume="isPaused = false"
+      :isOpen="story.isPaused"
+      @resume="story.setPaused(false)"
       @quit="quitDashboard"
       :showRestart="false"
     />
@@ -42,7 +45,7 @@ function getSpriteUrl(char, emotion) {
         <div class="window-controls">
           <span
             class="dot dot-red"
-            @click="isPaused = true"
+            @click="story.setPaused(true)"
             title="Menu"
           ></span>
           <span class="dot dot-yellow"></span>

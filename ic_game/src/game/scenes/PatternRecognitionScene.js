@@ -410,8 +410,8 @@ export default class PatternRecognitionScene extends Phaser.Scene {
    */
   drawProgressBar(width, height, baseSize) {
     const level = this.registry.get("level") ?? 1;
-    const stageLevel = ((level - 1) % 10) + 1;
-    const totalLevels = 10;
+    const totalLevels = this.registry.get("totalLevels") ?? 10;
+    const stageLevel = ((level - 1) % totalLevels) + 1;
     const progress = stageLevel / totalLevels;
 
     const barWidth = Math.min(width * 0.78, 320);

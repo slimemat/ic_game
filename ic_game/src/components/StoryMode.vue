@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { scenes } from "../data/dialogues";
 import { characters } from "../data/characters";
 import { useGameSessionStore } from "../stores/gameSession";
+import { useStoryStore } from "../stores/story";
 import AudioManager from "../game/managers/AudioManager";
 import PauseModal from "./ui/PauseModal.vue";
 import PauseButton from "./ui/PauseButton.vue";
@@ -13,7 +14,9 @@ import PauseButton from "./ui/PauseButton.vue";
  * Usada na abertura do Modo História e em briefings antes de desafios.
  *
  * Props:
- *   sceneId – id da cena em src/data/dialogues/index.js
+ *   sceneId     – id da cena em src/data/dialogues/index.js
+ *   interactive – false = só pano de fundo (sem reproduzir a cena nem pausa);
+ *                 usado quando o Painel de Chamados é restaurado de um save
  *
  * Eventos:
  *   finished – a cena chegou ao fim (next: null)
@@ -23,13 +26,14 @@ import PauseButton from "./ui/PauseButton.vue";
  */
 const props = defineProps({
   sceneId: { type: String, required: true },
+  interactive: { type: Boolean, default: true },
 });
 const emit = defineEmits(["finished", "quit"]);
 
 const { t } = useI18n();
 const session = useGameSessionStore();
+const story = useStoryStore();
 
-const isPaused = ref(false);
 const chatContainer = ref(null);
 const chatLog = ref([]);
 
@@ -166,6 +170,9 @@ function handleNext() {
 }
 
 onMounted(() => {
+  if (!props.interactive) return;
+  story.setPaused(false);
+
   if (!scene.value) {
     console.warn(`[StoryMode] Cena "${props.sceneId}" não encontrada.`);
     emit("finished");
@@ -184,17 +191,19 @@ onUnmounted(() => {
 
 <template>
   <div class="story-mode-container">
-    <PauseButton class="pause-btn-fixed" @click="isPaused = true" />
+    <template v-if="interactive">
+      <PauseButton class="pause-btn-fixed" @click="story.setPaused(true)" />
 
-    <PauseModal
-      :isOpen="isPaused"
-      @resume="isPaused = false"
-      @quit="
-        isPaused = false;
-        emit('quit');
-      "
-      :showRestart="false"
-    />
+      <PauseModal
+        :isOpen="story.isPaused"
+        @resume="story.setPaused(false)"
+        @quit="
+          story.setPaused(false);
+          emit('quit');
+        "
+        :showRestart="false"
+      />
+    </template>
 
     <div class="chat-history" ref="chatContainer" @click="skipTyping">
       <div v-if="scene?.systemMessage" class="system-message">

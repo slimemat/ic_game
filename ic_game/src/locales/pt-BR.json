@@ -86,6 +86,7 @@
   },
   "pattern": {
     "level": "Fase {num}",
+    "restart_game": "Reiniciar Jogo",
     "diff": "Dif: {diff}",
     "diff_1": "Rotação/Cores",
     "diff_2": "Múltipla Escolha",

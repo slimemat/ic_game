@@ -41,7 +41,7 @@
               @click="$emit('restart')"
               class="btn-modal btn-restart"
             >
-              {{ $t("global.buttons.restart_level") }}
+              {{ restartLabel || $t("global.buttons.restart_level") }}
             </button>
             <button @click="$emit('quit')" class="btn-modal btn-quit">
               {{ $t("global.buttons.quit") }}
@@ -72,6 +72,10 @@ defineProps({
   showRestart: {
     type: Boolean,
     default: true,
+  },
+  restartLabel: {
+    type: String,
+    default: "",
   },
 });
 
