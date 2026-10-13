@@ -1,9 +1,18 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref, shallowRef, computed, watch } from "vue";
+import {
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  shallowRef,
+  computed,
+  watch,
+} from "vue";
+import { useI18n } from "vue-i18n";
 import { storeToRefs } from "pinia";
 import Phaser from "phaser";
 import PatternRecognitionScene from "../game/scenes/PatternRecognitionScene";
 import { LEVEL_CONFIGS } from "../game/data/PatternRecognitionLevels";
+import { getThemeIdForLevel } from "../game/utils/patternTheme";
 import { useStoryStore } from "../stores/story";
 import PauseModal from "./ui/PauseModal.vue";
 import PauseButton from "./ui/PauseButton.vue";
@@ -37,12 +46,23 @@ function getStartLevel() {
     : 1;
 }
 
+const { t } = useI18n();
+
 const currentLevel = ref(getStartLevel());
 
-const currentDifficulty = computed(() => {
+const currentLevelConfig = computed(() => {
   const idx = (currentLevel.value - 1) % LEVEL_CONFIGS.length;
-  return LEVEL_CONFIGS[idx].difficulty;
+  return LEVEL_CONFIGS[idx];
 });
+
+const currentTypeName = computed(() => {
+  const type = currentLevelConfig.value?.type;
+  return type === "rotation"
+    ? t("pattern.type_rotation")
+    : t("pattern.type_color");
+});
+
+const currentTheme = computed(() => getThemeIdForLevel(currentLevel.value));
 
 /** Passa para a cena Phaser os dados que ela precisa (via registry). */
 function syncRegistry() {
@@ -172,25 +192,24 @@ const triggerWarning = (msg, type = "info") => {
     <!-- Modals Compartilhados -->
     <PauseModal
       :isOpen="isPaused"
-      :description="`${$t('pattern.level', { num: currentLevel })} - ${$t('pattern.diff', { diff: currentDifficulty === 1 ? $t('pattern.diff_1') : $t('pattern.diff_2') })}`"
+      :theme="currentTheme"
+      :description="`${$t('pattern.level', { num: currentLevel })}: ${currentTypeName}`"
       :restartLabel="$t('pattern.restart_game')"
       @resume="resumeGame"
       @restart="resetGame"
       @quit="$emit('back')"
     />
 
-    <VictoryModal :isOpen="hasWon" @next="nextLevel" @menu="$emit('back')">
+    <VictoryModal
+      :isOpen="hasWon"
+      :theme="currentTheme"
+      @next="nextLevel"
+      @menu="$emit('back')"
+    >
       <template #stats>
         <div>
           <p>{{ $t("pattern.stats_level", { num: currentLevel }) }}</p>
-          <p>
-            {{ $t("pattern.stats_diff", { diff: "" }) }}
-            {{
-              currentDifficulty === 1
-                ? $t("pattern.diff_1")
-                : $t("pattern.diff_2")
-            }}
-          </p>
+          <p>{{ $t("pattern.stats_type", { type: currentTypeName }) }}</p>
         </div>
       </template>
     </VictoryModal>

@@ -6,7 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
+    "prepare": "cd .. && npx --prefix ic_game husky .husky"
+  },
+  "lint-staged": {
+    "*.{js,vue,json,css,html,md}": "prettier --write"
   },
   "dependencies": {
     "phaser": "^4.2.1",
@@ -16,6 +22,9 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.9.10",
     "vite": "^8.2.0"
   }
 }
