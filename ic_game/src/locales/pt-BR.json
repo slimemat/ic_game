@@ -16,8 +16,21 @@
     "modals": {
       "pause_title": "Jogo Pausado",
       "pause_desc": "Você pausou a partida.",
+      "pause_window_title": "Jogo em pausa",
+      "pause_memos": [
+        "DICA // RESPIRAR É OBRIGATÓRIO",
+        "MAS VOLTA LOGO, TÁ?",
+        "PROCESSO SUSPENSO EM SEGUNDO PLANO",
+        "CALCULANDO PAUSA REMUNERADA...",
+        "AH, NÃO... OK, A GENTE ESPERA...",
+        "SISTEMA EM MODO DE ESPERA...",
+        "OK, PODE IR TOMAR UMA ÁGUA..."
+      ],
       "victory_title": "Fase Concluída!",
-      "victory_desc": "Você mandou muito bem."
+      "victory_desc": "Você mandou muito bem.",
+      "victory_window_title": "Relatório de Conclusão",
+      "victory_memo": "REGISTRO // TAREFA CONCLUÍDA",
+      "victory_tag": "APROVADO"
     },
     "categories": {
       "platform": "Plataforma",
@@ -87,11 +100,11 @@
   "pattern": {
     "level": "Fase {num}",
     "restart_game": "Reiniciar Jogo",
-    "diff": "Dif: {diff}",
-    "diff_1": "Rotação/Cores",
-    "diff_2": "Múltipla Escolha",
+    "challenge_type": "Desafio: {type}",
+    "type_rotation": "Rotação de Formas",
+    "type_color": "Padrão de Cores",
     "stats_level": "Fase Concluída: {num}",
-    "stats_diff": "Dificuldade: {diff}",
+    "stats_type": "Desafio: {type}",
     "question_diff_1": "Qual é o próximo padrão?",
     "drag_hint": "Arraste a resposta para o espaço vazio",
     "question_diff_2": "Selecione o próximo padrão",
