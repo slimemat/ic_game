@@ -1,9 +1,17 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref, shallowRef, computed, watch } from "vue";
+import {
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  shallowRef,
+  computed,
+  watch,
+} from "vue";
 import { storeToRefs } from "pinia";
 import Phaser from "phaser";
 import PatternRecognitionScene from "../game/scenes/PatternRecognitionScene";
 import { LEVEL_CONFIGS } from "../game/data/PatternRecognitionLevels";
+import { getThemeIdForLevel } from "../game/utils/patternTheme";
 import { useStoryStore } from "../stores/story";
 import PauseModal from "./ui/PauseModal.vue";
 import PauseButton from "./ui/PauseButton.vue";
@@ -43,6 +51,8 @@ const currentDifficulty = computed(() => {
   const idx = (currentLevel.value - 1) % LEVEL_CONFIGS.length;
   return LEVEL_CONFIGS[idx].difficulty;
 });
+
+const currentTheme = computed(() => getThemeIdForLevel(currentLevel.value));
 
 /** Passa para a cena Phaser os dados que ela precisa (via registry). */
 function syncRegistry() {
@@ -172,6 +182,7 @@ const triggerWarning = (msg, type = "info") => {
     <!-- Modals Compartilhados -->
     <PauseModal
       :isOpen="isPaused"
+      :theme="currentTheme"
       :description="`${$t('pattern.level', { num: currentLevel })} - ${$t('pattern.diff', { diff: currentDifficulty === 1 ? $t('pattern.diff_1') : $t('pattern.diff_2') })}`"
       :restartLabel="$t('pattern.restart_game')"
       @resume="resumeGame"
@@ -179,7 +190,12 @@ const triggerWarning = (msg, type = "info") => {
       @quit="$emit('back')"
     />
 
-    <VictoryModal :isOpen="hasWon" @next="nextLevel" @menu="$emit('back')">
+    <VictoryModal
+      :isOpen="hasWon"
+      :theme="currentTheme"
+      @next="nextLevel"
+      @menu="$emit('back')"
+    >
       <template #stats>
         <div>
           <p>{{ $t("pattern.stats_level", { num: currentLevel }) }}</p>

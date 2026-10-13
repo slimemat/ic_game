@@ -16,8 +16,21 @@
     "modals": {
       "pause_title": "Jogo Pausado",
       "pause_desc": "Você pausou a partida.",
+      "pause_window_title": "Jogo em pausa",
+      "pause_memos": [
+        "MEMO // PAUSA TÉCNICA AUTORIZADA",
+        "CAFÉ ESFRIANDO NA COPA...",
+        "PROCESSO SUSPENSO EM SEGUNDO PLANO",
+        "ORGANIZANDO AS GAVETAS DO ESCRITÓRIO...",
+        "ARQUIVANDO RELATÓRIOS TEMPORÁRIOS...",
+        "SISTEMA EM MODO DE ESPERA...",
+        "DESCARREGANDO MEMÓRIA VOLÁTIL..."
+      ],
       "victory_title": "Fase Concluída!",
-      "victory_desc": "Você mandou muito bem."
+      "victory_desc": "Você mandou muito bem.",
+      "victory_window_title": "Relatório de Conclusão",
+      "victory_memo": "REGISTRO // TAREFA CONCLUÍDA",
+      "victory_tag": "APROVADO"
     },
     "categories": {
       "platform": "Plataforma",
