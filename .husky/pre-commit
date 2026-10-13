@@ -1,0 +1,1 @@
+cd ic_game && npx lint-staged
