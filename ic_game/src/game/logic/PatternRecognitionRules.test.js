@@ -136,3 +136,31 @@ test("shuffleLevelOptions: determinístico com mock RNG", () => {
   const result = shuffleLevelOptions(config, mockRng);
   assert.equal(result.answerOptions[result.correctOptionIndex], 20);
 });
+
+test("shuffleLevelOptions: embaralha objetos de transformação preservando propriedades e resposta correta", () => {
+  const transformConfig = {
+    type: "transformation",
+    shape: "split_square",
+    baseShape: { angle: 0, flipX: false, flipY: false },
+    answerOptions: [
+      { angle: 0, flipX: false, flipY: false },
+      { angle: 90, flipX: false, flipY: false }, // Correta
+      { angle: 180, flipX: false, flipY: false },
+      { angle: 270, flipX: false, flipY: false },
+    ],
+    correctOptionIndex: 1,
+  };
+
+  const shuffled = shuffleLevelOptions(transformConfig);
+  assert.notEqual(shuffled, transformConfig);
+  assert.equal(shuffled.answerOptions.length, 4);
+
+  const correctItem = shuffled.answerOptions[shuffled.correctOptionIndex];
+  assert.equal(correctItem.angle, 90);
+  assert.equal(correctItem.flipX, false);
+
+  assert.equal(
+    evaluateAnswer(shuffled.correctOptionIndex, shuffled.correctOptionIndex),
+    AnswerStatus.CORRECT,
+  );
+});

@@ -87,6 +87,7 @@ export const STORY_STAGES = Object.freeze([
   {
     id: "stage-1-intern-onboarding",
     stageNumber: 1,
+    levelStartIndex: 1, // Fases 1 a 10 (Rotações)
     titleKey: "story.stages.stage1.title",
     descriptionKey: "story.stages.stage1.description",
     gameId: "pattern-recognition",
@@ -110,18 +111,19 @@ export const STORY_STAGES = Object.freeze([
   {
     id: "stage-2-corrupted-archives",
     stageNumber: 2,
+    levelStartIndex: 11, // Fases 11 a 15 (Transformações Espaciais com formas split)
     titleKey: "story.stages.stage2.title",
     descriptionKey: "story.stages.stage2.description",
     gameId: "pattern-recognition",
-    targetChallengesCount: 4,
+    targetChallengesCount: 5,
     tags: ["medium", "urgent"],
-    xpRewardPerChallenge: 40, // 4 * 40 = 160 XP
-    completionBonusXp: 80, // 160 + 80 = 240 XP (accumulated: 165 + 240 = 405 XP -> crosses 350 XP promotion threshold!)
+    xpRewardPerChallenge: 40, // 5 * 40 = 200 XP
+    completionBonusXp: 80, // 200 + 80 = 280 XP
     patternConfig: {
       difficultyTier: 2,
       minSequenceLength: 4,
       maxSequenceLength: 6,
-      allowedTypes: ["rotation", "color"],
+      allowedTypes: ["transformation", "color"],
     },
     introCutsceneId: "pre-pattern-recognition",
     postStageCutsceneId: "post-pattern-recognition-2",
@@ -130,6 +132,7 @@ export const STORY_STAGES = Object.freeze([
   {
     id: "stage-3-advanced-system",
     stageNumber: 3,
+    levelStartIndex: 16,
     titleKey: "story.stages.stage3.title",
     descriptionKey: "story.stages.stage3.description",
     gameId: "pattern-recognition",

@@ -1,16 +1,64 @@
 <script setup>
+import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useGameSessionStore } from "../stores/gameSession";
+import { useStoryStore, STORY_CHECKPOINTS } from "../stores/story";
+import { useProgressionStore } from "../stores/progression";
 import spritePaint from "../assets/images/spritepaint.png";
 
 const { t } = useI18n();
 const session = useGameSessionStore();
+const story = useStoryStore();
+const progression = useProgressionStore();
 
 const emit = defineEmits(["mode-selected"]);
+
+const debugMessage = ref("");
+let debugMsgTimeout = null;
 
 function selectMode(mode) {
   session.setActiveMode(mode);
   emit("mode-selected", mode);
+}
+
+function flashDebugMessage(msg) {
+  if (debugMsgTimeout) clearTimeout(debugMsgTimeout);
+  debugMessage.value = msg;
+  debugMsgTimeout = setTimeout(() => {
+    debugMessage.value = "";
+  }, 4000);
+}
+
+function handleResetProgress() {
+  story.resetProgress();
+  progression.resetProgression();
+  try {
+    localStorage.removeItem("ic_game:story-progress");
+    localStorage.removeItem("ic_game:career-progression");
+  } catch (e) {
+    console.warn(e);
+  }
+  flashDebugMessage(
+    "✓ Progresso do Pinia & LocalStorage resetado com sucesso!",
+  );
+}
+
+function handlePlayStage2Directly() {
+  // Configura a store para o início da Etapa 2
+  progression.totalXp = 350;
+  progression.completedStages = ["stage-1-intern-onboarding"];
+  progression.saveProgression();
+
+  story.currentStageId = "stage-2-corrupted-archives";
+  story.completedTasks = ["stage-1-intern-onboarding"];
+  story.currentPatternCount = 0;
+  story.startTask("stage-2-corrupted-archives", { withBriefing: false });
+  story.advanceCheckpoint(STORY_CHECKPOINTS.MINIGAME);
+
+  flashDebugMessage(
+    "⚡ Iniciando Etapa 2 com os novos jogos de transformação!",
+  );
+  selectMode("story");
 }
 </script>
 
@@ -69,6 +117,37 @@ function selectMode(mode) {
           }}
         </p>
       </Transition>
+
+      <!-- Painel de Debug -->
+      <section class="debug-panel" aria-label="Ferramentas de Debug">
+        <div class="debug-header">
+          <span class="debug-badge">PAINEL DEBUG DEV</span>
+        </div>
+
+        <div class="debug-buttons">
+          <button
+            class="btn-debug btn-debug-reset"
+            title="Zera o progresso de todas as stores do Pinia e LocalStorage"
+            @click="handleResetProgress"
+          >
+            🗑️ Resetar Progresso Pinia / Storage
+          </button>
+
+          <button
+            class="btn-debug btn-debug-jump"
+            title="Avança direto para a Etapa 2 com os novos jogos de transformação"
+            @click="handlePlayStage2Directly"
+          >
+            ⚡ Jogar Novos Jogos (Etapa 2 Direto)
+          </button>
+        </div>
+
+        <Transition name="fade">
+          <p v-if="debugMessage" class="debug-feedback">
+            {{ debugMessage }}
+          </p>
+        </Transition>
+      </section>
     </div>
   </main>
 </template>
@@ -198,5 +277,87 @@ function selectMode(mode) {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+/* Debug Dev Panel */
+.debug-panel {
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px 16px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px dashed rgba(244, 63, 94, 0.5);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.debug-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.debug-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #f43f5e;
+  background: rgba(244, 63, 94, 0.15);
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+
+.debug-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.btn-debug {
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-debug-reset {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  color: #fca5a5;
+}
+
+.btn-debug-reset:hover {
+  background: rgba(239, 68, 68, 0.3);
+  border-color: #ef4444;
+  color: #ffffff;
+}
+
+.btn-debug-jump {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  color: #7dd3fc;
+}
+
+.btn-debug-jump:hover {
+  background: rgba(56, 189, 248, 0.3);
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
+.debug-feedback {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #4ade80;
+  font-weight: 600;
+  text-align: center;
 }
 </style>

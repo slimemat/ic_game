@@ -107,7 +107,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     this.load.audio("swipe", swipeAudio);
     this.load.audio("stamp", stampAudio);
 
-    // Formas geométricas para fases de rotação
+    // Formas geométricas para fases de rotação e transformação
     const SHAPE_NAMES = [
       "triangle",
       "arrow",
@@ -117,6 +117,11 @@ export default class PatternRecognitionScene extends Phaser.Scene {
       "semicircle",
       "wedge",
       "pointer",
+      "split_square",
+      "split_circle",
+      "split_shield",
+      "split_diamond",
+      "split_triangle",
     ];
     SHAPE_NAMES.forEach((shape) => {
       this.load.svg(
@@ -559,8 +564,9 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   drawProgressBar(width, height, baseSize) {
     const level = this.registry.get("level") ?? 1;
     const totalLevels = this.registry.get("totalLevels") ?? 10;
-    const stageLevel = ((level - 1) % totalLevels) + 1;
-    const progress = stageLevel / totalLevels;
+    const stageLevel =
+      this.registry.get("stageLevel") ?? ((level - 1) % totalLevels) + 1;
+    const progress = Math.min(1, stageLevel / totalLevels);
 
     const barWidth = Math.min(width * 0.78, 320);
     const barHeight = Math.max(8, baseSize * 0.022);
@@ -595,6 +601,66 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   }
 
   drawTexts(width, height, baseSize) {
+    const isTransformation =
+      this.levelData.type === "transformation" ||
+      Boolean(this.levelData.instruction || this.levelData.instructionKey);
+
+    if (isTransformation) {
+      const instructionText = this.levelData.instructionKey
+        ? t(this.levelData.instructionKey)
+        : this.levelData.instruction || t("pattern.instruction_title");
+
+      // Tag / Categoria da tarefa
+      this.trackTask(
+        this.add
+          .text(width / 2, height * 0.095, t("pattern.instruction_title"), {
+            fontSize: `${Math.max(11, Math.min(14, baseSize * 0.028))}px`,
+            fill: "#38bdf8",
+            stroke: "#0f172a",
+            strokeThickness: 2,
+            align: "center",
+            fontStyle: "bold",
+            letterSpacing: 1,
+          })
+          .setOrigin(0.5),
+      );
+
+      // Frase imperativa principal em pt-BR (ex: "Gire a forma 90° no sentido horário.")
+      this.trackTask(
+        this.add
+          .text(width / 2, height * 0.155, instructionText, {
+            fontSize: `${Math.max(15, Math.min(22, width * 0.048))}px`,
+            fill: "#f8fafc",
+            stroke: "#0f172a",
+            strokeThickness: 3,
+            align: "center",
+            fontStyle: "bold",
+            wordWrap: { width: width * 0.9 },
+          })
+          .setOrigin(0.5),
+      );
+
+      // Dica de arrastar
+      this.trackTask(
+        this.add
+          .text(
+            width / 2,
+            height * 0.22,
+            t("pattern.drag_hint_transformation"),
+            {
+              fontSize: `${Math.max(11, baseSize * 0.026)}px`,
+              fill: this.theme.text.hint,
+              stroke: "#0f172a",
+              strokeThickness: 2,
+              align: "center",
+              wordWrap: { width: width * 0.9 },
+            },
+          )
+          .setOrigin(0.5),
+      );
+      return;
+    }
+
     const questionKey = QUESTION_KEY_BY_DIFFICULTY[this.levelData.difficulty];
 
     this.trackTask(
@@ -625,7 +691,10 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   }
 
   getSequenceRow(width, height) {
-    const totalItems = this.levelData.sequence.length + 1;
+    const seqLen = this.levelData?.sequence
+      ? this.levelData.sequence.length
+      : 3;
+    const totalItems = seqLen + 1;
     return {
       totalItems,
       spacing: width / (totalItems + 1),
@@ -634,6 +703,83 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   }
 
   drawSequence(width, height, baseSize) {
+    const isTransformation =
+      this.levelData.type === "transformation" ||
+      Boolean(this.levelData.baseShape !== undefined);
+
+    if (isTransformation) {
+      const y = height * 0.34;
+      const tileSize = baseSize * 0.16;
+      const baseX = width * 0.35;
+      const arrowX = width * 0.5;
+
+      // Sombra e Post-it da Forma Original
+      this.trackTask(
+        this.add.rectangle(
+          baseX + 2,
+          y + 3,
+          tileSize,
+          tileSize,
+          0x000000,
+          0.25,
+        ),
+      );
+
+      this.trackTask(
+        this.add
+          .rectangle(baseX, y, tileSize, tileSize, POST_IT_BG)
+          .setStrokeStyle(1.5, POST_IT_BORDER, 0.6),
+      );
+
+      const stripH = tileSize * 0.18;
+      this.trackTask(
+        this.add.rectangle(
+          baseX,
+          y - tileSize / 2 + stripH / 2,
+          tileSize,
+          stripH,
+          POST_IT_TAPE,
+          0.85,
+        ),
+      );
+
+      const baseValue = this.levelData.baseShape ?? {
+        angle: 0,
+        flipX: false,
+        flipY: false,
+      };
+      this.trackTask(
+        this.createShape(baseX, y + stripH * 0.2, baseValue, baseSize),
+      );
+
+      // Rótulo da forma original
+      this.trackTask(
+        this.add
+          .text(baseX, y + tileSize / 2 + 10, t("pattern.label_original"), {
+            fontSize: `${Math.max(10, baseSize * 0.024)}px`,
+            fill: "#cbd5e1",
+            stroke: "#0f172a",
+            strokeThickness: 2,
+            fontStyle: "bold",
+          })
+          .setOrigin(0.5, 0),
+      );
+
+      // Seta indicativa ➜
+      this.trackTask(
+        this.add
+          .text(arrowX, y, "➜", {
+            fontSize: `${Math.max(26, baseSize * 0.065)}px`,
+            fill: "#38bdf8",
+            stroke: "#0f172a",
+            strokeThickness: 2,
+            fontStyle: "bold",
+          })
+          .setOrigin(0.5),
+      );
+      return;
+    }
+
     const { spacing, y } = this.getSequenceRow(width, height);
     const tileSize = baseSize * 0.15;
 
@@ -667,9 +813,25 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   }
 
   drawSlot(width, height, baseSize) {
-    const { spacing, totalItems, y } = this.getSequenceRow(width, height);
-    const x = spacing * totalItems;
-    const size = baseSize * 0.18;
+    const isTransformation =
+      this.levelData.type === "transformation" ||
+      Boolean(this.levelData.baseShape !== undefined);
+
+    let x, y, size;
+    if (isTransformation) {
+      x = width * 0.65;
+      y = height * 0.34;
+      size = baseSize * 0.18;
+    } else {
+      const {
+        spacing,
+        totalItems,
+        y: rowY,
+      } = this.getSequenceRow(width, height);
+      x = spacing * totalItems;
+      y = rowY;
+      size = baseSize * 0.18;
+    }
 
     this.trackTask(
       this.add.rectangle(x + 2, y + 3, size, size, 0x000000, 0.35),
@@ -690,6 +852,20 @@ export default class PatternRecognitionScene extends Phaser.Scene {
         })
         .setOrigin(0.5),
     );
+
+    if (isTransformation) {
+      this.trackTask(
+        this.add
+          .text(x, y + size / 2 + 10, t("pattern.label_result"), {
+            fontSize: `${Math.max(10, baseSize * 0.024)}px`,
+            fill: "#38bdf8",
+            stroke: "#0f172a",
+            strokeThickness: 2,
+            fontStyle: "bold",
+          })
+          .setOrigin(0.5, 0),
+      );
+    }
 
     this.slotInfo = { x, y, size };
     this.updateSlotVisuals();
@@ -802,16 +978,28 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   createShape(x, y, value, baseSize) {
     const r = baseSize * 0.055;
     const isRotation = this.levelData.type === "rotation";
+    const isTransformation = this.levelData.type === "transformation";
 
-    if (isRotation) {
+    if (isRotation || isTransformation) {
       const shapeKey = this.getShapeSpriteKey();
       if (shapeKey) {
         const size = r * 1.6;
         const sprite = this.add
           .image(x, y, shapeKey)
           .setDisplaySize(size, size);
-        sprite.setAngle(value);
-        sprite.setTint(this.theme.ui.shape);
+
+        const angle =
+          typeof value === "object" ? (value.angle ?? 0) : Number(value) || 0;
+        const flipX = typeof value === "object" ? Boolean(value.flipX) : false;
+        const flipY = typeof value === "object" ? Boolean(value.flipY) : false;
+
+        sprite.setAngle(angle);
+        sprite.setFlip(flipX, flipY);
+
+        const isSplitShape = this.levelData.shape?.startsWith("split_");
+        if (!this.levelData.preserveColors && !isSplitShape) {
+          sprite.setTint(this.theme.ui.shape);
+        }
         return sprite;
       }
 
@@ -826,7 +1014,9 @@ export default class PatternRecognitionScene extends Phaser.Scene {
         0,
         this.theme.ui.shape,
       );
-      triangle.setAngle(value);
+      const angle =
+        typeof value === "object" ? (value.angle ?? 0) : Number(value) || 0;
+      triangle.setAngle(angle);
       return triangle;
     }
 
@@ -1028,7 +1218,9 @@ export default class PatternRecognitionScene extends Phaser.Scene {
       this.isTransitioning = true;
       const level = this.registry.get("level") ?? 1;
       const totalLevels = this.registry.get("totalLevels") ?? 10;
-      const isGroupComplete = level >= totalLevels;
+      const stageLevel =
+        this.registry.get("stageLevel") ?? ((level - 1) % totalLevels) + 1;
+      const isGroupComplete = stageLevel >= totalLevels;
 
       const occupantPiece = this.options[this.slot.occupant];
       if (occupantPiece) {

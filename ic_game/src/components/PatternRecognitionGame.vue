@@ -39,11 +39,20 @@ const showWarning = ref(false);
 const warningMessage = ref("");
 const warningType = ref("info");
 
-/** Nível inicial: no Modo História retoma do checkpoint (acertos + 1). */
+const stageStartLevel = computed(() => {
+  return props.storyMode ? story.currentStage?.levelStartIndex || 1 : 1;
+});
+
+/** Nível inicial: no Modo História retoma do checkpoint da etapa atual. */
 function getStartLevel() {
-  return props.storyMode
-    ? Math.min(currentPatternCount.value + 1, targetPatternCount.value)
-    : 1;
+  if (props.storyMode) {
+    const offset = Math.min(
+      currentPatternCount.value,
+      Math.max(0, targetPatternCount.value - 1),
+    );
+    return stageStartLevel.value + offset;
+  }
+  return 1;
 }
 
 const { t } = useI18n();
@@ -57,9 +66,9 @@ const currentLevelConfig = computed(() => {
 
 const currentTypeName = computed(() => {
   const type = currentLevelConfig.value?.type;
-  return type === "rotation"
-    ? t("pattern.type_rotation")
-    : t("pattern.type_color");
+  if (type === "rotation") return t("pattern.type_rotation");
+  if (type === "transformation") return t("pattern.type_transformation");
+  return t("pattern.type_color");
 });
 
 const currentTheme = computed(() => getThemeIdForLevel(currentLevel.value));
@@ -67,6 +76,10 @@ const currentTheme = computed(() => getThemeIdForLevel(currentLevel.value));
 /** Passa para a cena Phaser os dados que ela precisa (via registry). */
 function syncRegistry() {
   game.value?.registry.set("level", currentLevel.value);
+  game.value?.registry.set(
+    "stageLevel",
+    props.storyMode ? currentPatternCount.value + 1 : currentLevel.value,
+  );
   game.value?.registry.set(
     "totalLevels",
     props.storyMode ? targetPatternCount.value : 10,
@@ -100,9 +113,9 @@ onMounted(() => {
       // Concluiu o grupo de tarefas da etapa! Exibe o componente de vitória
       hasWon.value = true;
     } else {
-      // Tarefa intermediária: atualiza o nível e transiciona a nova tarefa
+      // Tarefa intermediária: atualiza o nível da etapa e transiciona
       currentLevel.value = props.storyMode
-        ? currentPatternCount.value + 1
+        ? stageStartLevel.value + currentPatternCount.value
         : currentLevel.value + 1;
       syncRegistry();
       gameScene.value?.resetLevel({ animateIn: true });
@@ -145,12 +158,12 @@ const checkAnswer = () => {
   }
 };
 
-/** Reinicia o jogo inteiro: volta ao nível 1 (e zera o progresso salvo na história). */
+/** Reinicia o jogo inteiro: volta ao nível 1 da etapa atual (e zera o progresso salvo na história). */
 const resetGame = () => {
   if (props.storyMode) {
     story.setPatternProgress(0);
   }
-  currentLevel.value = 1;
+  currentLevel.value = props.storyMode ? stageStartLevel.value : 1;
   syncRegistry();
   gameScene.value?.resetLevel();
   hasWon.value = false;
@@ -167,7 +180,7 @@ const nextLevel = () => {
   }
 
   currentLevel.value = props.storyMode
-    ? currentPatternCount.value + 1
+    ? stageStartLevel.value + currentPatternCount.value
     : currentLevel.value + 1;
   syncRegistry();
   gameScene.value?.resetLevel();

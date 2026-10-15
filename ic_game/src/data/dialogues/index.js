@@ -39,6 +39,11 @@ export const scenes = {
       },
       assistant_finish: {
         speaker: "assistant",
+        emotion: "neutral",
+        next: "assistant_finish_player",
+      },
+      assistant_finish_player: {
+        speaker: "assistant",
         emotion: "explaining",
         next: null,
       },

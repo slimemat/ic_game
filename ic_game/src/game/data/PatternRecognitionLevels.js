@@ -106,7 +106,84 @@ export const LEVEL_CONFIGS = [
     answerOptions: [45, 90, 135, 180, 225, 270, 315],
     correctOptionIndex: 3, // 180°
   },
-  // ── ETAPA 2+: CORES E COMPLEXIDADE ESTENDIDA (Fases 11+) ─────────────────
+  // ── ETAPA 2: TRANSFORMAÇÃO ESPACIAL E DIRETIVAS (Fases 11 a 15) ──────────
+  {
+    difficulty: 2,
+    type: "transformation",
+    shape: "split_square",
+    instructionKey: "pattern.transform_rotate_90_cw",
+    instruction: "Gire a forma 90° no sentido horário.",
+    baseShape: { angle: 0, flipX: false, flipY: false },
+    answerOptions: [
+      { angle: 0, flipX: false, flipY: false },
+      { angle: 90, flipX: false, flipY: false },
+      { angle: 180, flipX: false, flipY: false },
+      { angle: 270, flipX: false, flipY: false },
+    ],
+    correctOptionIndex: 1, // 90° horário
+  },
+  {
+    difficulty: 2,
+    type: "transformation",
+    shape: "split_triangle",
+    instructionKey: "pattern.transform_flip_horizontal",
+    instruction:
+      "Espelhe a forma horizontalmente (inverter esquerda e direita).",
+    baseShape: { angle: 0, flipX: false, flipY: false },
+    answerOptions: [
+      { angle: 0, flipX: false, flipY: false },
+      { angle: 0, flipX: true, flipY: false },
+      { angle: 180, flipX: false, flipY: false },
+      { angle: 90, flipX: false, flipY: false },
+    ],
+    correctOptionIndex: 1, // Espelhado horizontal
+  },
+  {
+    difficulty: 2,
+    type: "transformation",
+    shape: "split_shield",
+    instructionKey: "pattern.transform_rotate_180",
+    instruction: "Gire a forma 180° (meia volta completa).",
+    baseShape: { angle: 0, flipX: false, flipY: false },
+    answerOptions: [
+      { angle: 0, flipX: true, flipY: false },
+      { angle: 90, flipX: false, flipY: false },
+      { angle: 180, flipX: false, flipY: false },
+      { angle: 270, flipX: false, flipY: false },
+    ],
+    correctOptionIndex: 2, // 180°
+  },
+  {
+    difficulty: 2,
+    type: "transformation",
+    shape: "split_circle",
+    instructionKey: "pattern.transform_flip_vertical",
+    instruction: "Espelhe a forma verticalmente (inverter topo e base).",
+    baseShape: { angle: 90, flipX: false, flipY: false },
+    answerOptions: [
+      { angle: 90, flipX: false, flipY: false },
+      { angle: 270, flipX: false, flipY: false },
+      { angle: 0, flipX: false, flipY: false },
+      { angle: 180, flipX: false, flipY: false },
+    ],
+    correctOptionIndex: 1, // Invertido topo e base
+  },
+  {
+    difficulty: 2,
+    type: "transformation",
+    shape: "split_diamond",
+    instructionKey: "pattern.transform_rotate_90_flip_h",
+    instruction: "Gire 90° no sentido horário e espelhe horizontalmente.",
+    baseShape: { angle: 0, flipX: false, flipY: false },
+    answerOptions: [
+      { angle: 90, flipX: false, flipY: false },
+      { angle: 0, flipX: true, flipY: false },
+      { angle: 270, flipX: false, flipY: false },
+      { angle: 90, flipX: true, flipY: false },
+    ],
+    correctOptionIndex: 3, // 90° horário + espelhado horizontal
+  },
+  // ── ETAPA 3+: CORES E COMPLEXIDADE ESTENDIDA (Fases 16+) ─────────────────
   {
     difficulty: 2,
     type: "color",

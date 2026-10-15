@@ -65,7 +65,7 @@ test("STORY_STAGES: Stage 1 + Stage 2 yields enough XP for advancement towards P
   const stage2Payout = calculateStageTotalPayout(STORY_STAGES[1]);
   const total = stage1Payout + stage2Payout;
 
-  // 350 + 240 = 590 XP (advancing towards Pleno Analyst at 900 XP)
-  assert.equal(total, 590);
+  // 350 + 280 = 630 XP (advancing towards Pleno Analyst at 900 XP)
+  assert.equal(total, 630);
   assert.equal(getRankForXp(total).id, "junior_analyst");
 });
