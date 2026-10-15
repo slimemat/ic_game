@@ -58,3 +58,51 @@ export function isOverSlot(px, py, slotX, slotY, slotSize, tolerance = 0.7) {
   const limit = slotSize * tolerance;
   return Math.abs(px - slotX) <= limit && Math.abs(py - slotY) <= limit;
 }
+
+/**
+ * Clona a configuração de uma fase e embaralha as opções de resposta,
+ * recalculando o correctOptionIndex para apontar para a nova posição da resposta correta.
+ * @param {object} levelConfig
+ * @param {() => number} [rng=Math.random]
+ * @returns {object}
+ */
+export function shuffleLevelOptions(levelConfig, rng = Math.random) {
+  if (!levelConfig || !Array.isArray(levelConfig.answerOptions)) {
+    return levelConfig;
+  }
+
+  const { answerOptions, correctOptionIndex } = levelConfig;
+
+  // Se correctOptionIndex não for válido, retorna o config original
+  if (
+    typeof correctOptionIndex !== "number" ||
+    correctOptionIndex < 0 ||
+    correctOptionIndex >= answerOptions.length
+  ) {
+    return levelConfig;
+  }
+
+  // Mapeia os itens preservando quem é a resposta correta
+  const items = answerOptions.map((val, idx) => ({
+    val,
+    isCorrect: idx === correctOptionIndex,
+  }));
+
+  // Fisher-Yates shuffle
+  for (let i = items.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    const temp = items[i];
+    items[i] = items[j];
+    items[j] = temp;
+  }
+
+  const newOptions = items.map((item) => item.val);
+  const newCorrectIndex = items.findIndex((item) => item.isCorrect);
+
+  return {
+    ...levelConfig,
+    answerOptions: newOptions,
+    correctOptionIndex:
+      newCorrectIndex !== -1 ? newCorrectIndex : correctOptionIndex,
+  };
+}

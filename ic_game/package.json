@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "node --test src/**/*.test.js",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "prepare": "cd .. && npx --prefix ic_game husky .husky"

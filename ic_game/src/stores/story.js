@@ -1,72 +1,91 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
+import { STORY_STAGES } from "../game/data/progressionConfig";
+import { useProgressionStore } from "./progression";
 
 /**
- * Etapas (checkpoints) do fluxo do Modo História, em ordem de ocorrência.
- * O App.vue usa o checkpoint atual para decidir qual tela renderizar.
+ * Checkpoints for the Story Mode flow.
+ * App.vue uses the current checkpoint to determine which screen/modal to render.
  */
 export const STORY_CHECKPOINTS = Object.freeze({
-  /** Cutscene inicial (Vue – StoryMode, cena "intro") */
+  /** Opening story cutscene (Vue – StoryMode, scene "intro") */
   INTRO_CUTSCENE: "intro-cutscene",
-  /** Painel de Chamados (escolha da tarefa) */
+  /** Mission control / Ticket dashboard */
   DASHBOARD: "dashboard",
-  /** Cutscene de introdução da tarefa (Vue – StoryMode, cena "pre-<tarefa>") */
+  /** Pre-task briefing cutscene (Vue – StoryMode, scene "pre-<task>") */
   TASK_INTRO_CUTSCENE: "task-intro-cutscene",
-  /** O jogo em si (Phaser) */
+  /** Gameplay canvas (Phaser) */
   MINIGAME: "minigame",
+  /** Post-stage narrative cutscene */
+  POST_STAGE_CUTSCENE: "post-stage-cutscene",
+  /** Promotion celebration screen/modal */
+  PROMOTION: "promotion",
 });
 
-/** Quantidade padrão de padrões que o jogador precisa acertar por tarefa. */
-export const DEFAULT_TARGET_PATTERN_COUNT = 10;
-
 const STORAGE_KEY = "ic_game:story-progress";
-const SAVE_VERSION = 1;
+const SAVE_VERSION = 2;
 const VALID_CHECKPOINTS = Object.values(STORY_CHECKPOINTS);
 
 /**
- * Store do Modo História.
+ * Story Mode Store.
  *
- * Responsabilidades:
- *   - Em que etapa o jogador está (checkpoint) e qual tarefa está ativa
- *   - Progresso granular do minigame (ex.: 5 de 10 padrões)
- *   - Estado global de pausa (ponte Vue ⇄ Phaser)
- *   - Persistência em localStorage (sem backend por enquanto)
- *
- * Persistência isolada em save()/load(): ao integrar com o backend,
- * apenas essas duas funções precisam mudar.
+ * Responsibilities:
+ *   - Orchestrate story narrative checkpoints and active stages
+ *   - Manage active task and granular in-game challenge count
+ *   - Global pause state (Vue ⇄ Phaser bridge)
+ *   - Coordinate with useProgressionStore for XP gains and promotions
+ *   - LocalStorage persistence with backward-compatible migrations
  */
 export const useStoryStore = defineStore("story", () => {
-  // ── State (persistido) ──────────────────────────────────────────────────
+  const progression = useProgressionStore();
 
-  /** Etapa atual do fluxo. Ver STORY_CHECKPOINTS. */
+  // ── State (persisted) ───────────────────────────────────────────────────
+
+  /** Current story checkpoint. See STORY_CHECKPOINTS. */
   const checkpoint = ref(STORY_CHECKPOINTS.INTRO_CUTSCENE);
 
-  /** Id da tarefa/minigame em andamento (ex.: "pattern-recognition") ou null. */
+  /** Currently active stage ID from STORY_STAGES. */
+  const currentStageId = ref(STORY_STAGES[0].id);
+
+  /** Active cutscene sceneId to render in StoryMode.vue. */
+  const activeCutsceneId = ref("intro");
+
+  /** Id of active minigame/task (e.g. "pattern-recognition") or null. */
   const activeTaskId = ref(null);
 
-  /** Padrões acertados na tarefa atual. */
+  /** Solved patterns/challenges in the current run. */
   const currentPatternCount = ref(0);
 
-  /** Padrões necessários para concluir a tarefa atual (configurável). */
-  const targetPatternCount = ref(DEFAULT_TARGET_PATTERN_COUNT);
-
-  /** Ids das tarefas já concluídas. */
+  /** Completed task/game IDs. */
   const completedTasks = ref([]);
 
-  // ── State (não persistido) ──────────────────────────────────────────────
+  // ── State (non-persisted) ───────────────────────────────────────────────
 
-  /** Pausa global: Vue (PauseModal) e Phaser (cena) reagem a este valor. */
+  /** Global pause: PauseModal (Vue) and Scene (Phaser) react to this value. */
   const isPaused = ref(false);
 
   // ── Getters ─────────────────────────────────────────────────────────────
 
-  const isGoalReached = computed(
-    () => currentPatternCount.value >= targetPatternCount.value,
-  );
+  /** Resolved active stage configuration. */
+  const currentStage = computed(() => {
+    return (
+      STORY_STAGES.find((s) => s.id === currentStageId.value) || STORY_STAGES[0]
+    );
+  });
 
-  // ── Persistência ────────────────────────────────────────────────────────
+  /** Data-driven challenge target for the active stage (replaces hardcoded 10). */
+  const targetPatternCount = computed(() => {
+    return currentStage.value.targetChallengesCount || 3;
+  });
 
-  /** Grava o progresso atual no localStorage. */
+  /** Whether the current run target has been reached. */
+  const isGoalReached = computed(() => {
+    return currentPatternCount.value >= targetPatternCount.value;
+  });
+
+  // ── Persistence ────────────────────────────────────────────────────────
+
+  /** Persists story progress to localStorage. */
   function save() {
     try {
       localStorage.setItem(
@@ -74,20 +93,21 @@ export const useStoryStore = defineStore("story", () => {
         JSON.stringify({
           version: SAVE_VERSION,
           checkpoint: checkpoint.value,
+          currentStageId: currentStageId.value,
+          activeCutsceneId: activeCutsceneId.value,
           activeTaskId: activeTaskId.value,
           currentPatternCount: currentPatternCount.value,
-          targetPatternCount: targetPatternCount.value,
           completedTasks: completedTasks.value,
         }),
       );
     } catch (error) {
-      console.warn("[storyStore] Não foi possível salvar o progresso.", error);
+      console.warn("[storyStore] Could not save progress.", error);
     }
   }
 
   /**
-   * Carrega o progresso salvo (se houver e for válido).
-   * @returns {boolean} true se algo foi carregado.
+   * Loads saved progress with backward compatibility.
+   * @returns {boolean}
    */
   function load() {
     try {
@@ -95,15 +115,30 @@ export const useStoryStore = defineStore("story", () => {
       if (!raw) return false;
 
       const data = JSON.parse(raw);
-      if (data?.version !== SAVE_VERSION) return false;
-      if (!VALID_CHECKPOINTS.includes(data.checkpoint)) return false;
+      if (!data) return false;
 
-      checkpoint.value = data.checkpoint;
+      // Migrate version 1 or validate version 2
+      if (data.version === 1) {
+        currentStageId.value = STORY_STAGES[0].id;
+        activeCutsceneId.value = "intro";
+        checkpoint.value = VALID_CHECKPOINTS.includes(data.checkpoint)
+          ? data.checkpoint
+          : STORY_CHECKPOINTS.INTRO_CUTSCENE;
+      } else if (data.version === SAVE_VERSION) {
+        checkpoint.value = VALID_CHECKPOINTS.includes(data.checkpoint)
+          ? data.checkpoint
+          : STORY_CHECKPOINTS.INTRO_CUTSCENE;
+        currentStageId.value = STORY_STAGES.some(
+          (s) => s.id === data.currentStageId,
+        )
+          ? data.currentStageId
+          : STORY_STAGES[0].id;
+        activeCutsceneId.value = data.activeCutsceneId || "intro";
+      } else {
+        return false;
+      }
+
       activeTaskId.value = data.activeTaskId ?? null;
-      targetPatternCount.value =
-        Number.isInteger(data.targetPatternCount) && data.targetPatternCount > 0
-          ? data.targetPatternCount
-          : DEFAULT_TARGET_PATTERN_COUNT;
       currentPatternCount.value = Math.min(
         Math.max(Number(data.currentPatternCount) || 0, 0),
         targetPatternCount.value,
@@ -113,20 +148,20 @@ export const useStoryStore = defineStore("story", () => {
         : [];
       return true;
     } catch (error) {
-      console.warn("[storyStore] Save inválido, ignorando.", error);
+      console.warn("[storyStore] Invalid save data, ignoring.", error);
       return false;
     }
   }
 
-  // ── Actions: fluxo ──────────────────────────────────────────────────────
+  // ── Actions: Flow & Stage Transitions ───────────────────────────────────
 
   /**
-   * Avança (ou move) para uma etapa do fluxo e persiste.
-   * @param {string} step um valor de STORY_CHECKPOINTS
+   * Advance to a specific checkpoint and persist.
+   * @param {string} step
    */
   function advanceCheckpoint(step) {
     if (!VALID_CHECKPOINTS.includes(step)) {
-      console.warn(`[storyStore] Checkpoint inválido: "${step}".`);
+      console.warn(`[storyStore] Invalid checkpoint: "${step}".`);
       return;
     }
     checkpoint.value = step;
@@ -134,22 +169,51 @@ export const useStoryStore = defineStore("story", () => {
   }
 
   /**
-   * Inicia uma tarefa a partir do Painel de Chamados.
-   * Zera o progresso do minigame e vai para a cutscene da tarefa
-   * (ou direto para o jogo, se não houver cutscene).
+   * Starts a task from the Dashboard.
+   * Resets pattern count and loads task briefing cutscene if available.
    * @param {string} taskId
    * @param {{ withBriefing?: boolean }} [options]
    */
   function startTask(taskId, { withBriefing = true } = {}) {
     activeTaskId.value = taskId;
     currentPatternCount.value = 0;
-    checkpoint.value = withBriefing
-      ? STORY_CHECKPOINTS.TASK_INTRO_CUTSCENE
-      : STORY_CHECKPOINTS.MINIGAME;
+
+    if (withBriefing && currentStage.value.introCutsceneId) {
+      activeCutsceneId.value = currentStage.value.introCutsceneId;
+      checkpoint.value = STORY_CHECKPOINTS.TASK_INTRO_CUTSCENE;
+    } else {
+      checkpoint.value = STORY_CHECKPOINTS.MINIGAME;
+    }
     save();
   }
 
-  /** Conclui a tarefa ativa e volta ao Painel de Chamados. */
+  /**
+   * Registers a correctly solved pattern during gameplay.
+   * Awards XP per challenge and checks if stage target is met.
+   * @returns {boolean} true if stage target has been met.
+   */
+  function registerCorrectPattern() {
+    currentPatternCount.value = Math.min(
+      currentPatternCount.value + 1,
+      targetPatternCount.value,
+    );
+
+    // Award XP per challenge
+    progression.addXp(
+      currentStage.value.xpRewardPerChallenge || 35,
+      "challenge_solved",
+    );
+
+    save();
+    return isGoalReached.value;
+  }
+
+  /**
+   * Concludes the current stage run:
+   * - Awards completion bonus XP
+   * - Marks stage completed
+   * - Transitions to post-stage cutscene, promotion modal, or next stage
+   */
   function completeTask() {
     if (
       activeTaskId.value &&
@@ -157,16 +221,65 @@ export const useStoryStore = defineStore("story", () => {
     ) {
       completedTasks.value.push(activeTaskId.value);
     }
+
+    // Award stage completion bonus XP
+    const promoResult = progression.addXp(
+      currentStage.value.completionBonusXp || 60,
+      "stage_completion_bonus",
+    );
+    progression.markStageCompleted(currentStageId.value);
+
     activeTaskId.value = null;
     currentPatternCount.value = 0;
+
+    // Check for post-stage cutscene
+    if (currentStage.value.postStageCutsceneId) {
+      activeCutsceneId.value = currentStage.value.postStageCutsceneId;
+      checkpoint.value = STORY_CHECKPOINTS.POST_STAGE_CUTSCENE;
+    } else if (promoResult.promoted || progression.pendingPromotion) {
+      checkpoint.value = STORY_CHECKPOINTS.PROMOTION;
+    } else {
+      advanceToNextStage();
+      checkpoint.value = STORY_CHECKPOINTS.DASHBOARD;
+    }
+
+    save();
+  }
+
+  /**
+   * Called when post-stage cutscene concludes.
+   */
+  function finishPostStageCutscene() {
+    if (progression.pendingPromotion) {
+      checkpoint.value = STORY_CHECKPOINTS.PROMOTION;
+    } else {
+      advanceToNextStage();
+      checkpoint.value = STORY_CHECKPOINTS.DASHBOARD;
+    }
+    save();
+  }
+
+  /**
+   * Called when promotion celebration screen is dismissed.
+   */
+  function finishPromotion() {
+    progression.consumePendingPromotion();
+    advanceToNextStage();
     checkpoint.value = STORY_CHECKPOINTS.DASHBOARD;
     save();
   }
 
-  // ── Actions: progresso do minigame ──────────────────────────────────────
+  /**
+   * Advances currentStageId to the next stage if defined in config.
+   */
+  function advanceToNextStage() {
+    if (currentStage.value.nextStageId) {
+      currentStageId.value = currentStage.value.nextStageId;
+    }
+  }
 
   /**
-   * Define o progresso do minigame atual (limitado a 0..target) e persiste.
+   * Sets manual pattern progress.
    * @param {number} count
    */
   function setPatternProgress(count) {
@@ -177,29 +290,8 @@ export const useStoryStore = defineStore("story", () => {
     save();
   }
 
-  /**
-   * Registra um acerto. Chamado quando o jogador acerta um padrão.
-   * @returns {boolean} true se a meta da tarefa foi atingida.
-   */
-  function registerCorrectPattern() {
-    setPatternProgress(currentPatternCount.value + 1);
-    return isGoalReached.value;
-  }
+  // ── Actions: Pause ──────────────────────────────────────────────────────
 
-  /**
-   * Altera a meta de padrões da tarefa atual.
-   * @param {number} target inteiro positivo
-   */
-  function setTargetPatternCount(target) {
-    if (!Number.isInteger(target) || target <= 0) return;
-    targetPatternCount.value = target;
-    currentPatternCount.value = Math.min(currentPatternCount.value, target);
-    save();
-  }
-
-  // ── Actions: pausa ──────────────────────────────────────────────────────
-
-  /** @param {boolean} paused */
   function setPaused(paused) {
     isPaused.value = Boolean(paused);
   }
@@ -208,43 +300,53 @@ export const useStoryStore = defineStore("story", () => {
     isPaused.value = !isPaused.value;
   }
 
-  // ── Actions: reset ──────────────────────────────────────────────────────
+  // ── Actions: Reset ──────────────────────────────────────────────────────
 
-  /** Apaga o progresso (novo jogo). */
+  /**
+   * Fully resets story and career progression (new game).
+   */
   function resetProgress() {
     checkpoint.value = STORY_CHECKPOINTS.INTRO_CUTSCENE;
+    currentStageId.value = STORY_STAGES[0].id;
+    activeCutsceneId.value = "intro";
     activeTaskId.value = null;
     currentPatternCount.value = 0;
-    targetPatternCount.value = DEFAULT_TARGET_PATTERN_COUNT;
     completedTasks.value = [];
     isPaused.value = false;
+
+    progression.resetProgression();
+
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch (error) {
-      console.warn("[storyStore] Não foi possível limpar o save.", error);
+      console.warn("[storyStore] Could not clear save data.", error);
     }
   }
 
-  // Restaura o último checkpoint ao criar a store
+  // Restore saved state
   load();
 
   return {
     // state
     checkpoint,
+    currentStageId,
+    activeCutsceneId,
     activeTaskId,
     currentPatternCount,
-    targetPatternCount,
     completedTasks,
     isPaused,
     // getters
+    currentStage,
+    targetPatternCount,
     isGoalReached,
     // actions
     advanceCheckpoint,
     startTask,
-    completeTask,
-    setPatternProgress,
     registerCorrectPattern,
-    setTargetPatternCount,
+    completeTask,
+    finishPostStageCutscene,
+    finishPromotion,
+    setPatternProgress,
     setPaused,
     togglePause,
     save,

@@ -86,12 +86,27 @@ watch(isPaused, (paused) => {
 onMounted(() => {
   story.setPaused(false);
 
-  const handleWin = () => {
+  const handleWin = ({ isGroupComplete = false } = {}) => {
+    let reachedGoal = false;
     if (props.storyMode) {
-      // Persiste o acerto antes de abrir o modal (sobrevive a um "sair")
-      story.registerCorrectPattern();
+      // Registra o acerto e XP na store
+      reachedGoal = story.registerCorrectPattern();
+    } else {
+      const totalLevels = game.value?.registry.get("totalLevels") ?? 10;
+      reachedGoal = isGroupComplete || currentLevel.value >= totalLevels;
     }
-    hasWon.value = true;
+
+    if (reachedGoal || isGroupComplete) {
+      // Concluiu o grupo de tarefas da etapa! Exibe o componente de vitória
+      hasWon.value = true;
+    } else {
+      // Tarefa intermediária: atualiza o nível e transiciona a nova tarefa
+      currentLevel.value = props.storyMode
+        ? currentPatternCount.value + 1
+        : currentLevel.value + 1;
+      syncRegistry();
+      gameScene.value?.resetLevel({ animateIn: true });
+    }
   };
 
   const handleError = (msg) => {
