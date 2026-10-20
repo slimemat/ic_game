@@ -14,6 +14,7 @@ import PatternRecognitionScene from "../game/scenes/PatternRecognitionScene";
 import { LEVEL_CONFIGS } from "../game/data/PatternRecognitionLevels";
 import { getThemeIdForLevel } from "../game/utils/patternTheme";
 import { useStoryStore } from "../stores/story";
+import { useStagePerformance } from "../composables/useStagePerformance";
 import PauseModal from "./ui/PauseModal.vue";
 import PauseButton from "./ui/PauseButton.vue";
 import VictoryModal from "./ui/VictoryModal.vue";
@@ -29,6 +30,11 @@ const story = useStoryStore();
 const { isPaused, currentPatternCount, targetPatternCount } =
   storeToRefs(story);
 
+const performance = useStagePerformance({
+  storyMode: () => props.storyMode,
+  totalChallenges: () => (props.storyMode ? targetPatternCount.value : 10),
+});
+
 // --- VUE STATE ---
 const gameRoot = ref(null);
 const game = shallowRef(null);
@@ -39,11 +45,20 @@ const showWarning = ref(false);
 const warningMessage = ref("");
 const warningType = ref("info");
 
-/** Nível inicial: no Modo História retoma do checkpoint (acertos + 1). */
+const stageStartLevel = computed(() => {
+  return props.storyMode ? story.currentStage?.levelStartIndex || 1 : 1;
+});
+
+/** Nível inicial: no Modo História retoma do checkpoint da etapa atual. */
 function getStartLevel() {
-  return props.storyMode
-    ? Math.min(currentPatternCount.value + 1, targetPatternCount.value)
-    : 1;
+  if (props.storyMode) {
+    const offset = Math.min(
+      currentPatternCount.value,
+      Math.max(0, targetPatternCount.value - 1),
+    );
+    return stageStartLevel.value + offset;
+  }
+  return 1;
 }
 
 const { t } = useI18n();
@@ -57,9 +72,9 @@ const currentLevelConfig = computed(() => {
 
 const currentTypeName = computed(() => {
   const type = currentLevelConfig.value?.type;
-  return type === "rotation"
-    ? t("pattern.type_rotation")
-    : t("pattern.type_color");
+  if (type === "rotation") return t("pattern.type_rotation");
+  if (type === "transformation") return t("pattern.type_transformation");
+  return t("pattern.type_color");
 });
 
 const currentTheme = computed(() => getThemeIdForLevel(currentLevel.value));
@@ -67,6 +82,10 @@ const currentTheme = computed(() => getThemeIdForLevel(currentLevel.value));
 /** Passa para a cena Phaser os dados que ela precisa (via registry). */
 function syncRegistry() {
   game.value?.registry.set("level", currentLevel.value);
+  game.value?.registry.set(
+    "stageLevel",
+    props.storyMode ? currentPatternCount.value + 1 : currentLevel.value,
+  );
   game.value?.registry.set(
     "totalLevels",
     props.storyMode ? targetPatternCount.value : 10,
@@ -86,15 +105,33 @@ watch(isPaused, (paused) => {
 onMounted(() => {
   story.setPaused(false);
 
-  const handleWin = () => {
+  const handleWin = ({ isGroupComplete = false } = {}) => {
+    let reachedGoal = false;
     if (props.storyMode) {
-      // Persiste o acerto antes de abrir o modal (sobrevive a um "sair")
-      story.registerCorrectPattern();
+      // Registra o acerto e XP na store
+      reachedGoal = story.registerCorrectPattern();
+    } else {
+      const totalLevels = game.value?.registry.get("totalLevels") ?? 10;
+      reachedGoal = isGroupComplete || currentLevel.value >= totalLevels;
     }
-    hasWon.value = true;
+
+    if (reachedGoal || isGroupComplete) {
+      // Concluiu o grupo de tarefas da etapa! Exibe o componente de vitória
+      hasWon.value = true;
+    } else {
+      // Tarefa intermediária: atualiza o nível da etapa e transiciona
+      currentLevel.value = props.storyMode
+        ? stageStartLevel.value + currentPatternCount.value
+        : currentLevel.value + 1;
+      syncRegistry();
+      gameScene.value?.resetLevel({ animateIn: true });
+    }
   };
 
-  const handleError = (msg) => {
+  const handleError = (msg, { isMistake = true } = {}) => {
+    if (isMistake) {
+      performance.recordMistake();
+    }
     triggerWarning(msg, "error");
   };
 
@@ -130,12 +167,10 @@ const checkAnswer = () => {
   }
 };
 
-/** Reinicia o jogo inteiro: volta ao nível 1 (e zera o progresso salvo na história). */
+/** Reinicia o jogo inteiro: volta ao nível 1 da etapa atual (e zera o progresso salvo na história). */
 const resetGame = () => {
-  if (props.storyMode) {
-    story.setPatternProgress(0);
-  }
-  currentLevel.value = 1;
+  performance.resetPerformance();
+  currentLevel.value = props.storyMode ? stageStartLevel.value : 1;
   syncRegistry();
   gameScene.value?.resetLevel();
   hasWon.value = false;
@@ -151,8 +186,9 @@ const nextLevel = () => {
     return;
   }
 
+  performance.resetPerformance();
   currentLevel.value = props.storyMode
-    ? currentPatternCount.value + 1
+    ? stageStartLevel.value + currentPatternCount.value
     : currentLevel.value + 1;
   syncRegistry();
   gameScene.value?.resetLevel();
@@ -203,6 +239,8 @@ const triggerWarning = (msg, type = "info") => {
     <VictoryModal
       :isOpen="hasWon"
       :theme="currentTheme"
+      :stars="performance.stars.value"
+      :maxStars="performance.maxStars.value"
       @next="nextLevel"
       @menu="$emit('back')"
     >
@@ -210,6 +248,22 @@ const triggerWarning = (msg, type = "info") => {
         <div>
           <p>{{ $t("pattern.stats_level", { num: currentLevel }) }}</p>
           <p>{{ $t("pattern.stats_type", { type: currentTypeName }) }}</p>
+          <p>
+            {{
+              $t("global.modals.stats_mistakes", {
+                count: performance.mistakes.value,
+              })
+            }}
+          </p>
+          <p v-if="storyMode && performance.perfectBonusXp.value > 0">
+            <strong>
+              {{
+                $t("global.modals.stats_perfect_bonus", {
+                  xp: performance.perfectBonusXp.value,
+                })
+              }}
+            </strong>
+          </p>
         </div>
       </template>
     </VictoryModal>

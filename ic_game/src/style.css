@@ -35,6 +35,14 @@
   --bg-overlay: rgba(0, 0, 0, 0.5);
   --bg-overlay-hover: rgba(0, 0, 0, 0.8);
   --border-strong: #4a5568;
+
+  /* Cores de Pasta (Windows Folder Style) */
+  --folder-bg: #fef08a;
+  --folder-surface: #fffbeb;
+  --folder-tab-bg: #fde047;
+  --folder-border: #ca8a04;
+  --folder-shadow: #a16207;
+  --folder-text: #422006;
 }
 
 * {

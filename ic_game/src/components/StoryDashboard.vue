@@ -1,15 +1,20 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { onMounted, ref, computed } from "vue";
+import { useI18n } from "vue-i18n";
 import { useGameSessionStore } from "../stores/gameSession";
 import { useStoryStore } from "../stores/story";
+import { STORY_STAGES, TASK_TAGS } from "../game/data/progressionConfig";
 import PauseModal from "./ui/PauseModal.vue";
 import PauseButton from "./ui/PauseButton.vue";
+import lockIcon from "../assets/images/lock.svg";
 
 const emit = defineEmits(["play"]);
+const { t } = useI18n();
 const session = useGameSessionStore();
 const story = useStoryStore();
 
 const showAssistant = ref(true);
+const shakingFolderId = ref(null);
 
 onMounted(() => story.setPaused(false));
 
@@ -24,10 +29,84 @@ function getSpriteUrl(char, emotion) {
     import.meta.url,
   ).href;
 }
+
+const currentStage = computed(() => story.currentStage);
+
+const stageNumber = computed(() => currentStage.value?.stageNumber || 1);
+
+const stageTitle = computed(() => {
+  const key = currentStage.value?.titleKey;
+  return key ? t(key) : "Padrões Corrompidos";
+});
+
+const stageDescription = computed(() => {
+  const key = currentStage.value?.descriptionKey;
+  return key ? t(key) : "Restaure a integridade dos padrões geométricos.";
+});
+
+const stageTags = computed(() => {
+  const tags = currentStage.value?.tags || [];
+  return tags.map((tagId) => TASK_TAGS[tagId]).filter(Boolean);
+});
+
+/**
+ * Lista híbrida de pastas bloqueadas:
+ * 1. A próxima etapa real de STORY_STAGES (se existir) para continuidade de progressão.
+ * 2. 1 pasta de Easter Egg confidencial no final da fila.
+ */
+const lockedFolders = computed(() => {
+  const items = [];
+
+  const nextRealStage = STORY_STAGES.find(
+    (s) => s.stageNumber === stageNumber.value + 1,
+  );
+
+  if (nextRealStage) {
+    const resolvedTags = (nextRealStage.tags || [])
+      .map((tagId) => TASK_TAGS[tagId])
+      .filter(Boolean)
+      .map((tag) => t(tag.labelKey));
+
+    items.push({
+      id: nextRealStage.id,
+      levelLabel: t("story.dashboard.level_badge", {
+        num: nextRealStage.stageNumber,
+      }),
+      tags: resolvedTags,
+      goalLabel: t("story.dashboard.task_goal", {
+        count: nextRealStage.targetChallengesCount,
+      }),
+      eyebrow: t("story.dashboard.ticket_eyebrow", {
+        num: nextRealStage.stageNumber,
+      }),
+      title: t(nextRealStage.titleKey),
+    });
+  }
+
+  // Easter Egg Confidencial no final da fila
+  items.push({
+    id: "easter-egg-99",
+    levelLabel: t("story.dashboard.easter_egg.level"),
+    tags: [t("story.dashboard.easter_egg.tag_secret")],
+    goalLabel: t("story.dashboard.easter_egg.tag_goal"),
+    eyebrow: t("story.dashboard.easter_egg.eyebrow"),
+    title: t("story.dashboard.easter_egg.title"),
+  });
+
+  return items;
+});
+
+function triggerLockedShake(folderId) {
+  shakingFolderId.value = folderId;
+  setTimeout(() => {
+    if (shakingFolderId.value === folderId) {
+      shakingFolderId.value = null;
+    }
+  }, 400);
+}
 </script>
 
 <template>
-  <!-- O dashboard agora volta a ser um overlay (sobreposição) -->
   <div class="dashboard-overlay">
     <PauseButton class="pause-btn-fixed" @click="story.setPaused(true)" />
 
@@ -51,7 +130,7 @@ function getSpriteUrl(char, emotion) {
           <span class="dot dot-yellow"></span>
           <span class="dot dot-green"></span>
         </div>
-        <div class="window-title">LogicHub - Painel de Chamados</div>
+        <div class="window-title">{{ $t("story.dashboard.window_title") }}</div>
       </header>
 
       <div class="window-body">
@@ -72,33 +151,128 @@ function getSpriteUrl(char, emotion) {
             />
           </div>
 
-          <span class="sender-name">Assistente</span>
+          <span class="sender-name">{{
+            $t("story.dashboard.assistant_sender")
+          }}</span>
           <div class="text-content">
-            Temos um chamado urgente na linha! Clique em
-            <strong>Iniciar</strong> para acessar o sistema do cliente e
-            resolver os padrões corrompidos.
+            {{ stageDescription }}
           </div>
         </div>
 
-        <div class="mission-card">
-          <div class="mission-icon-placeholder"></div>
+        <!-- Card do Chamado Atual em formato de Pastinha do Windows -->
+        <div class="folder-wrapper">
+          <!-- Abas / Etiquetas Superiores da Pasta -->
+          <div class="folder-tabs" aria-label="Informações do chamado">
+            <span class="folder-tab tab-level">
+              {{ $t("story.dashboard.level_badge", { num: stageNumber }) }}
+            </span>
 
-          <!-- Título e Tags agora agrupados à direita do ícone -->
-          <div class="mission-info">
-            <h3>Padrões Corrompidos</h3>
-            <div class="tags">
-              <span class="tag tag-level">Nível: Fácil</span>
-              <span class="tag tag-type">Tipo: Reconhecimento</span>
-            </div>
+            <span
+              v-for="tag in stageTags"
+              :key="tag.id"
+              class="folder-tab"
+              :class="tag.bgClass"
+            >
+              {{ $t(tag.labelKey) }}
+            </span>
+
+            <span class="folder-tab tab-goal">
+              {{
+                $t("story.dashboard.task_goal", {
+                  count: currentStage.targetChallengesCount,
+                })
+              }}
+            </span>
           </div>
 
-          <div class="mission-action">
-            <button
-              class="btn-primary"
-              @click="$emit('play', 'pattern-recognition')"
-            >
-              Iniciar
-            </button>
+          <!-- Corpo da Pasta Windows -->
+          <div class="folder-card">
+            <div class="folder-sheet">
+              <div class="folder-main">
+                <div class="mission-icon-placeholder" aria-hidden="true"></div>
+
+                <div class="mission-info">
+                  <span class="mission-eyebrow">{{
+                    $t("story.dashboard.ticket_eyebrow", { num: stageNumber })
+                  }}</span>
+                  <h3>{{ stageTitle }}</h3>
+                </div>
+              </div>
+
+              <div class="mission-action">
+                <button
+                  class="btn-primary"
+                  @click="$emit('play', currentStage.gameId)"
+                >
+                  {{ $t("story.dashboard.btn_start") }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Lista de Próximas Pastas Bloqueadas (P&B Compactas com Cadeado) -->
+        <div
+          class="locked-folders-list"
+          aria-label="Próximos chamados bloqueados"
+        >
+          <div
+            v-for="locked in lockedFolders"
+            :key="locked.id"
+            class="folder-wrapper folder-wrapper--locked"
+            :class="{ 'anim-shake': shakingFolderId === locked.id }"
+            @click="triggerLockedShake(locked.id)"
+            role="button"
+            tabindex="0"
+            :aria-label="`${locked.title} - ${$t('story.dashboard.locked_label')}`"
+          >
+            <!-- Abas em P&B -->
+            <div class="folder-tabs">
+              <span class="folder-tab tab-locked-level">
+                {{ locked.levelLabel }}
+              </span>
+
+              <span
+                v-for="(tagLabel, idx) in locked.tags"
+                :key="idx"
+                class="folder-tab tab-locked-meta"
+              >
+                {{ tagLabel }}
+              </span>
+
+              <span class="folder-tab tab-locked-meta">
+                {{ locked.goalLabel }}
+              </span>
+            </div>
+
+            <!-- Corpo Compacto em P&B (sem o botão de ação) -->
+            <div class="folder-card folder-card--locked">
+              <div class="folder-sheet folder-sheet--locked">
+                <div class="folder-main">
+                  <div
+                    class="mission-icon-placeholder mission-icon--locked"
+                    aria-hidden="true"
+                  ></div>
+
+                  <div class="mission-info">
+                    <span class="mission-eyebrow mission-eyebrow--locked">{{
+                      locked.eyebrow
+                    }}</span>
+                    <h3>{{ locked.title }}</h3>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Overlay com Sprite de Cadeado -->
+              <div class="locked-overlay" aria-hidden="true">
+                <div class="lock-badge">
+                  <img :src="lockIcon" alt="" class="lock-sprite" />
+                  <span class="lock-text">{{
+                    $t("story.dashboard.locked_label")
+                  }}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -107,28 +281,26 @@ function getSpriteUrl(char, emotion) {
 </template>
 
 <style scoped>
-/* ── VOLTAMOS PARA O OVERLAY (Sobreposição) ── */
+/* ── OVERLAY E JANELA PRINCIPAL (MOBILE-FIRST) ── */
 .dashboard-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100vw;
   height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 16px;
   z-index: 1000;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: var(--font-main);
 }
 
 .backdrop {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(6px); /* Esse é o efeito de vidro lindo no fundo! */
+  inset: 0;
+  background-color: rgba(16, 24, 32, 0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 
 .pause-btn-fixed {
@@ -141,61 +313,58 @@ function getSpriteUrl(char, emotion) {
 .os-window {
   position: relative;
   z-index: 10;
-  width: 90%;
-  max-width: 750px;
+  width: 100%;
+  max-width: 440px;
+  max-height: 92vh;
   background-color: #f4f5f7;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow:
-    0 30px 60px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  border: 2px solid #cbd5e1;
+  /* Sombra sólida sem blur */
+  box-shadow: 0 8px 0 #1e293b;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .window-header {
-  height: 45px;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.9) 0%,
-    rgba(225, 230, 235, 0.7) 49%,
-    rgba(195, 205, 215, 0.7) 50%,
-    rgba(235, 240, 245, 0.9) 100%
-  );
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+  height: 40px;
+  background: linear-gradient(to bottom, #ffffff 0%, #e2e8f0 100%);
+  border-bottom: 2px solid #cbd5e1;
   display: flex;
   align-items: center;
-  padding: 0 15px;
+  padding: 0 14px;
   position: relative;
+  flex-shrink: 0;
 }
 
 .window-controls {
   display: flex;
-  gap: 8px;
+  gap: 7px;
+  align-items: center;
 }
+
 .dot {
-  width: 13px;
-  height: 13px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  box-shadow:
-    inset 0 2px 4px rgba(255, 255, 255, 0.6),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.2),
-    0 1px 1px rgba(0, 0, 0, 0.1);
 }
+
 .dot-red {
   background-color: #ff5f56;
   border: 1px solid #e0443e;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.15s ease;
 }
+
 .dot-red:hover {
   transform: scale(1.15);
 }
+
 .dot-yellow {
   background-color: #ffbd2e;
   border: 1px solid #dea123;
 }
+
 .dot-green {
   background-color: #27c93f;
   border: 1px solid #1aab29;
@@ -205,27 +374,38 @@ function getSpriteUrl(char, emotion) {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 0.9rem;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
   font-weight: 600;
-  color: #333;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+  color: #334155;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .window-body {
-  background-color: #ffffff;
-  padding: 2.5rem 2rem;
+  background-color: #f8fafc;
+  padding: 1.25rem 1.15rem 1.4rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
 }
 
+/* ── BALÃO DA ASSISTENTE ── */
 .assistant-chat-bubble {
   position: relative;
   background-color: #ebf8ff;
-  border-left: 4px solid #4a90e2;
+  border: 2px solid #90cdf4;
+  border-left: 5px solid #3182ce;
   border-radius: 12px;
-  border-bottom-left-radius: 0;
-  padding: 15px 35px 15px 15px;
-  margin-left: 25px;
-  margin-bottom: 2rem;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  border-bottom-left-radius: 2px;
+  padding: 12px 30px 12px 12px;
+  margin-left: 16px;
+  margin-top: 6px;
+  /* Sombra sólida sem blur */
+  box-shadow: 0 4px 0 #bee3f8;
 }
 
 .assistant-chat-bubble::after {
@@ -236,35 +416,36 @@ function getSpriteUrl(char, emotion) {
 
 .btn-close {
   position: absolute;
-  top: 8px;
-  right: 12px;
+  top: 6px;
+  right: 10px;
   background: none;
   border: none;
-  font-size: 1.5rem;
-  color: #718096;
+  font-size: 1.35rem;
+  color: #64748b;
   cursor: pointer;
   line-height: 1;
 }
+
 .btn-close:hover {
   color: #e53e3e;
 }
 
 .avatar-container {
   float: left;
-  width: 65px;
-  height: 65px;
-  margin-top: -15px;
-  margin-left: -35px;
-  margin-right: 15px;
-  margin-bottom: 5px;
-  background-color: #fff;
+  width: 52px;
+  height: 52px;
+  margin-top: -16px;
+  margin-left: -26px;
+  margin-right: 10px;
+  margin-bottom: 4px;
+  background-color: #ffffff;
   border-radius: 50%;
-  border: 2px solid #4a90e2;
+  border: 2px solid #3182ce;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 3px 0 #90cdf4;
   position: relative;
   z-index: 2;
 }
@@ -277,123 +458,344 @@ function getSpriteUrl(char, emotion) {
 }
 
 .sender-name {
-  font-weight: 800;
-  font-size: 0.95rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: #2b6cb0;
   display: block;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
   line-height: 1.2;
 }
+
 .text-content {
-  color: #2d3748;
-  font-size: 1.05rem;
-  line-height: 1.5;
+  font-family: var(--font-main);
+  color: #1e293b;
+  font-size: 0.94rem;
+  line-height: 1.4;
   display: block;
 }
 
-.mission-card {
+/* ── PASTA WINDOWS (FOLDER CARD COM ETIQUETAS NO TOPO) ── */
+.folder-wrapper {
   display: flex;
-  gap: 1.5rem;
+  flex-direction: column;
+  width: 100%;
+}
+
+.folder-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 4px;
+  padding-left: 8px;
+  padding-right: 8px;
+  margin-bottom: -2px;
+  position: relative;
+  z-index: 2;
+}
+
+.folder-tab {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 5px 10px 6px;
+  border-radius: 8px 8px 0 0;
+  border: 2px solid var(--folder-border, #ca8a04);
+  border-bottom: none;
+  background-color: var(--folder-tab-bg, #fde047);
+  color: var(--folder-text, #422006);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Aba principal do Nível */
+.tab-level {
+  background-color: var(--folder-bg, #fef08a);
+  color: var(--folder-text, #422006);
+  padding-top: 7px;
+  font-weight: 800;
+}
+
+/* Variantes de etiquetas nas abas */
+.folder-tab.tag-easy {
+  background-color: #bbf7d0;
+  color: #14532d;
+  border-color: #16a34a;
+}
+
+.folder-tab.tag-medium {
+  background-color: #fde68a;
+  color: #78350f;
+  border-color: #d97706;
+}
+
+.folder-tab.tag-hard {
+  background-color: #fecaca;
+  color: #7f1d1d;
+  border-color: #dc2626;
+}
+
+.folder-tab.tag-special {
+  background-color: #fef08a;
+  color: #9a3412;
+  border-color: #ea580c;
+}
+
+.folder-tab.tag-urgent {
+  background-color: #fca5a5;
+  color: #7f1d1d;
+  border-color: #b91c1c;
+}
+
+.tab-goal {
+  background-color: #e0f2fe;
+  color: #0c4a6e;
+  border-color: #0284c7;
+}
+
+/* Corpo principal da Pastinha Windows */
+.folder-card {
+  position: relative;
+  z-index: 1;
+  background-color: var(--folder-bg, #fef08a);
+  border: 2px solid var(--folder-border, #ca8a04);
+  border-radius: 10px;
+  padding: 10px;
+  /* Sombra sólida (hard shadow sem blur) */
+  box-shadow: 0 6px 0 var(--folder-shadow, #a16207);
+}
+
+/* Folha interna da pasta */
+.folder-sheet {
+  background-color: var(--folder-surface, #fffbeb);
+  border: 1.5px solid #fde047;
+  border-radius: 7px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.folder-main {
+  display: flex;
   align-items: center;
-  background: #f8fafc;
-  padding: 1.5rem;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+  gap: 12px;
 }
 
 .mission-icon-placeholder {
-  width: 90px;
-  height: 90px;
+  width: 58px;
+  height: 58px;
   flex-shrink: 0;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #4fd1c5, #2b6cb0);
-  box-shadow:
-    inset 0 4px 8px rgba(255, 255, 255, 0.4),
-    inset 0 -4px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+  background-color: #38bdf8;
+  border: 2px solid #0284c7;
+  box-shadow: 0 3px 0 #0369a1;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
 .mission-icon-placeholder::after {
-  content: "SPRITE";
-  color: white;
-  font-weight: 800;
-  font-size: 0.8rem;
-  opacity: 0.8;
+  content: "DOC";
+  font-family: var(--font-mono);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
 }
 
 .mission-info {
-  flex-grow: 1;
-}
-.mission-info h3 {
-  margin: 0 0 0.5rem 0;
-  color: #2d3748;
-  font-size: 1.3rem;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.tags {
-  display: flex;
-  gap: 0.5rem;
-}
-.tag {
-  font-size: 0.75rem;
-  font-weight: bold;
-  padding: 0.3rem 0.6rem;
-  border-radius: 6px;
+.mission-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--folder-shadow, #a16207);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
-.tag-level {
-  background: #e6fffa;
-  color: #319795;
-  border: 1px solid #b2f5ea;
-}
-.tag-type {
-  background: #ebf8ff;
-  color: #2b6cb0;
-  border: 1px solid #bee3f8;
+
+.mission-info h3 {
+  margin: 0;
+  font-family: var(--font-main);
+  color: var(--folder-text, #422006);
+  font-size: 1.08rem;
+  font-weight: 700;
+  line-height: 1.25;
 }
 
 .mission-action {
-  flex-shrink: 0;
-}
-.btn-primary {
-  background: linear-gradient(180deg, #4fd1c5 0%, #38b2ac 100%);
-  color: #fff;
-  border: 1px solid #319795;
-  padding: 0.8rem 2rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 1.1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
-}
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  width: 100%;
 }
 
+.btn-primary {
+  width: 100%;
+  font-family: var(--font-main);
+  background-color: #14b8a6;
+  color: #ffffff;
+  border: 2px solid #0f766e;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+  /* Sombra sólida sem blur */
+  box-shadow: 0 4px 0 #0f766e;
+  transition:
+    transform 0.12s ease,
+    background-color 0.15s ease,
+    box-shadow 0.12s ease;
+}
+
+.btn-primary:hover {
+  background-color: #0d9488;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 #0f766e;
+}
+
+.btn-primary:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #0f766e;
+}
+
+/* ── PASTAS BLOQUEADAS EM P&B (COMPACTAS COM CADEADO) ── */
+.locked-folders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+}
+
+.folder-wrapper--locked {
+  cursor: not-allowed;
+  user-select: none;
+  opacity: 0.88;
+  transition: opacity 0.15s ease;
+}
+
+.folder-wrapper--locked:hover {
+  opacity: 0.96;
+}
+
+.tab-locked-level {
+  background-color: #cbd5e1;
+  color: #334155;
+  border-color: #64748b;
+  padding-top: 6px;
+}
+
+.tab-locked-meta {
+  background-color: #e2e8f0;
+  color: #475569;
+  border-color: #64748b;
+}
+
+.folder-card--locked {
+  background-color: #cbd5e1;
+  border-color: #64748b;
+  box-shadow: 0 5px 0 #475569;
+  padding: 8px;
+  overflow: hidden;
+}
+
+.folder-sheet--locked {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  padding: 10px 12px;
+  filter: grayscale(1);
+}
+
+.mission-icon--locked {
+  width: 44px;
+  height: 44px;
+  background-color: #94a3b8;
+  border-color: #475569;
+  box-shadow: 0 2px 0 #334155;
+}
+
+.mission-eyebrow--locked {
+  color: #64748b;
+}
+
+.folder-sheet--locked .mission-info h3 {
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+.locked-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 14px;
+  pointer-events: none;
+}
+
+.lock-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #f8fafc;
+  border: 2px solid #1e293b;
+  border-radius: 8px;
+  padding: 5px 10px;
+  box-shadow: 0 3px 0 #1e293b;
+}
+
+.lock-sprite {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  display: block;
+}
+
+.lock-text {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: 0.06em;
+}
+
+/* ── ANIMAÇÕES ── */
 .anim-fade-in {
-  animation: fade-in 0.4s ease-out;
+  animation: fade-in 0.35s ease-out;
 }
+
 .anim-bounce {
-  animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: pop-in 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
+
+.anim-shake {
+  animation: locked-shake 0.35s ease-in-out;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
+
 @keyframes pop-in {
   from {
-    transform: scale(0.5);
+    transform: scale(0.6);
     opacity: 0;
   }
   to {
@@ -402,35 +804,55 @@ function getSpriteUrl(char, emotion) {
   }
 }
 
-@media (max-width: 600px) {
-  .os-window {
-    width: 95%;
+@keyframes locked-shake {
+  0%,
+  100% {
+    transform: translateX(0);
   }
+  20% {
+    transform: translateX(-5px);
+  }
+  40% {
+    transform: translateX(5px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+@media (max-width: 400px) {
   .window-body {
-    padding: 2rem 1.5rem;
+    padding: 1rem 0.9rem 1.2rem;
   }
-  .assistant-chat-bubble {
-    margin-left: 15px;
-    padding-left: 12px;
+
+  .folder-tab {
+    font-size: 0.64rem;
+    padding: 4px 7px 5px;
   }
-  .avatar-container {
-    width: 55px;
-    height: 55px;
-    margin-left: -25px;
+
+  .mission-icon-placeholder {
+    width: 50px;
+    height: 50px;
   }
-  .mission-card {
-    flex-wrap: wrap;
-    padding: 1.2rem;
-    gap: 1rem;
+
+  .mission-icon--locked {
+    width: 40px;
+    height: 40px;
   }
-  .mission-info {
-    flex-grow: 1;
+
+  .mission-info h3 {
+    font-size: 0.98rem;
   }
-  .mission-action {
-    width: 100%;
+
+  .lock-badge {
+    padding: 4px 8px;
   }
-  .btn-primary {
-    width: 100%;
+
+  .lock-text {
+    font-size: 0.62rem;
   }
 }
 </style>

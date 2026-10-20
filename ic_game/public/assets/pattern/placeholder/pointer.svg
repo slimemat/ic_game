@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <!-- Textura acessível para daltônicos na metade superior do cristal -->
+    <pattern id="plumbob-top-hatch" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="10" stroke="#ffffff" stroke-width="3" opacity="0.88" />
+    </pattern>
+  </defs>
+
+  <!-- METADE SUPERIOR (Cristal Topo - Azul + Textura Listrada) -->
+  <!-- Faceta superior esquerda -->
+  <polygon points="64,8 22,64 48,64" fill="#1e40af" />
+  <!-- Faceta superior central -->
+  <polygon points="64,8 48,64 80,64" fill="#2563eb" />
+  <!-- Faceta superior direita -->
+  <polygon points="64,8 80,64 106,64" fill="#1d4ed8" />
+  <!-- Sobreposição de textura em toda a metade superior -->
+  <polygon points="64,8 106,64 22,64" fill="url(#plumbob-top-hatch)" />
+
+  <!-- METADE INFERIOR (Cristal Base - Âmbar Sólido Facetado) -->
+  <!-- Faceta inferior esquerda -->
+  <polygon points="64,120 22,64 48,64" fill="#d97706" />
+  <!-- Faceta inferior central -->
+  <polygon points="64,120 48,64 80,64" fill="#fbbf24" />
+  <!-- Faceta inferior direita -->
+  <polygon points="64,120 80,64 106,64" fill="#f59e0b" />
+
+  <!-- Arestas internas do cristal Plumbob -->
+  <polyline points="64,8 48,64 64,120" fill="none" stroke="#0f172a" stroke-width="2" opacity="0.75" />
+  <polyline points="64,8 80,64 64,120" fill="none" stroke="#0f172a" stroke-width="2" opacity="0.75" />
+
+  <!-- Linha divisória central (Equador) e Contorno Externo -->
+  <line x1="22" y1="64" x2="106" y2="64" stroke="#0f172a" stroke-width="3" />
+  <polygon points="64,8 106,64 64,120 22,64" fill="none" stroke="#0f172a" stroke-width="3.5" stroke-linejoin="round" />
+</svg>

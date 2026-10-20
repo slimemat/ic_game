@@ -6,6 +6,7 @@ import {
   NO_ANSWER,
   evaluateAnswer,
   isOverSlot,
+  shuffleLevelOptions,
 } from "./PatternRecognitionRules.js";
 import {
   computeColumns,
@@ -85,4 +86,81 @@ test("isOverSlot", () => {
   assert.ok(isOverSlot(100, 100, 100, 100, 80));
   assert.ok(isOverSlot(140, 100, 100, 100, 80)); // dentro da tolerância
   assert.ok(!isOverSlot(200, 100, 100, 100, 80));
+});
+
+test("shuffleLevelOptions: preserva todas as opções e atualiza correctOptionIndex", () => {
+  const original = {
+    difficulty: 1,
+    type: "rotation",
+    shape: "triangle",
+    sequence: [0, 90, 180],
+    answerOptions: [0, 90, 180, 270],
+    correctOptionIndex: 3, // 270
+  };
+
+  const shuffled = shuffleLevelOptions(original);
+
+  // Não muta o original
+  assert.notEqual(shuffled, original);
+  assert.equal(shuffled.answerOptions.length, 4);
+
+  // O valor correto permanece 270 no novo índice
+  assert.equal(shuffled.answerOptions[shuffled.correctOptionIndex], 270);
+
+  // Todas as opções originais ainda estão presentes
+  assert.deepEqual(
+    [...shuffled.answerOptions].sort((a, b) => a - b),
+    [0, 90, 180, 270],
+  );
+
+  // A validação de acerto continua funcionando
+  assert.equal(
+    evaluateAnswer(shuffled.correctOptionIndex, shuffled.correctOptionIndex),
+    AnswerStatus.CORRECT,
+  );
+});
+
+test("shuffleLevelOptions: determinístico com mock RNG", () => {
+  const config = {
+    answerOptions: [10, 20, 30],
+    correctOptionIndex: 1, // 20
+  };
+
+  // Mock RNG que inverte posições
+  let counter = 0;
+  const mockRng = () => {
+    counter++;
+    return 0; // sempre troca com o primeiro
+  };
+
+  const result = shuffleLevelOptions(config, mockRng);
+  assert.equal(result.answerOptions[result.correctOptionIndex], 20);
+});
+
+test("shuffleLevelOptions: embaralha objetos de transformação preservando propriedades e resposta correta", () => {
+  const transformConfig = {
+    type: "transformation",
+    shape: "split_square",
+    baseShape: { angle: 0, flipX: false, flipY: false },
+    answerOptions: [
+      { angle: 0, flipX: false, flipY: false },
+      { angle: 90, flipX: false, flipY: false }, // Correta
+      { angle: 180, flipX: false, flipY: false },
+      { angle: 270, flipX: false, flipY: false },
+    ],
+    correctOptionIndex: 1,
+  };
+
+  const shuffled = shuffleLevelOptions(transformConfig);
+  assert.notEqual(shuffled, transformConfig);
+  assert.equal(shuffled.answerOptions.length, 4);
+
+  const correctItem = shuffled.answerOptions[shuffled.correctOptionIndex];
+  assert.equal(correctItem.angle, 90);
+  assert.equal(correctItem.flipX, false);
+
+  assert.equal(
+    evaluateAnswer(shuffled.correctOptionIndex, shuffled.correctOptionIndex),
+    AnswerStatus.CORRECT,
+  );
 });

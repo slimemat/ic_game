@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Sombra sólida dura da haste e corpo -->
+  <rect x="14" y="30" width="38" height="28" rx="6" fill="#1e293b"/>
+  <!-- Haste metálica do cadeado -->
+  <path d="M21 28V20C21 13.9249 25.9249 9 32 9C38.0751 9 43 13.9249 43 20V28" stroke="#1e293b" stroke-width="8" stroke-linecap="round"/>
+  <path d="M21 28V20C21 13.9249 25.9249 9 32 9C38.0751 9 43 13.9249 43 20V28" stroke="#cbd5e1" stroke-width="4" stroke-linecap="round"/>
+  <!-- Corpo do cadeado -->
+  <rect x="13" y="26" width="38" height="28" rx="6" fill="#94a3b8" stroke="#1e293b" stroke-width="3"/>
+  <!-- Brilho superior sólido -->
+  <rect x="17" y="29" width="30" height="4" rx="2" fill="#e2e8f0"/>
+  <!-- Buraco da fechadura -->
+  <circle cx="32" cy="38" r="4" fill="#1e293b"/>
+  <path d="M30 39L29 47H35L34 39H30Z" fill="#1e293b"/>
+</svg>

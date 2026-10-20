@@ -22,7 +22,7 @@
         "MAS VOLTA LOGO, TÁ?",
         "PROCESSO SUSPENSO EM SEGUNDO PLANO",
         "CALCULANDO PAUSA REMUNERADA...",
-        "AH, NÃO... OK, A GENTE ESPERA...",
+        "AH, OK... NÃO, A GENTE ESPERA...",
         "SISTEMA EM MODO DE ESPERA...",
         "OK, PODE IR TOMAR UMA ÁGUA..."
       ],
@@ -30,7 +30,12 @@
       "victory_desc": "Você mandou muito bem.",
       "victory_window_title": "Relatório de Conclusão",
       "victory_memo": "REGISTRO // TAREFA CONCLUÍDA",
-      "victory_tag": "APROVADO"
+      "victory_tag": "Aprovado",
+      "rating_perfect": "Perfeito",
+      "rating_good": "Aprovado",
+      "rating_completed": "Ok",
+      "stats_mistakes": "Erros cometidos: {count}",
+      "stats_perfect_bonus": "Bônus Sem Erros: +{xp} XP"
     },
     "categories": {
       "platform": "Plataforma",
@@ -102,14 +107,24 @@
     "restart_game": "Reiniciar Jogo",
     "challenge_type": "Desafio: {type}",
     "type_rotation": "Rotação de Formas",
+    "type_transformation": "Transformação Espacial",
     "type_color": "Padrão de Cores",
+    "instruction_title": "INSTRUÇÃO DE TRANSFORMAÇÃO",
+    "drag_hint_transformation": "Arraste a forma resultante para o espaço '?'",
+    "label_original": "FORMA BASE",
+    "label_result": "RESULTADO",
     "stats_level": "Fase Concluída: {num}",
     "stats_type": "Desafio: {type}",
     "question_diff_1": "Qual é o próximo padrão?",
     "drag_hint": "Arraste a resposta para o espaço vazio",
     "question_diff_2": "Selecione o próximo padrão",
     "err_select_first": "Selecione uma opção antes de confirmar!",
-    "err_incorrect": "Padrão incorreto! Observe com mais atenção."
+    "err_incorrect": "Padrão incorreto! Observe com mais atenção.",
+    "transform_rotate_90_cw": "Gire a forma 90° no sentido horário.",
+    "transform_flip_horizontal": "Espelhe a forma horizontalmente (inverter esquerda e direita).",
+    "transform_rotate_180": "Gire a forma 180° (meia volta completa).",
+    "transform_flip_vertical": "Espelhe a forma verticalmente (inverter topo e base).",
+    "transform_rotate_90_flip_h": "Gire 90° no sentido horário e espelhe horizontalmente."
   },
   "charade": {
     "level_title": "Fase {num}: {title}",
@@ -134,24 +149,93 @@
       "manager": "{managerName}",
       "taskGiver01": "{taskGiver01Name}"
     },
+    "ranks": {
+      "intern": "Estagiário(a)",
+      "junior_analyst": "Analista Júnior",
+      "pleno_analyst": "Analista Pleno",
+      "senior_analyst": "Analista Sênior"
+    },
+    "tags": {
+      "easy": "Fácil",
+      "medium": "Médio",
+      "hard": "Difícil",
+      "special": "(+XP)",
+      "urgent": "Urgente"
+    },
+    "stages": {
+      "stage1": {
+        "title": "Onboarding: Padrões Corrompidos",
+        "description": "Restaure a integridade dos primeiros arquivos corrompidos da Dra. Helena."
+      },
+      "stage2": {
+        "title": "Operações: Arquivos Corrompidos Nível 2",
+        "description": "Casos mais complexos com sequências rotacionais e paletas estendidas."
+      },
+      "stage3": {
+        "title": "Diagnóstico Avançado de Padrões",
+        "description": "Análise crítica de anomalias com sequências profundas."
+      }
+    },
+    "dashboard": {
+      "window_title": "Painel de Chamados",
+      "assistant_sender": "Assistente",
+      "level_badge": "NV. {num}",
+      "ticket_eyebrow": "CHAMADO #0{num}",
+      "locked_label": "BLOQUEADO",
+      "easter_egg": {
+        "level": "NV. 99",
+        "tag_secret": "CONFIDENCIAL",
+        "tag_goal": "??? fases",
+        "eyebrow": "CHAMADO #99 // RESTRITO",
+        "title": "Operação Café Infinito da Diretoria"
+      },
+      "career_title": "Plano de Carreira",
+      "current_xp": "XP Total: {xp}",
+      "xp_progress": "{current} / {target} XP para promoção",
+      "max_rank": "Cargo Máximo Atingido",
+      "task_reward": "Pagamento: +{xp} XP",
+      "task_goal": "{count} fases",
+      "btn_start": "Iniciar Chamado"
+    },
+    "promotion": {
+      "title": "Parabéns! Você foi Promovido(a)!",
+      "badge": "NOVO CARGO DESBLOQUEADO",
+      "message": "Seu desempenho na resolução de chamados impressionou a gerência. Você acumulou experiência e subiu de nível na empresa!",
+      "new_rank": "Novo Cargo: {rank}",
+      "btn_continue": "Continuar Carreira"
+    },
     "scenes": {
       "intro": {
         "_system": "Criptografia Ativada. Você entrou na rede corporativa.",
-        "intro": "Olá! Bem-vindo(a) à {companyName}! Eu sou a {assistantName}, vou ajudar você com seu onboarding. Tô vendo aqui no sistema que hoje é o seu primeiro dia como estagiário. Seja bem-vindo(a)!",
-        "choiceA": "Eu quase me perdi no metrô, mas cheguei!",
-        "choiceB": "Foi sim, eu moro perto!",
-        "replyA": "Haha, que bom que chegou inteiro(a)! Mas só não vá se atrasar amanhã, hein? Hahaha!",
-        "replyB": "ÓTIMO! Ser pontual é muito importante, ainda mais pra quem tá começando. Hahaha!",
+        "intro": "Olá! Bem-vindo(a) à {companyName}! Eu sou a {assistantName} e vou ajudar você com seu onboarding. Tô vendo aqui no sistema que hoje é o seu primeiro dia. Seja bem-vindo(a)! Foi difícil chegar aqui?",
+        "choiceA": "Eu quase me perdi no caminho, mas cheguei a tempo!",
+        "choiceB": "Foram muitos anos de estudo...",
+        "replyA": "HAHAHA! Ainda bem que você não se atrasou!",
+        "replyB": "Eu estava falando do prédio, mas ok... (ᵕ—ᴗ—)",
         "call_manager": "Ai, só um segundo, o Gerente tá me ligando",
-        "manager_enters": "{assistantName}! Ainda bem que atendeu! O sistema geométrico tá uma bagunça, parece que não... oh!",
-        "manager_explains": "Esse é o novo estagiário? ÓTIMO! VOCÊ VAI ADORAR TRABALHAR NESSE SISTEMA. {assistantName}, mostre o painel para o nosso novo talento A.S.A.P.",
-        "assistant_finish": "Tá bom, Chefe! Vamos lá, meu bem? Abra seu Painel de Chamados para iniciar sua primeira tarefa."
+        "manager_enters": "{assistantName}, ainda bem que você me atendeu! Eu preciso que você me ajude com o... oh!",
+        "manager_explains": "Quem é essa pessoa aí com você? Bom, não importa... Preciso de alguém para resolver os bugs da última atualização. {assistantName}, mostre o painel para o nosso novato A.S.A.P.",
+        "assistant_finish": "Tá bom, Chefe! ദ്ദി(˵ •̀ ᴗ - ˵ )",
+        "assistant_finish_player": "Vamos lá, meu bem. Abra seu Painel de Chamados para iniciar sua primeira tarefa."
       },
       "pre-pattern-recognition": {
         "briefing": "O cliente deste chamado perdeu o controle das sequências de formas do sistema dele. Os padrões ficaram corrompidos, e alguém precisa restaurá-los. O cliente está ligando. Vamos ouvir!",
         "client_call": "Socorro, {playerName}! Eu estava restaurando um banco de dados milenar quando o sistema travou exigindo a continuação de uma sequência de símbolos!",
         "analysis": "Analisando os dados... Olhe com atenção para as figuras, recruta! Algumas mudam de formato, outras giram como os ponteiros de um relógio (0°, 90°, 180°...). Encontre a regra que comanda essa transformação e selecione o símbolo correto para restaurar o arquivo da {taskGiver01Name}.",
         "tip": "Dica: observe o que muda de uma forma para a próxima. Depois, arraste a resposta certa para o espaço vazio e confirme!"
+      },
+      "post-pattern-recognition-1": {
+        "client_thanks": "Incrível, {playerName}! Os dados geométricos voltaram ao normal. O arquivo foi salvo graças à sua dedução!",
+        "assistant_praise": "Mandou muito bem! Você concluiu a tarefa e faturou seus primeiros pontos de experiência corporativa (XP).",
+        "manager_feedback": "Excelente trabalho! Estou de olho nas suas métricas. Se continuar resolvendo chamados e acumulando experiência, a vaga de Analista Júnior é sua!",
+        "choiceContinue": "Pode mandar mais chamados, Chefe!",
+        "choiceHumble": "Obrigado(a)! Vou continuar me esforçando.",
+        "manager_reply": "Essa é a atitude! Volte ao Painel de Chamados e pegue seu próximo lote de tarefas. Rumo ao topo!",
+        "assistant_dashboard": "Viu só? O Chefe gostou! Vamos voltar ao painel e ver o que mais tem pra resolver."
+      },
+      "post-pattern-recognition-2": {
+        "manager_eval": "Impressionante, {playerName}! Você completou este lote com excelência e acumulou XP suficiente para a diretoria autorizar sua promoção!",
+        "assistant_celebrate": "Olha só isso! Você recebeu uma promoção oficial no sistema! Parabéns pelo novo cargo!"
       }
     }
   },

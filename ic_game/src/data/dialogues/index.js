@@ -39,6 +39,11 @@ export const scenes = {
       },
       assistant_finish: {
         speaker: "assistant",
+        emotion: "neutral",
+        next: "assistant_finish_player",
+      },
+      assistant_finish_player: {
+        speaker: "assistant",
         emotion: "explaining",
         next: null,
       },
@@ -61,6 +66,58 @@ export const scenes = {
       },
       analysis: { speaker: "assistant", emotion: "explaining", next: "tip" },
       tip: { speaker: "assistant", emotion: "explaining", next: null },
+    },
+  },
+
+  // Cutscene pós-conclusão da Etapa 1
+  "post-pattern-recognition-1": {
+    start: "client_thanks",
+    nodes: {
+      client_thanks: {
+        speaker: "taskGiver01",
+        emotion: "neutral",
+        next: "assistant_praise",
+      },
+      assistant_praise: {
+        speaker: "assistant",
+        emotion: "explaining",
+        next: "manager_feedback",
+      },
+      manager_feedback: {
+        speaker: "manager",
+        emotion: "explaining",
+        choices: [
+          { id: "choiceContinue", next: "manager_reply" },
+          { id: "choiceHumble", next: "manager_reply" },
+        ],
+      },
+      manager_reply: {
+        speaker: "manager",
+        emotion: "neutral",
+        next: "assistant_dashboard",
+      },
+      assistant_dashboard: {
+        speaker: "assistant",
+        emotion: "explaining",
+        next: null,
+      },
+    },
+  },
+
+  // Cutscene pós-conclusão da Etapa 2
+  "post-pattern-recognition-2": {
+    start: "manager_eval",
+    nodes: {
+      manager_eval: {
+        speaker: "manager",
+        emotion: "explaining",
+        next: "assistant_celebrate",
+      },
+      assistant_celebrate: {
+        speaker: "assistant",
+        emotion: "explaining",
+        next: null,
+      },
     },
   },
 };
