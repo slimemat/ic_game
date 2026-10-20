@@ -14,6 +14,7 @@ import PatternRecognitionScene from "../game/scenes/PatternRecognitionScene";
 import { LEVEL_CONFIGS } from "../game/data/PatternRecognitionLevels";
 import { getThemeIdForLevel } from "../game/utils/patternTheme";
 import { useStoryStore } from "../stores/story";
+import { useStagePerformance } from "../composables/useStagePerformance";
 import PauseModal from "./ui/PauseModal.vue";
 import PauseButton from "./ui/PauseButton.vue";
 import VictoryModal from "./ui/VictoryModal.vue";
@@ -28,6 +29,11 @@ const emit = defineEmits(["back"]);
 const story = useStoryStore();
 const { isPaused, currentPatternCount, targetPatternCount } =
   storeToRefs(story);
+
+const performance = useStagePerformance({
+  storyMode: () => props.storyMode,
+  totalChallenges: () => (props.storyMode ? targetPatternCount.value : 10),
+});
 
 // --- VUE STATE ---
 const gameRoot = ref(null);
@@ -122,7 +128,10 @@ onMounted(() => {
     }
   };
 
-  const handleError = (msg) => {
+  const handleError = (msg, { isMistake = true } = {}) => {
+    if (isMistake) {
+      performance.recordMistake();
+    }
     triggerWarning(msg, "error");
   };
 
@@ -160,9 +169,7 @@ const checkAnswer = () => {
 
 /** Reinicia o jogo inteiro: volta ao nível 1 da etapa atual (e zera o progresso salvo na história). */
 const resetGame = () => {
-  if (props.storyMode) {
-    story.setPatternProgress(0);
-  }
+  performance.resetPerformance();
   currentLevel.value = props.storyMode ? stageStartLevel.value : 1;
   syncRegistry();
   gameScene.value?.resetLevel();
@@ -179,6 +186,7 @@ const nextLevel = () => {
     return;
   }
 
+  performance.resetPerformance();
   currentLevel.value = props.storyMode
     ? stageStartLevel.value + currentPatternCount.value
     : currentLevel.value + 1;
@@ -231,6 +239,8 @@ const triggerWarning = (msg, type = "info") => {
     <VictoryModal
       :isOpen="hasWon"
       :theme="currentTheme"
+      :stars="performance.stars.value"
+      :maxStars="performance.maxStars.value"
       @next="nextLevel"
       @menu="$emit('back')"
     >
@@ -238,6 +248,22 @@ const triggerWarning = (msg, type = "info") => {
         <div>
           <p>{{ $t("pattern.stats_level", { num: currentLevel }) }}</p>
           <p>{{ $t("pattern.stats_type", { type: currentTypeName }) }}</p>
+          <p>
+            {{
+              $t("global.modals.stats_mistakes", {
+                count: performance.mistakes.value,
+              })
+            }}
+          </p>
+          <p v-if="storyMode && performance.perfectBonusXp.value > 0">
+            <strong>
+              {{
+                $t("global.modals.stats_perfect_bonus", {
+                  xp: performance.perfectBonusXp.value,
+                })
+              }}
+            </strong>
+          </p>
         </div>
       </template>
     </VictoryModal>

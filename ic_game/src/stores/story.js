@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { STORY_STAGES } from "../game/data/progressionConfig";
+import { calculateStarRating } from "../game/logic/performanceRating";
 import { useProgressionStore } from "./progression";
 
 /**
@@ -56,6 +57,9 @@ export const useStoryStore = defineStore("story", () => {
   /** Solved patterns/challenges in the current run. */
   const currentPatternCount = ref(0);
 
+  /** Number of wrong attempts in the current stage run. */
+  const currentStageMistakes = ref(0);
+
   /** Completed task/game IDs. */
   const completedTasks = ref([]);
 
@@ -83,6 +87,17 @@ export const useStoryStore = defineStore("story", () => {
     return currentPatternCount.value >= targetPatternCount.value;
   });
 
+  /** Star rating evaluation for the active stage run. */
+  const currentStageRating = computed(() => {
+    return calculateStarRating({ mistakes: currentStageMistakes.value });
+  });
+
+  /** Bonus XP awarded when completing the current stage with 3 stars (0 mistakes). */
+  const currentStagePerfectBonusXp = computed(() => {
+    if (!currentStageRating.value.isPerfect) return 0;
+    return currentStage.value.perfectBonusXp || 50;
+  });
+
   // ── Persistence ────────────────────────────────────────────────────────
 
   /** Persists story progress to localStorage. */
@@ -97,6 +112,7 @@ export const useStoryStore = defineStore("story", () => {
           activeCutsceneId: activeCutsceneId.value,
           activeTaskId: activeTaskId.value,
           currentPatternCount: currentPatternCount.value,
+          currentStageMistakes: currentStageMistakes.value,
           completedTasks: completedTasks.value,
         }),
       );
@@ -143,6 +159,10 @@ export const useStoryStore = defineStore("story", () => {
         Math.max(Number(data.currentPatternCount) || 0, 0),
         targetPatternCount.value,
       );
+      currentStageMistakes.value = Math.max(
+        0,
+        Math.trunc(Number(data.currentStageMistakes) || 0),
+      );
       completedTasks.value = Array.isArray(data.completedTasks)
         ? data.completedTasks
         : [];
@@ -177,6 +197,7 @@ export const useStoryStore = defineStore("story", () => {
   function startTask(taskId, { withBriefing = true } = {}) {
     activeTaskId.value = taskId;
     currentPatternCount.value = 0;
+    currentStageMistakes.value = 0;
 
     if (withBriefing && currentStage.value.introCutsceneId) {
       activeCutsceneId.value = currentStage.value.introCutsceneId;
@@ -184,6 +205,14 @@ export const useStoryStore = defineStore("story", () => {
     } else {
       checkpoint.value = STORY_CHECKPOINTS.MINIGAME;
     }
+    save();
+  }
+
+  /**
+   * Registers an incorrect attempt during the active stage run.
+   */
+  function registerMistake() {
+    currentStageMistakes.value += 1;
     save();
   }
 
@@ -223,14 +252,27 @@ export const useStoryStore = defineStore("story", () => {
     }
 
     // Award stage completion bonus XP
-    const promoResult = progression.addXp(
+    let promoResult = progression.addXp(
       currentStage.value.completionBonusXp || 60,
       "stage_completion_bonus",
     );
+
+    // Award extra perfect-run bonus XP if completed with 3 stars (0 mistakes)
+    if (currentStageRating.value.isPerfect) {
+      const perfectPromo = progression.addXp(
+        currentStagePerfectBonusXp.value,
+        "perfect_stage_bonus",
+      );
+      if (perfectPromo.promoted) {
+        promoResult = perfectPromo;
+      }
+    }
+
     progression.markStageCompleted(currentStageId.value);
 
     activeTaskId.value = null;
     currentPatternCount.value = 0;
+    currentStageMistakes.value = 0;
 
     // Check for post-stage cutscene
     if (currentStage.value.postStageCutsceneId) {
@@ -287,6 +329,9 @@ export const useStoryStore = defineStore("story", () => {
       Math.max(Math.trunc(count) || 0, 0),
       targetPatternCount.value,
     );
+    if (currentPatternCount.value === 0) {
+      currentStageMistakes.value = 0;
+    }
     save();
   }
 
@@ -311,6 +356,7 @@ export const useStoryStore = defineStore("story", () => {
     activeCutsceneId.value = "intro";
     activeTaskId.value = null;
     currentPatternCount.value = 0;
+    currentStageMistakes.value = 0;
     completedTasks.value = [];
     isPaused.value = false;
 
@@ -333,15 +379,19 @@ export const useStoryStore = defineStore("story", () => {
     activeCutsceneId,
     activeTaskId,
     currentPatternCount,
+    currentStageMistakes,
     completedTasks,
     isPaused,
     // getters
     currentStage,
     targetPatternCount,
     isGoalReached,
+    currentStageRating,
+    currentStagePerfectBonusXp,
     // actions
     advanceCheckpoint,
     startTask,
+    registerMistake,
     registerCorrectPattern,
     completeTask,
     finishPostStageCutscene,

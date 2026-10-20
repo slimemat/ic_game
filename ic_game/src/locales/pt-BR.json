@@ -30,7 +30,12 @@
       "victory_desc": "Você mandou muito bem.",
       "victory_window_title": "Relatório de Conclusão",
       "victory_memo": "REGISTRO // TAREFA CONCLUÍDA",
-      "victory_tag": "APROVADO"
+      "victory_tag": "Aprovado",
+      "rating_perfect": "Perfeito",
+      "rating_good": "Aprovado",
+      "rating_completed": "Ok",
+      "stats_mistakes": "Erros cometidos: {count}",
+      "stats_perfect_bonus": "Bônus Sem Erros: +{xp} XP"
     },
     "categories": {
       "platform": "Plataforma",
@@ -154,7 +159,7 @@
       "easy": "Fácil",
       "medium": "Médio",
       "hard": "Difícil",
-      "special": "Especial (+XP)",
+      "special": "(+XP)",
       "urgent": "Urgente"
     },
     "stages": {
@@ -172,12 +177,24 @@
       }
     },
     "dashboard": {
+      "window_title": "Painel de Chamados",
+      "assistant_sender": "Assistente",
+      "level_badge": "NV. {num}",
+      "ticket_eyebrow": "CHAMADO #0{num}",
+      "locked_label": "BLOQUEADO",
+      "easter_egg": {
+        "level": "NV. 99",
+        "tag_secret": "CONFIDENCIAL",
+        "tag_goal": "??? fases",
+        "eyebrow": "CHAMADO #99 // RESTRITO",
+        "title": "Operação Café Infinito da Diretoria"
+      },
       "career_title": "Plano de Carreira",
       "current_xp": "XP Total: {xp}",
       "xp_progress": "{current} / {target} XP para promoção",
       "max_rank": "Cargo Máximo Atingido",
       "task_reward": "Pagamento: +{xp} XP",
-      "task_goal": "Meta: {count} desafios",
+      "task_goal": "{count} fases",
       "btn_start": "Iniciar Chamado"
     },
     "promotion": {

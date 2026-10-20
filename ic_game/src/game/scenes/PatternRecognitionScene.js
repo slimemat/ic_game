@@ -23,6 +23,7 @@ import winAudio from "../../assets/audio/success_guitar.mp3";
 import swipeAudio from "../../assets/audio/swipe.mp3";
 import stampAudio from "../../assets/audio/stamp.mp3";
 import scene1Clean from "../../assets/images/scene1_clean.png";
+import scene1CleanNight from "../../assets/images/scene1_clean_night.png";
 import defaultCloudSprite from "../../assets/images/cloud.png";
 
 const t = i18n.global.t;
@@ -100,6 +101,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
 
   preload() {
     this.load.image("scene1_clean", scene1Clean);
+    this.load.image("scene1_clean_night", scene1CleanNight);
     this.load.image("cloud_sprite", defaultCloudSprite);
     this.load.audio("connect", connectAudio);
     this.load.audio("error", errorAudio);
@@ -235,6 +237,8 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   initClouds() {
     this.destroyClouds();
     const { width, height } = this.scale;
+    const level = this.registry.get("level") ?? 1;
+    const isNight = level > 10;
 
     for (let i = 0; i < CLOUD_CONFIG.count; i++) {
       const x = Phaser.Math.Between(-50, width);
@@ -246,7 +250,10 @@ export default class PatternRecognitionScene extends Phaser.Scene {
       );
 
       cloud.setScale(scale);
-      cloud.setAlpha(CLOUD_CONFIG.alpha);
+      cloud.setAlpha(isNight ? 0.35 : CLOUD_CONFIG.alpha);
+      if (isNight) {
+        cloud.setTint(0xc7d2fe);
+      }
       cloud.setDepth(DEPTH_CLOUDS);
       cloud.speed = CLOUD_CONFIG.baseSpeed * Phaser.Math.FloatBetween(0.7, 1.4);
 
@@ -514,17 +521,16 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   drawBackground(width, height) {
     const level = this.registry.get("level") ?? 1;
     const isFirstStage = level <= 10;
+    const bgKey = isFirstStage ? "scene1_clean" : "scene1_clean_night";
     let bgRendered = false;
 
-    if (isFirstStage && this.textures.exists("scene1_clean")) {
-      const texture = this.textures.get("scene1_clean");
+    if (this.textures.exists(bgKey)) {
+      const texture = this.textures.get(bgKey);
       if (texture) {
         texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
       }
       const image = this.track(
-        this.add
-          .image(width / 2, height / 2, "scene1_clean")
-          .setDepth(DEPTH_BACKGROUND),
+        this.add.image(width / 2, height / 2, bgKey).setDepth(DEPTH_BACKGROUND),
       );
       image.setScale(Math.max(width / image.width, height / image.height));
       bgRendered = true;
@@ -1265,10 +1271,14 @@ export default class PatternRecognitionScene extends Phaser.Scene {
 
     if (status === AnswerStatus.EMPTY) {
       this.cameras.main.shake(150, 0.01);
-      this.onErrorCallback?.(t("pattern.err_select_first"));
+      this.onErrorCallback?.(t("pattern.err_select_first"), {
+        isMistake: false,
+      });
     } else {
       this.cameras.main.shake(200, 0.015);
-      this.onErrorCallback?.(t("pattern.err_incorrect"));
+      this.onErrorCallback?.(t("pattern.err_incorrect"), {
+        isMistake: true,
+      });
 
       if (!this.slot.isEmpty) {
         const wrongPiece = this.options[this.slot.occupant];

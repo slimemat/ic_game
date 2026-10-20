@@ -86,6 +86,7 @@ export const LEVEL_CONFIGS = [
     difficulty: 1,
     type: "rotation",
     shape: "pointer",
+    preserveColors: true,
     sequence: [45, 90, 135, 180], // Passos diagonais de 45° -> 225°
     answerOptions: [45, 90, 135, 180, 225, 270, 315],
     correctOptionIndex: 4, // 225°

@@ -97,6 +97,7 @@ export const STORY_STAGES = Object.freeze([
     tags: ["easy", "special"],
     xpRewardPerChallenge: 25, // 10 * 25 = 250 XP
     completionBonusXp: 100, // 250 + 100 = 350 XP (earns promotion to Junior Analyst right upon completion!)
+    perfectBonusXp: 50, // Bônus extra ao concluir com 3 estrelas (0 erros)
     // Future-proofing placeholder for dynamic/procedural level generator
     patternConfig: {
       difficultyTier: 1,
@@ -119,6 +120,7 @@ export const STORY_STAGES = Object.freeze([
     tags: ["medium", "urgent"],
     xpRewardPerChallenge: 40, // 5 * 40 = 200 XP
     completionBonusXp: 80, // 200 + 80 = 280 XP
+    perfectBonusXp: 40, // Bônus extra ao concluir com 3 estrelas (0 erros)
     patternConfig: {
       difficultyTier: 2,
       minSequenceLength: 4,
@@ -140,6 +142,7 @@ export const STORY_STAGES = Object.freeze([
     tags: ["hard", "special"],
     xpRewardPerChallenge: 50,
     completionBonusXp: 120,
+    perfectBonusXp: 60, // Bônus extra ao concluir com 3 estrelas (0 erros)
     patternConfig: {
       difficultyTier: 3,
       minSequenceLength: 5,
