@@ -5,6 +5,10 @@ import { useGameSessionStore } from "../stores/gameSession";
 import { useStoryStore, STORY_CHECKPOINTS } from "../stores/story";
 import { useProgressionStore } from "../stores/progression";
 import spritePaint from "../assets/images/spritepaint.png";
+import RestPanel from "./ui/RestPanel.vue";
+import { useRestSummary } from "../composables/useRestSummary";
+
+const { summary } = useRestSummary();
 
 const { t } = useI18n();
 const session = useGameSessionStore();
@@ -75,6 +79,8 @@ function handlePlayStage2Directly() {
           <span class="level-badge">{{ session.currentLevel }}</span>
         </p>
       </header>
+
+      <RestPanel :summary="summary" @continue="selectMode('story')" />
 
       <!-- CTA buttons -->
       <nav class="menu-actions" :aria-label="$t('mainMenu.nav_aria_label')">
@@ -155,20 +161,25 @@ function handlePlayStage2Directly() {
 <style scoped>
 .main-menu {
   flex: 1;
+  min-height: 0;
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: clamp(24px, 6vw, 48px);
-  min-height: 100vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: max(clamp(16px, 5vw, 48px), env(safe-area-inset-top))
+    max(clamp(16px, 5vw, 48px), env(safe-area-inset-right))
+    max(clamp(16px, 5vw, 48px), env(safe-area-inset-bottom))
+    max(clamp(16px, 5vw, 48px), env(safe-area-inset-left));
 }
 
 .menu-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 40px;
+  gap: 24px;
   width: 100%;
   max-width: 480px;
+  margin: auto 0;
 }
 
 .menu-header {
@@ -213,6 +224,7 @@ function handlePlayStage2Directly() {
   width: 100%;
   padding: 20px 24px;
   border-radius: 12px;
+  min-height: 56px;
   font-size: 1.15rem;
   font-weight: 600;
   cursor: pointer;
