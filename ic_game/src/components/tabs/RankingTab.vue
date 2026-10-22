@@ -1,73 +1,93 @@
+<script setup>
+import { useLocalRanking } from "../../composables/useLocalRanking";
+
+const MEDALS = ["🥇", "🥈", "🥉"];
+const { ranking } = useLocalRanking();
+</script>
+
 <template>
   <div class="tab-content">
-    <h2>🏆 Ranking de Alunos</h2>
-    <div class="ranking-list">
-      <div
-        v-for="(user, index) in ranking"
-        :key="index"
+    <h2>🏆 {{ $t("hub.ranking.title") }}</h2>
+
+    <ol class="ranking-list">
+      <li
+        v-for="player in ranking"
+        :key="player.id"
         class="ranking-item"
-        :class="{ 'is-me': user.isMe }"
+        :class="{ 'is-me': player.isMe }"
       >
-        <span class="rank-pos">#{{ index + 1 }}</span>
-        <span class="rank-name">{{ user.name }}</span>
-        <span class="rank-score">{{ user.score }} XP</span>
-      </div>
-    </div>
+        <span class="rank-pos">
+          {{ MEDALS[player.position - 1] ?? `#${player.position}` }}
+        </span>
+        <span class="rank-name">
+          {{ player.name }}
+          <em v-if="player.isMe" class="rank-you">
+            {{ $t("hub.ranking.you") }}
+          </em>
+        </span>
+        <span class="rank-score">
+          {{ $t("hub.ranking.xp", { xp: player.xp }) }}
+        </span>
+      </li>
+    </ol>
+
+    <p class="note">{{ $t("hub.ranking.note") }}</p>
   </div>
 </template>
 
-<script>
-export default {
-  name: "RankingTab",
-  data() {
-    return {
-      ranking: [
-        { name: "Ana Souza", score: 1450 },
-        { name: "Carlos Lima", score: 1200 },
-        { name: "Felipe Silva (Você)", score: 980, isMe: true },
-        { name: "Beatriz Costa", score: 850 },
-      ],
-    };
-  },
-};
-</script>
-
 <style scoped>
-.tab-content {
-  padding: 20px;
-  padding-bottom: 90px;
-  color: #fff;
-  max-width: 600px;
-  margin: 0 auto;
-}
 .ranking-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 15px;
 }
+
 .ranking-item {
   display: flex;
-  justify-content: space-between;
-  background: #252836;
-  padding: 12px 15px;
-  border-radius: 8px;
   align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  border-radius: 8px;
 }
+
 .ranking-item.is-me {
   background: #2b4c7e;
-  border: 1px solid #ffd700;
+  border-color: #ffd700;
 }
+
 .rank-pos {
-  font-weight: bold;
-  color: #ffd700;
   width: 40px;
+  font-weight: 700;
+  color: #ffd700;
 }
+
 .rank-name {
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
+
+.rank-you {
+  margin-left: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-style: normal;
+  color: var(--light-green);
+}
+
 .rank-score {
-  font-weight: bold;
-  color: #68d391;
+  font-weight: 700;
+  color: var(--color-success);
+}
+
+.note {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-dim);
 }
 </style>
