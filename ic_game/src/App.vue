@@ -20,7 +20,7 @@ const story = useStoryStore();
 /**
  * Top-level navigation state.
  *
- * 'main-menu'       → MainMenu entry screen
+ * 'main-menu'       → HubShell entry screen (abas do Hub)
  * 'story'           → Modo História: cutscene inicial / Painel de Chamados
  * 'dialogue'        → Modo História: cutscene de introdução da tarefa
  * 'post-cutscene'   → Modo História: cutscene de conclusão da etapa
