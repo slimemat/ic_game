@@ -47,6 +47,51 @@
       "play": "Jogar"
     }
   },
+  "hub": {
+    "nav_aria_label": "Navegação principal",
+    "tabs": {
+      "challenges": "Desafios",
+      "story": "História",
+      "home": "Início",
+      "profile": "Perfil",
+      "ranking": "Ranking"
+    },
+    "challenges": {
+      "title": "Desafios",
+      "subtitle": "Selecione um jogo para treinar suas habilidades"
+    },
+    "story": {
+      "title": "Modo História",
+      "subtitle_new": "Comece sua carreira na LogicHub.",
+      "subtitle_progress": "Continue de onde parou.",
+      "btn_start": "Iniciar Jornada",
+      "btn_continue": "Continuar Jornada"
+    },
+    "profile": {
+      "title": "Perfil",
+      "player_fallback": "Jogador(a)",
+      "stat_xp": "XP total",
+      "stat_stages": "Chamados concluídos",
+      "stat_level": "Nível",
+      "next_rank_hint": "{xp} XP para {rank}"
+    },
+    "ranking": {
+      "title": "Ranking",
+      "you": "Você",
+      "xp": "{xp} XP",
+      "note": "Ranking local: os outros jogadores são exemplos até existir um banco de dados."
+    },
+    "debug": {
+      "aria": "Ferramentas de Debug",
+      "badge": "PAINEL DEBUG DEV",
+      "reset_label": "🗑️ Resetar Progresso Pinia / Storage",
+      "reset_title": "Zera o progresso de todas as stores do Pinia e LocalStorage",
+      "reset_done": "✓ Progresso do Pinia & LocalStorage resetado com sucesso!",
+      "jump_label": "⚡ Jogar Novos Jogos (Etapa 2 Direto)",
+      "jump_title": "Avança direto para a Etapa 2 com os novos jogos de transformação",
+      "jump_done": "⚡ Iniciando Etapa 2 com os novos jogos de transformação!"
+    }
+  },
   "mainMenu": {
     "title": "Logic Hub",
     "subtitle": "Bem-vindo(a)! Escolha como quer jogar.",
