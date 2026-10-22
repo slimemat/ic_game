@@ -3,7 +3,7 @@ import { computed, ref, watch } from "vue";
 import { useGameSessionStore } from "./stores/gameSession";
 import { useStoryStore, STORY_CHECKPOINTS } from "./stores/story";
 import { scenes } from "./data/dialogues";
-import MainMenu from "./components/MainMenu.vue";
+import HubShell from "./components/HubShell.vue";
 import Home from "./components/Home.vue";
 import GameSelection from "./components/GameSelection.vue";
 import TestGame from "./components/TestGame.vue";
@@ -102,11 +102,20 @@ function startTask(gameId) {
   const introScene = story.currentStage?.introCutsceneId || `pre-${gameId}`;
   story.startTask(gameId, { withBriefing: Boolean(scenes[introScene]) });
 }
+
+/** Abre um mini-jogo escolhido nas abas do Hub (Desafios / Início). */
+function playGame(gameId) {
+  activeScreen.value = gameId;
+}
 </script>
 
 <template>
   <!-- ── Main Menu ─────────────────────────────────────────────────────── -->
-  <MainMenu v-if="activeScreen === 'main-menu'" @mode-selected="() => {}" />
+  <HubShell
+    v-if="activeScreen === 'main-menu'"
+    @mode-selected="() => {}"
+    @play="playGame"
+  />
 
   <!-- ── Modo História: cutscene inicial + Painel de Chamados (overlay) ── -->
   <template v-else-if="activeScreen === 'story'">

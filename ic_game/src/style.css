@@ -82,6 +82,22 @@ button {
   background-color: var(--bg-app);
 }
 
+/* ── Conteúdo das abas do Hub ── */
+.tab-content {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 16px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tab-content h2 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
 .placeholder-screen {
   display: grid;
   align-content: center;
