@@ -8,6 +8,7 @@ import StoryTab from "./tabs/StoryTab.vue";
 import HomeTab from "./tabs/HomeTab.vue";
 import ProfileTab from "./tabs/ProfileTab.vue";
 import RankingTab from "./tabs/RankingTab.vue";
+import { useSwipe } from "../composables/useSwipe";
 
 const emit = defineEmits(["mode-selected", "play"]);
 
@@ -28,10 +29,18 @@ const navTabs = computed(() =>
   TABS.map(({ id, icon }) => ({ icon, label: t(`hub.tabs.${id}`) })),
 );
 
-function goToTab(id) {
-  const index = TABS.findIndex((tab) => tab.id === id);
-  if (index !== -1) activeTab.value = index;
+function goToIndex(index) {
+  if (index >= 0 && index < TABS.length) activeTab.value = index;
 }
+
+function goToTab(id) {
+  goToIndex(TABS.findIndex((tab) => tab.id === id));
+}
+
+const swipe = useSwipe({
+  onSwipeLeft: () => goToIndex(activeTab.value + 1),
+  onSwipeRight: () => goToIndex(activeTab.value - 1),
+});
 
 function selectMode(mode) {
   session.setActiveMode(mode);
@@ -44,23 +53,29 @@ function playGame(gameId) {
 </script>
 
 <template>
-  <div class="hub-shell">
-    <header class="hub-header">
-      <h1>{{ $t("mainMenu.title") }}</h1>
-      <p>{{ $t("mainMenu.subtitle") }}</p>
-    </header>
-
-    <div class="tab-viewport">
-      <component
-        :is="TABS[activeTab].component"
-        :key="TABS[activeTab].id"
-        @start-story="selectMode('story')"
-        @select-game="playGame"
-        @navigate="goToTab"
-      />
+  <div
+    class="tab-viewport"
+    @touchstart.passive="swipe.onStart"
+    @touchend.passive="swipe.onEnd"
+  >
+    <div
+      class="tab-track"
+      :style="{ transform: `translateX(-${activeTab * 100}%)` }"
+    >
+      <section
+        v-for="(tab, index) in TABS"
+        :key="tab.id"
+        class="tab-pane"
+        :inert="index !== activeTab ? '' : null"
+      >
+        <component
+          :is="tab.component"
+          @start-story="selectMode('story')"
+          @select-game="playGame"
+          @navigate="goToTab"
+        />
+      </section>
     </div>
-
-    <BottomNav v-model="activeTab" :tabs="navTabs" />
   </div>
 </template>
 
@@ -94,7 +109,29 @@ function playGame(gameId) {
 .tab-viewport {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
+}
+
+.tab-track {
+  display: flex;
+  height: 100%;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+/* Cada aba rola sozinha e mantém a posição de scroll ao trocar */
+.tab-pane {
+  flex: 0 0 100%;
+  min-width: 0;
+  height: 100%;
   overflow-y: auto;
-  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-track {
+    transition: none;
+  }
 }
 </style>
