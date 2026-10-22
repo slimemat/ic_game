@@ -1,150 +1,153 @@
+<script setup>
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
+import { useGameSessionStore } from "../../stores/gameSession";
+import { useRestSummary } from "../../composables/useRestSummary";
+
+const { t } = useI18n();
+const session = useGameSessionStore();
+const { summary } = useRestSummary();
+
+const playerName = computed(
+  () => session.playerName || t("hub.profile.player_fallback"),
+);
+
+const nextRankHint = computed(() => {
+  const { xp } = summary.value;
+  if (xp.isMax) return t("story.dashboard.max_rank");
+  return t("hub.profile.next_rank_hint", {
+    xp: Math.max(0, xp.target - xp.current),
+    rank: xp.nextRankTitle,
+  });
+});
+
+const stats = computed(() => [
+  {
+    key: "xp",
+    label: t("hub.profile.stat_xp"),
+    value: summary.value.totalXp,
+  },
+  {
+    key: "stages",
+    label: t("hub.profile.stat_stages"),
+    value: `${summary.value.completedCount}/${summary.value.totalCount}`,
+  },
+  {
+    key: "level",
+    label: t("hub.profile.stat_level"),
+    value: session.currentLevel,
+  },
+]);
+</script>
+
 <template>
   <div class="tab-content">
-    <div class="profile-header">
-      <div class="avatar-container">👤</div>
-      <div class="user-info">
-        <h2>{{ profile.name }}</h2>
-        <p class="cargo">
-          Cargo: <strong>{{ profile.cargo }}</strong>
-        </p>
-      </div>
-    </div>
+    <h2>{{ $t("hub.profile.title") }}</h2>
 
-    <div class="xp-section">
-      <div class="xp-labels">
-        <span>XP Total: {{ profile.xp }}</span>
-        <span>Próximo: {{ profile.nextCargo }}</span>
+    <section class="profile-card">
+      <div
+        class="rank-badge"
+        :style="{ '--rank-color': summary.rank.badgeColor }"
+        aria-hidden="true"
+      >
+        {{ summary.rank.badgeLabel }}
       </div>
-      <div class="progress-bar">
-        <div
-          class="progress-fill"
-          :style="{ width: profile.xpPercentage + '%' }"
-        ></div>
+      <div class="profile-info">
+        <strong class="profile-name">{{ playerName }}</strong>
+        <span class="profile-rank">{{ summary.rank.title }}</span>
+        <span class="profile-hint">{{ nextRankHint }}</span>
       </div>
-    </div>
+    </section>
 
-    <div class="stats-card">
-      <p>
-        📚 Aulas/Atividades Concluídas:
-        <strong>{{ profile.completedClasses }}</strong>
-      </p>
-    </div>
-
-    <div class="book-section">
-      <h3>📖 Livro de Personagens Encontrados</h3>
-      <div class="characters-grid">
-        <div
-          v-for="char in characters"
-          :key="char.id"
-          class="char-badge"
-          :class="{ locked: !char.unlocked }"
-        >
-          <span>{{ char.unlocked ? char.name : "???" }}</span>
-        </div>
+    <dl class="stats-grid">
+      <div v-for="stat in stats" :key="stat.key" class="stat">
+        <dt>{{ stat.label }}</dt>
+        <dd>{{ stat.value }}</dd>
       </div>
-    </div>
+    </dl>
   </div>
 </template>
 
-<script>
-export default {
-  name: "ProfileTab",
-  data() {
-    return {
-      profile: {
-        name: "Felipe Silva",
-        cargo: "Estagiário(a)",
-        xp: 120,
-        nextCargo: "Analista Júnior",
-        xpPercentage: 35,
-        completedClasses: 3,
-      },
-      characters: [
-        { id: 1, name: "Mentor Tech", unlocked: true },
-        { id: 2, name: "Gerente de Projetos", unlocked: true },
-        { id: 3, name: "Assistente IA", unlocked: false },
-      ],
-    };
-  },
-};
-</script>
-
 <style scoped>
-.tab-content {
-  padding: 20px;
-  padding-bottom: 90px;
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  border-radius: 14px;
+}
+
+.rank-badge {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  padding: 4px;
+  background: var(--rank-color, #718096);
+  border: 2px solid rgba(0, 0, 0, 0.35);
+  border-radius: 10px;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35);
   color: #fff;
-  max-width: 600px;
-  margin: 0 auto;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
 }
-.profile-header {
+
+.profile-info {
   display: flex;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 20px;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
-.avatar-container {
-  font-size: 40px;
-  background: #2d3748;
-  padding: 10px;
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+
+.profile-name {
+  font-size: 1.2rem;
+  overflow-wrap: anywhere;
 }
-.xp-section {
-  background: #252836;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 15px;
+
+.profile-rank {
+  color: var(--light-green);
+  font-weight: 600;
 }
-.xp-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  margin-bottom: 8px;
-  color: #a0aec0;
+
+.profile-hint {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
-.progress-bar {
-  background: #1a1c23;
-  height: 10px;
-  border-radius: 5px;
-  overflow: hidden;
-}
-.progress-fill {
-  background: #ffd700;
-  height: 100%;
-  transition: width 0.3s;
-}
-.stats-card {
-  background: #252836;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 15px;
-  font-size: 14px;
-}
-.book-section h3 {
-  margin-bottom: 10px;
-  font-size: 16px;
-}
-.characters-grid {
+
+.stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
+  margin: 0;
 }
-.char-badge {
-  background: #2d3748;
-  padding: 15px;
+
+.stat {
+  padding: 12px 8px;
   text-align: center;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: bold;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
 }
-.char-badge.locked {
-  background: #1a1c23;
-  color: #4a5568;
-  border: 1px dashed #4a5568;
+
+.stat dt {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.stat dd {
+  margin: 4px 0 0;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-warning);
 }
 </style>
