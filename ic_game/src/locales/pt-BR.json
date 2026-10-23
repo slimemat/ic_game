@@ -61,6 +61,15 @@
       "level_select": "Seleção de Fase ativada"
     }
   },
+  "restPanel": {
+    "window_title": "Sala de Descanso",
+    "rank_label": "Cargo atual",
+    "next_rank": "Próximo cargo: {rank}",
+    "missions_available": "Nenhum chamado disponível | 1 chamado disponível | {count} chamados disponíveis",
+    "missions_done": "{done} de {total} concluídos",
+    "all_done": "Você concluiu todos os chamados desta versão. Aproveite o café! ☕",
+    "btn_continue": "Continuar Chamado"
+  },
   "home": {
     "welcome": "Bem-vindo(a) de volta",
     "title": "Logic Hub",
