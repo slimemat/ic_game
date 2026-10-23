@@ -78,8 +78,7 @@
     "ranking": {
       "title": "Ranking",
       "you": "Você",
-      "xp": "{xp} XP",
-      "note": "Ranking local: os outros jogadores são exemplos até existir um banco de dados."
+      "xp": "{xp} XP"
     },
     "debug": {
       "aria": "Ferramentas de Debug",

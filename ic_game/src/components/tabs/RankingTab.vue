@@ -37,8 +37,6 @@ const { ranking } = useLocalRanking();
         </span>
       </li>
     </ol>
-
-    <p class="note">{{ $t("hub.ranking.note") }}</p>
   </div>
 </template>
 
@@ -92,11 +90,5 @@ const { ranking } = useLocalRanking();
 .rank-score {
   font-weight: 700;
   color: var(--color-success);
-}
-
-.note {
-  margin: 0;
-  font-size: 0.78rem;
-  color: var(--text-dim);
 }
 </style>
