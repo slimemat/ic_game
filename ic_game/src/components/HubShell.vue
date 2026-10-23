@@ -16,11 +16,11 @@ const { t } = useI18n();
 const session = useGameSessionStore();
 
 const TABS = [
-  { id: "challenges", icon: "⚔️", component: ChallengesTab },
-  { id: "story", icon: "📜", component: StoryTab },
-  { id: "home", icon: "🏠", component: HomeTab },
-  { id: "profile", icon: "🛡️", component: ProfileTab },
-  { id: "ranking", icon: "🏆", component: RankingTab },
+  { id: "challenges", icon: "challenges", component: ChallengesTab },
+  { id: "story", icon: "story", component: StoryTab },
+  { id: "home", icon: "home", component: HomeTab },
+  { id: "profile", icon: "profile", component: ProfileTab },
+  { id: "ranking", icon: "ranking", component: RankingTab },
 ];
 
 const activeTab = ref(TABS.findIndex((tab) => tab.id === "home"));

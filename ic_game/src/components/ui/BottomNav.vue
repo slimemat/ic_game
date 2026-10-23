@@ -1,4 +1,6 @@
 <script setup>
+import AppIcon from "./AppIcon.vue";
+
 defineProps({
   modelValue: { type: Number, required: true },
   tabs: { type: Array, required: true },
@@ -17,7 +19,9 @@ defineEmits(["update:modelValue"]);
       :aria-current="modelValue === index ? 'page' : undefined"
       @click="$emit('update:modelValue', index)"
     >
-      <span class="nav-icon" aria-hidden="true">{{ tab.icon }}</span>
+      <span class="nav-icon" aria-hidden="true">
+        <AppIcon :name="tab.icon" :size="24" />
+      </span>
       <span class="nav-label">{{ tab.label }}</span>
     </button>
   </nav>
@@ -74,7 +78,8 @@ defineEmits(["update:modelValue"]);
 }
 
 .nav-icon {
-  font-size: 22px;
+  display: grid;
+  place-items: center;
   margin-bottom: 2px;
   transition: transform 0.2s ease;
 }

@@ -1,13 +1,15 @@
 <script setup>
+import AppIcon from "../ui/AppIcon.vue";
 import { useLocalRanking } from "../../composables/useLocalRanking";
 
-const MEDALS = ["🥇", "🥈", "🥉"];
+const MEDALS = ["medal1", "medal2", "medal3"];
+const MEDAL_COLORS = ["#facc15", "#cbd5e1", "#d97706"]; // ouro, prata, bronze
 const { ranking } = useLocalRanking();
 </script>
 
 <template>
   <div class="tab-content">
-    <h2>🏆 {{ $t("hub.ranking.title") }}</h2>
+    <h2>{{ $t("hub.ranking.title") }}</h2>
 
     <ol class="ranking-list">
       <li
@@ -17,7 +19,12 @@ const { ranking } = useLocalRanking();
         :class="{ 'is-me': player.isMe }"
       >
         <span class="rank-pos">
-          {{ MEDALS[player.position - 1] ?? `#${player.position}` }}
+          <AppIcon
+            v-if="MEDALS[player.position - 1]"
+            :name="MEDALS[player.position - 1]"
+            :style="{ color: MEDAL_COLORS[player.position - 1] }"
+          />
+          <template v-else>#{{ player.position }}</template>
         </span>
         <span class="rank-name">
           {{ player.name }}
@@ -61,6 +68,8 @@ const { ranking } = useLocalRanking();
 }
 
 .rank-pos {
+  display: flex;
+  align-items: center;
   width: 40px;
   font-weight: 700;
   color: #ffd700;
