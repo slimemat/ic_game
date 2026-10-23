@@ -35,6 +35,7 @@ defineEmits(["update:modelValue"]);
 }
 
 .nav-item {
+  position: relative;
   flex: 1;
   min-height: 65px;
   display: flex;
@@ -46,19 +47,45 @@ defineEmits(["update:modelValue"]);
   border: none;
   color: #8b92a5;
   cursor: pointer;
-  transition:
-    color 0.2s ease,
-    transform 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.2s ease;
+}
+
+/* Barrinha indicadora no topo do item ativo */
+.nav-item::before {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: 25%;
+  width: 50%;
+  height: 3px;
+  border-radius: 0 0 4px 4px;
+  background: #ffd700;
+  transform: scaleX(0);
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .nav-item.active {
   color: #ffd700;
-  transform: translateY(-2px);
+}
+
+.nav-item.active::before {
+  transform: scaleX(1);
 }
 
 .nav-icon {
   font-size: 22px;
   margin-bottom: 2px;
+  transition: transform 0.2s ease;
+}
+
+.nav-item.active .nav-icon {
+  transform: translateY(-2px) scale(1.15);
+  filter: drop-shadow(0 0 6px rgba(255, 215, 0, 0.55));
+}
+
+.nav-item:active .nav-icon {
+  transform: scale(0.9);
 }
 
 .nav-label {
@@ -66,5 +93,18 @@ defineEmits(["update:modelValue"]);
   font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.nav-item:focus-visible {
+  outline: 2px solid #ffd700;
+  outline-offset: -4px;
+  border-radius: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-item::before,
+  .nav-icon {
+    transition: none;
+  }
 }
 </style>
