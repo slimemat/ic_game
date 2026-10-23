@@ -53,38 +53,56 @@ function playGame(gameId) {
 </script>
 
 <template>
-  <div
-    class="tab-viewport"
-    @touchstart.passive="swipe.onStart"
-    @touchend.passive="swipe.onEnd"
-  >
+  <div class="hub-shell">
+    <header class="hub-header">
+      <h1>{{ $t("mainMenu.title") }}</h1>
+      <p>{{ $t("mainMenu.subtitle") }}</p>
+    </header>
+
     <div
-      class="tab-track"
-      :style="{ transform: `translateX(-${activeTab * 100}%)` }"
+      class="tab-viewport"
+      @touchstart.passive="swipe.onStart"
+      @touchend.passive="swipe.onEnd"
     >
-      <section
-        v-for="(tab, index) in TABS"
-        :key="tab.id"
-        class="tab-pane"
-        :inert="index !== activeTab ? '' : null"
+      <div
+        class="tab-track"
+        :style="{ transform: `translateX(-${activeTab * 100}%)` }"
       >
-        <component
-          :is="tab.component"
-          @start-story="selectMode('story')"
-          @select-game="playGame"
-          @navigate="goToTab"
-        />
-      </section>
+        <section
+          v-for="(tab, index) in TABS"
+          :key="tab.id"
+          class="tab-pane"
+          :inert="index !== activeTab ? '' : null"
+        >
+          <component
+            :is="tab.component"
+            @start-story="selectMode('story')"
+            @select-game="playGame"
+            @navigate="goToTab"
+          />
+        </section>
+      </div>
     </div>
+
+    <BottomNav v-model="activeTab" :tabs="navTabs" />
   </div>
 </template>
-
 <style scoped>
 .hub-shell {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* fallback */
+  overflow: clip;
+}
+
+.tab-viewport {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden; /* fallback */
+  overflow: clip;
 }
 
 .hub-header {
@@ -113,8 +131,9 @@ function playGame(gameId) {
 }
 
 .tab-track {
+  position: absolute;
+  inset: 0;
   display: flex;
-  height: 100%;
   transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
 }
@@ -123,10 +142,17 @@ function playGame(gameId) {
 .tab-pane {
   flex: 0 0 100%;
   min-width: 0;
+  overflow-x: hidden;
   height: 100%;
   overflow-y: auto;
   overscroll-behavior-y: contain;
   touch-action: pan-y;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Edge antigo */
+}
+
+.tab-pane::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
 }
 
 @media (prefers-reduced-motion: reduce) {
