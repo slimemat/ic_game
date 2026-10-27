@@ -1,6 +1,24 @@
-import keyboardSfxUrl from "../../assets/audio/keyboard_sfx.mp3";
-import messageNeutralUrl from "../../assets/audio/message_neutral.mp3";
-import replySfxUrl from "../../assets/audio/reply_sfx.mp3";
+/**
+ * URLs de todos os áudios em src/assets/audio. Via glob, um arquivo ausente
+ * (ex.: placeholder ainda não entregue) não quebra o build, só gera um aviso.
+ */
+const audioUrls = import.meta.glob("../../assets/audio/*.mp3", {
+  eager: true,
+  import: "default",
+});
+
+/**
+ * Sons de UI tocados via Web Audio API (sem delay, permitem overlap).
+ * Sons do Phaser (ex.: "win", "error") NÃO devem entrar aqui.
+ * Para adicionar um som de UI: coloque <chave>.mp3 em src/assets/audio e
+ * adicione a chave nesta lista.
+ */
+const UI_SOUND_KEYS = [
+  "keyboard_sfx",
+  "message_neutral",
+  "reply_sfx",
+  "telephone_ring", // placeholder: arquivo ainda não adicionado
+];
 
 /**
  * AudioManager - Singleton
@@ -25,9 +43,11 @@ class AudioManager {
     this.activeUiSources = {};
 
     // Pré-carrega os sons para a memória
-    this._loadUI(keyboardSfxUrl, "keyboard_sfx");
-    this._loadUI(messageNeutralUrl, "message_neutral");
-    this._loadUI(replySfxUrl, "reply_sfx");
+    UI_SOUND_KEYS.forEach((key) => {
+      const url = audioUrls[`../../assets/audio/${key}.mp3`];
+      if (url) this._loadUI(url, key);
+      else console.warn(`[AudioManager] Áudio de UI '${key}' não encontrado.`);
+    });
 
     AudioManager.instance = this;
   }

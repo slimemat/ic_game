@@ -5,9 +5,13 @@ import { scenes } from "../data/dialogues";
 import { characters } from "../data/characters";
 import { useGameSessionStore } from "../stores/gameSession";
 import { useStoryStore } from "../stores/story";
+import { useChatEffects } from "../composables/useChatEffects";
 import AudioManager from "../game/managers/AudioManager";
 import PauseModal from "./ui/PauseModal.vue";
 import PauseButton from "./ui/PauseButton.vue";
+import ChatHeader from "./story/ChatHeader.vue";
+import ChatSystemNotice from "./story/ChatSystemNotice.vue";
+import StickyNotesCarousel from "./story/StickyNotesCarousel.vue";
 
 /**
  * StoryMode: tela de diálogo estilo chat, genérica e reutilizável.
@@ -23,6 +27,8 @@ import PauseButton from "./ui/PauseButton.vue";
  *   quit     – o jogador escolheu sair pelo menu de pausa
  *
  * O componente não sabe o que vem depois: quem decide é o pai.
+ * Cada tipo de nó (message | presence | notes) tem seu próprio handler;
+ * o esquema dos nós está documentado em src/data/dialogues/index.js.
  */
 const props = defineProps({
   sceneId: { type: String, required: true },
@@ -30,9 +36,18 @@ const props = defineProps({
 });
 const emit = defineEmits(["finished", "quit"]);
 
-const { t } = useI18n();
+const PRESENCE_DELAY_MS = 900;
+const TYPING_DELAY_MS = 1500;
+const CHOICE_DELAY_MS = 500;
+
+const { t, tm, locale } = useI18n();
 const session = useGameSessionStore();
 const story = useStoryStore();
+const {
+  isShaking,
+  apply: applyEffects,
+  stopAll: stopEffects,
+} = useChatEffects();
 
 const chatContainer = ref(null);
 const chatLog = ref([]);
@@ -40,14 +55,21 @@ const chatLog = ref([]);
 const scene = computed(() => scenes[props.sceneId]);
 const i18nKey = (id) => `story.scenes.${props.sceneId}.${id}`;
 
-const storyVariables = computed(() => ({
-  assistantName: t("story.variables.assistantName"),
-  managerName: t("story.variables.managerName"),
-  companyName: t("story.variables.companyName"),
-  taskGiver01Name: t("story.variables.taskGiver01Name"),
+// Todas as chaves de story.variables viram variáveis de interpolação
+// automaticamente: para criar uma nova, basta adicioná-la no pt-BR.json.
+const storyVariables = computed(() => {
+  const vars = Object.fromEntries(
+    Object.keys(tm("story.variables")).map((key) => [
+      key,
+      t(`story.variables.${key}`),
+    ]),
+  );
   // Nome do estagiário; se ainda não foi definido, usa o nome da empresa
-  playerName: session.playerName || t("story.variables.companyName"),
-}));
+  vars.playerName = session.playerName || vars.companyName;
+  return vars;
+});
+
+const charName = (char) => t(`story.characters.${char}`, storyVariables.value);
 
 const currentNodeId = ref(null);
 const currentDialogue = computed(() =>
@@ -61,6 +83,36 @@ const typingChar = ref("");
 const typingName = ref("");
 let typingTimeout = null;
 let choiceTimeout = null;
+let presenceTimeout = null;
+
+// ── Header de grupo (chamado atual + participantes derivados da cena) ─────
+const headerInfo = computed(() => {
+  if (!scene.value?.header) return null;
+
+  const stage = story.currentStage;
+  const participantIds = [
+    ...new Set(
+      Object.values(scene.value.nodes)
+        .map((node) => node.speaker ?? node.char)
+        .filter(Boolean),
+    ),
+  ];
+  const names = [
+    ...participantIds.map(charName),
+    t("story.chat.participants_you"),
+  ];
+
+  return {
+    eyebrow: t("story.dashboard.ticket_eyebrow", {
+      num: stage?.stageNumber || 1,
+    }),
+    title: stage?.titleKey ? t(stage.titleKey) : charName("assistant"),
+    participants: new Intl.ListFormat(locale.value, {
+      style: "long",
+      type: "conjunction",
+    }).format(names),
+  };
+});
 
 // ── Sprites (com fallback para <personagem>_neutral.png) ──────────────────
 const sprites = import.meta.glob("../assets/sprites/*.png", {
@@ -88,6 +140,64 @@ function scrollToBottom() {
   });
 }
 
+function pushLog(entry) {
+  chatLog.value.push({ id: Date.now() + Math.random(), ...entry });
+  scrollToBottom();
+}
+
+// ── Handlers por tipo de nó ───────────────────────────────────────────────
+
+/** Fala de personagem: mostra "digitando..." e depois a mensagem. */
+function playMessage(node, nodeId) {
+  isTyping.value = true;
+  typingChar.value = node.speaker;
+  typingName.value = charName(node.speaker);
+
+  scrollToBottom();
+
+  // Inicia som da máquina de escrever em loop
+  AudioManager.play("keyboard_sfx", { loop: true, volume: 0.5 });
+
+  typingTimeout = setTimeout(() => {
+    commitMessage(nodeId);
+  }, TYPING_DELAY_MS);
+}
+
+/** Aviso centralizado "<nome> entrou/saiu do chat"; avança sozinho. */
+function playPresence(node) {
+  // Ao entrar/sair alguém, efeitos pendentes (ex.: telefone tocando) param
+  stopEffects();
+
+  const messageKey = node.action === "leave" ? "left" : "joined";
+  pushLog({
+    kind: "presence",
+    variant: node.action === "leave" ? "leave" : "join",
+    text: t(`story.chat.${messageKey}`, { name: charName(node.char) }),
+  });
+
+  presenceTimeout = setTimeout(() => {
+    processNode(node.next);
+  }, PRESENCE_DELAY_MS);
+}
+
+/** Carrossel de post-its; o jogador segue pelo botão Continuar. */
+function playNotes(node) {
+  AudioManager.play("message_neutral", { volume: 1.0 });
+  pushLog({
+    kind: "notes",
+    title: t("story.chat.notes_title", storyVariables.value),
+    notes: node.notes.map((noteId) =>
+      t(i18nKey(`notes.${noteId}`), storyVariables.value),
+    ),
+  });
+}
+
+const nodeHandlers = {
+  message: playMessage,
+  presence: playPresence,
+  notes: playNotes,
+};
+
 function processNode(nodeId) {
   // next: null → fim da cena
   if (nodeId === null || nodeId === undefined) {
@@ -98,22 +208,14 @@ function processNode(nodeId) {
 
   currentNodeId.value = nodeId;
   const node = scene.value.nodes[nodeId];
+  const handler = nodeHandlers[node.type ?? "message"];
 
-  isTyping.value = true;
-  typingChar.value = node.speaker;
-  typingName.value = t(
-    `story.characters.${node.speaker}`,
-    storyVariables.value,
-  );
-
-  scrollToBottom();
-
-  // Inicia som da máquina de escrever em loop
-  AudioManager.play("keyboard_sfx", { loop: true, volume: 0.5 });
-
-  typingTimeout = setTimeout(() => {
-    commitMessage(nodeId);
-  }, 1500);
+  if (!handler) {
+    console.warn(`[StoryMode] Tipo de nó "${node.type}" desconhecido.`);
+    processNode(node.next ?? null);
+    return;
+  }
+  handler(node, nodeId);
 }
 
 function commitMessage(nodeId) {
@@ -128,16 +230,17 @@ function commitMessage(nodeId) {
 
   const node = scene.value.nodes[nodeId];
 
-  chatLog.value.push({
-    id: Date.now() + Math.random(),
-    isPlayer: false,
+  pushLog({
+    kind: "npc",
     char: node.speaker,
     emotion: node.emotion,
     name: typingName.value,
+    forwarded: Boolean(node.forwarded),
     text: t(i18nKey(nodeId), storyVariables.value),
   });
 
-  scrollToBottom();
+  // Efeitos de cena declarados no nó (som, tremida, vibração)
+  applyEffects(node.effects);
 }
 
 function skipTyping() {
@@ -149,18 +252,16 @@ function skipTyping() {
 function handleChoice(choice) {
   AudioManager.play("reply_sfx", { volume: 1.0 });
 
-  chatLog.value.push({
-    id: Date.now() + Math.random(),
-    isPlayer: true,
+  pushLog({
+    kind: "player",
     text: t(i18nKey(choice.id), storyVariables.value),
   });
 
   currentNodeId.value = null;
-  scrollToBottom();
 
   choiceTimeout = setTimeout(() => {
     processNode(choice.next);
-  }, 500);
+  }, CHOICE_DELAY_MS);
 }
 
 function handleNext() {
@@ -168,6 +269,14 @@ function handleNext() {
     processNode(currentDialogue.value?.next ?? null);
   }
 }
+
+// Nós de presença avançam sozinhos: não exibem botões
+const showReplyArea = computed(
+  () =>
+    currentDialogue.value &&
+    !isTyping.value &&
+    currentDialogue.value.type !== "presence",
+);
 
 onMounted(() => {
   if (!props.interactive) return;
@@ -185,12 +294,14 @@ onMounted(() => {
 onUnmounted(() => {
   clearTimeout(typingTimeout);
   clearTimeout(choiceTimeout);
+  clearTimeout(presenceTimeout);
   AudioManager.stop("keyboard_sfx");
+  stopEffects();
 });
 </script>
 
 <template>
-  <div class="story-mode-container">
+  <div class="story-mode-container" :class="{ 'anim-screen-shake': isShaking }">
     <template v-if="interactive">
       <PauseButton class="pause-btn-fixed" @click="story.setPaused(true)" />
 
@@ -205,41 +316,73 @@ onUnmounted(() => {
       />
     </template>
 
-    <div class="chat-history" ref="chatContainer" @click="skipTyping">
-      <div v-if="scene?.systemMessage" class="system-message">
+    <ChatHeader
+      v-if="interactive && headerInfo"
+      :eyebrow="headerInfo.eyebrow"
+      :title="headerInfo.title"
+      :participants="headerInfo.participants"
+    />
+
+    <div
+      class="chat-history"
+      :class="{ 'has-header': interactive && headerInfo }"
+      ref="chatContainer"
+      @click="skipTyping"
+    >
+      <ChatSystemNotice v-if="scene?.systemMessage" class="system-intro">
         {{ $t(i18nKey("_system")) }}
-      </div>
+      </ChatSystemNotice>
 
-      <div
-        v-for="msg in chatLog"
-        :key="msg.id"
-        class="message-row anim-fade-in"
-        :class="msg.isPlayer ? 'player-row' : 'npc-row'"
-      >
-        <template v-if="!msg.isPlayer">
-          <div
-            class="message-bubble notebook-paper npc-bubble"
-            :style="charStyle(msg.char)"
-          >
-            <div class="avatar-container anim-bounce">
-              <img
-                :src="getSpriteUrl(msg.char, msg.emotion)"
-                class="avatar-icon"
-                :alt="msg.char"
-              />
+      <template v-for="msg in chatLog" :key="msg.id">
+        <!-- Aviso de presença (entrou / saiu do chat) -->
+        <ChatSystemNotice
+          v-if="msg.kind === 'presence'"
+          :variant="msg.variant"
+          class="anim-fade-in"
+        >
+          {{ msg.text }}
+        </ChatSystemNotice>
+
+        <!-- Post-its -->
+        <div v-else-if="msg.kind === 'notes'" class="anim-slide-up notes-row">
+          <StickyNotesCarousel :title="msg.title" :notes="msg.notes" />
+        </div>
+
+        <!-- Mensagens -->
+        <div
+          v-else
+          class="message-row anim-fade-in"
+          :class="msg.kind === 'player' ? 'player-row' : 'npc-row'"
+        >
+          <template v-if="msg.kind === 'npc'">
+            <div
+              class="message-bubble notebook-paper npc-bubble"
+              :class="{ 'is-forwarded': msg.forwarded }"
+              :style="charStyle(msg.char)"
+            >
+              <div class="avatar-container anim-bounce">
+                <img
+                  :src="getSpriteUrl(msg.char, msg.emotion)"
+                  class="avatar-icon"
+                  :alt="msg.char"
+                />
+              </div>
+
+              <span class="sender-name">{{ msg.name }}</span>
+              <span v-if="msg.forwarded" class="forwarded-label">
+                ↪ {{ $t("story.chat.forwarded") }}
+              </span>
+              <div class="text-content">{{ msg.text }}</div>
             </div>
+          </template>
 
-            <span class="sender-name">{{ msg.name }}</span>
-            <div class="text-content">{{ msg.text }}</div>
-          </div>
-        </template>
-
-        <template v-else>
-          <div class="message-bubble notebook-paper player-bubble">
-            <div class="text-content">{{ msg.text }}</div>
-          </div>
-        </template>
-      </div>
+          <template v-else>
+            <div class="message-bubble notebook-paper player-bubble">
+              <div class="text-content">{{ msg.text }}</div>
+            </div>
+          </template>
+        </div>
+      </template>
 
       <!-- Indicador de Digitação -->
       <div v-if="isTyping" class="message-row npc-row anim-fade-in">
@@ -257,7 +400,7 @@ onUnmounted(() => {
     </div>
 
     <!-- ÁREA DE INPUT / OPÇÕES -->
-    <div class="reply-area" v-if="currentDialogue && !isTyping">
+    <div class="reply-area" v-if="showReplyArea">
       <template v-if="currentDialogue.choices">
         <button
           v-for="choice in currentDialogue.choices"
@@ -308,15 +451,19 @@ onUnmounted(() => {
   scroll-behavior: smooth;
 }
 
-.system-message {
-  text-align: center;
-  font-size: 0.85rem;
-  color: #666;
-  background: rgba(255, 255, 255, 0.4);
-  padding: 4px 12px;
-  border-radius: 12px;
-  align-self: center;
+/* Com header, o espaço do botão de pausa já está reservado nele */
+.chat-history.has-header {
+  padding-top: 1.5rem;
+}
+
+.system-intro {
   margin-bottom: 1rem;
+}
+
+.notes-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
 
 .message-row {
@@ -400,6 +547,20 @@ onUnmounted(() => {
   border-bottom-right-radius: 0;
   background-color: #f0f7f0;
   border-left: 3px solid rgba(80, 200, 80, 0.6);
+}
+
+/* Mensagem encaminhada (relida/citada por outro personagem) */
+.is-forwarded {
+  background-color: #f7f4ee;
+  border-left-style: dashed;
+}
+
+.forwarded-label {
+  display: block;
+  font-size: 0.75rem;
+  font-style: italic;
+  line-height: 1.4;
+  color: #888;
 }
 
 /* ── NOMES ── */
@@ -496,6 +657,11 @@ onUnmounted(() => {
   animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
+/* Tremida horizontal da tela (ex.: telefone tocando) */
+.anim-screen-shake {
+  animation: screen-shake 0.45s ease-in-out;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -522,6 +688,23 @@ onUnmounted(() => {
   to {
     transform: scale(1);
     opacity: 1;
+  }
+}
+@keyframes screen-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  15%,
+  55% {
+    transform: translateX(-6px);
+  }
+  35%,
+  75% {
+    transform: translateX(6px);
+  }
+  90% {
+    transform: translateX(-2px);
   }
 }
 

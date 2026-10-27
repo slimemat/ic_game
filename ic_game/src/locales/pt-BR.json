@@ -195,7 +195,19 @@
       "assistantName": "Malu",
       "managerName": "Sérgio W.",
       "companyName": "LogicHub",
-      "taskGiver01Name": "Dra. Helena"
+      "taskGiver01Name": "Dra. Helena",
+      "formerITguyName": "Rardi"
+    },
+    "chat": {
+      "joined": "{name} entrou no chat",
+      "left": "{name} saiu do chat",
+      "participants_you": "você",
+      "notes_title": "Anotações do {formerITguyName}",
+      "notes_counter": "{current} / {total}",
+      "notes_prev": "Anotação anterior",
+      "notes_next": "Próxima anotação",
+      "notes_goto": "Ir para a anotação {num}",
+      "forwarded": "Mensagem encaminhada"
     },
     "characters": {
       "assistant": "{assistantName}",
@@ -272,10 +284,17 @@
         "assistant_finish_player": "Vamos lá, meu bem. Abra seu Painel de Chamados para iniciar sua primeira tarefa."
       },
       "pre-pattern-recognition": {
-        "briefing": "O cliente deste chamado perdeu o controle das sequências de formas do sistema dele. Os padrões ficaram corrompidos, e alguém precisa restaurá-los. O cliente está ligando. Vamos ouvir!",
-        "client_call": "Socorro, {playerName}! Eu estava restaurando um banco de dados milenar quando o sistema travou exigindo a continuação de uma sequência de símbolos!",
-        "analysis": "Analisando os dados... Olhe com atenção para as figuras, recruta! Algumas mudam de formato, outras giram como os ponteiros de um relógio (0°, 90°, 180°...). Encontre a regra que comanda essa transformação e selecione o símbolo correto para restaurar o arquivo da {taskGiver01Name}.",
-        "tip": "Dica: observe o que muda de uma forma para a próxima. Depois, arraste a resposta certa para o espaço vazio e confirme!"
+        "briefing": "O cliente deste chamado é a {taskGiver01Name}. Ela me contou por cima o que aconteceu, vamos reler a mensagem dela pra entender melhor:",
+        "client_call": "Socorro, equipe da {companyName}! Eu estava rodando uma consulta num banco de dados milenar e, sem querer, apaguei algumas tabelas. O sistema está exigindo uma restauração lógica do HD e, pra isso, preciso da ajuda de vocês pra entender o que esses símbolos querem dizer!",
+        "analysis": "Analisando o que ela disse... Vamos precisar conversar com a máquina na língua dela pra conseguir restaurar esse banco de dados.",
+        "former_it": "Bom, pelo menos é isso que o {formerITguyName} costumava dizer... Ele saiu no último corte de gastos, hahaha! *rindo de nervoso*",
+        "notes_handoff": "Ele deixou umas anotações. Dá uma olhada, tenho certeza que você vai entender! Boa sorte.",
+        "notes": {
+          "rotation": "Algumas formas precisam ser rotacionadas conforme as anteriores.",
+          "repeat": "Certos padrões se repetem!",
+          "instructions": "Leia com cuidado as instruções do computador: algumas condições combinadas podem confundir.",
+          "rule": "Observe o que muda de uma forma para a outra, descubra a regra e encontre a próxima para o espaço vazio."
+        }
       },
       "post-pattern-recognition-1": {
         "client_thanks": "Incrível, {playerName}! Os dados geométricos voltaram ao normal. O arquivo foi salvo graças à sua dedução!",

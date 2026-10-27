@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Patrick+Hand&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 :root {
   /* Brand Colors */
@@ -30,6 +30,8 @@
 
   --font-main: "Space Grotesk", sans-serif;
   --font-mono: "DM Mono", monospace;
+  --font-handwritten:
+    "Patrick Hand", "Comic Sans MS", cursive; /* post-its / anotações */
 
   /* Overlays e bordas de UI flutuante */
   --bg-overlay: rgba(0, 0, 0, 0.5);
