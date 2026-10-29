@@ -88,6 +88,7 @@ let choiceTimeout = null;
 let presenceTimeout = null;
 let transitionTimeout = null;
 let clearChatTimeout = null;
+const pendingChoiceNextId = ref(null);
 const isFading = ref(false);
 const transitionText = ref("");
 
@@ -258,6 +259,10 @@ const nodeHandlers = {
 };
 
 function processNode(nodeId) {
+  clearTimeout(choiceTimeout);
+  clearTimeout(presenceTimeout);
+  pendingChoiceNextId.value = null;
+
   // next: null → fim da cena
   if (nodeId === null || nodeId === undefined) {
     currentNodeId.value = null;
@@ -318,23 +323,76 @@ function handleChoice(choice) {
   });
 
   currentNodeId.value = null;
+  pendingChoiceNextId.value = choice.next;
 
   choiceTimeout = setTimeout(() => {
-    processNode(choice.next);
+    const nextId = pendingChoiceNextId.value;
+    pendingChoiceNextId.value = null;
+    processNode(nextId);
   }, CHOICE_DELAY_MS);
 }
 
+const hasNextNode = computed(
+  () =>
+    currentDialogue.value?.next !== null &&
+    currentDialogue.value?.next !== undefined,
+);
+
+const canClickChatToAdvance = computed(() => {
+  if (!props.interactive || story.isPaused || isFading.value) return false;
+  if (isTyping.value || pendingChoiceNextId.value !== null) return true;
+  if (!currentDialogue.value) return false;
+  if (currentDialogue.value.type === "presence") return true;
+
+  return (
+    !currentDialogue.value.choices &&
+    currentDialogue.value.type !== "transition" &&
+    currentDialogue.value.type !== "placeholder" &&
+    hasNextNode.value
+  );
+});
+
 function handleNext() {
-  if (!isTyping.value) {
-    processNode(currentDialogue.value?.next ?? null);
+  if (isTyping.value) {
+    skipTyping();
+    return;
+  }
+  processNode(currentDialogue.value?.next ?? null);
+}
+
+function handleChatAreaClick() {
+  if (!props.interactive || story.isPaused || isFading.value) return;
+
+  if (isTyping.value) {
+    skipTyping();
+    return;
+  }
+
+  if (pendingChoiceNextId.value !== null) {
+    processNode(pendingChoiceNextId.value);
+    return;
+  }
+
+  if (currentDialogue.value?.type === "presence") {
+    processNode(currentDialogue.value.next);
+    return;
+  }
+
+  if (
+    currentDialogue.value &&
+    !currentDialogue.value.choices &&
+    currentDialogue.value.type !== "transition" &&
+    currentDialogue.value.type !== "placeholder" &&
+    hasNextNode.value
+  ) {
+    handleNext();
   }
 }
 
-// Nós de presença avançam sozinhos: não exibem botões
+// Mantém a área de resposta visível durante a digitação para evitar saltos de layout
 const showReplyArea = computed(
   () =>
     currentDialogue.value &&
-    !isTyping.value &&
     currentDialogue.value.type !== "presence" &&
     currentDialogue.value.type !== "branch" &&
     currentDialogue.value.type !== "transition" &&
@@ -390,9 +448,12 @@ onUnmounted(() => {
 
     <div
       class="chat-history"
-      :class="{ 'has-header': interactive && headerInfo }"
+      :class="{
+        'has-header': interactive && headerInfo,
+        'is-clickable': canClickChatToAdvance,
+      }"
       ref="chatContainer"
-      @click="skipTyping"
+      @click="handleChatAreaClick"
     >
       <ChatSystemNotice v-if="scene?.systemMessage" class="system-intro">
         {{ $t(i18nKey("_system")) }}
@@ -500,7 +561,7 @@ onUnmounted(() => {
 
     <!-- ÁREA DE INPUT / OPÇÕES -->
     <div class="reply-area" v-if="showReplyArea">
-      <template v-if="currentDialogue.choices">
+      <template v-if="!isTyping && currentDialogue.choices">
         <button
           v-for="choice in currentDialogue.choices"
           :key="choice.id"
@@ -513,9 +574,19 @@ onUnmounted(() => {
       <template v-else>
         <button
           class="reply-btn notebook-paper btn-continue anim-slide-up"
+          :class="{
+            'is-typing': isTyping,
+            'is-finish': !isTyping && !hasNextNode,
+          }"
           @click="handleNext"
         >
-          {{ $t("global.buttons.continue") }} ➔
+          <template v-if="isTyping">
+            {{ $t("story.chat.btn_typing") }}
+          </template>
+          <template v-else-if="hasNextNode">
+            {{ $t("story.chat.btn_next_message") }} ➔
+          </template>
+          <template v-else> {{ $t("global.buttons.continue") }} ➔ </template>
         </button>
       </template>
     </div>
@@ -648,6 +719,11 @@ onUnmounted(() => {
 /* Com header, o espaço do botão de pausa já está reservado nele */
 .chat-history.has-header {
   padding-top: 1.5rem;
+}
+
+.chat-history.is-clickable {
+  cursor: pointer;
+  user-select: none;
 }
 
 .system-intro {
@@ -838,6 +914,18 @@ onUnmounted(() => {
   font-weight: bold;
   color: #2b6cb0;
   border-left-color: #2b6cb0;
+}
+
+.btn-continue.is-typing {
+  color: #6b7280;
+  border-left-color: #9ca3af;
+  letter-spacing: 0.2em;
+}
+
+.btn-continue.is-finish {
+  color: #1e40af;
+  border-left-color: #1e40af;
+  background-color: #eff6ff;
 }
 
 /* ── ANIMAÇÕES ── */

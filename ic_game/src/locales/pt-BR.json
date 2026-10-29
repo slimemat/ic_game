@@ -202,6 +202,8 @@
       "joined": "{name} entrou no chat",
       "left": "{name} saiu do chat",
       "participants_you": "você",
+      "btn_typing": "...",
+      "btn_next_message": "Próxima mensagem",
       "notes_title": "Anotações do {formerITguyName}",
       "notes_counter": "{current} / {total}",
       "notes_prev": "Anotação anterior",

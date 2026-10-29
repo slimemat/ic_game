@@ -46,6 +46,7 @@ function noteStyle(index) {
     class="sticky-notes"
     :aria-label="title"
     aria-roledescription="carousel"
+    @click.stop
     @keydown.left.prevent="goTo(activeIndex - 1)"
     @keydown.right.prevent="goTo(activeIndex + 1)"
   >
