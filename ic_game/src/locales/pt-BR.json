@@ -62,7 +62,7 @@
     },
     "story": {
       "title": "Modo História",
-      "subtitle_new": "Comece sua carreira na LogicHub.",
+      "subtitle_new": "Comece sua carreira na {companyName}.",
       "subtitle_progress": "Continue de onde parou.",
       "btn_start": "Iniciar Jornada",
       "btn_continue": "Continuar Jornada"
@@ -83,6 +83,38 @@
     "debug": {
       "aria": "Ferramentas de Debug",
       "badge": "PAINEL DEBUG DEV",
+      "status_title": "Estado Pré-Selecionado no Pinia",
+      "status_shift_night": "🌙 Turno Noturno (Trabalhou até tarde → Tipster Bot / Difícil)",
+      "status_shift_day": "☀️ Turno Diurno (Encerrou cedo → Assistente Malu / Normal)",
+      "status_day": "Dia {day}",
+      "status_stars": "{stars} ★ na etapa",
+      "status_checkpoint": "Checkpoint: {checkpoint}",
+      "decisions_title": "1. Pré-definir Decisões e Estado",
+      "shift_label": "Decisão Dia 1 / Cenário Etapa 2 (stage2TimeOfDay):",
+      "shift_night_btn": "🌙 Noturno (Tipster Bot)",
+      "shift_day_btn": "☀️ Diurno (Malu)",
+      "stars_label": "Estrelas da Etapa (lastStageStars):",
+      "stars_btn": "{stars} ★",
+      "cutscenes_title": "2. Pular para Cutscene (Diálogos)",
+      "games_title": "3. Pular para Jogo / Painel (Checkpoints)",
+      "presets": {
+        "cutscene_intro": "💬 Cutscene Inicial (Intro)",
+        "cutscene_pre_1": "💬 Briefing Etapa 1 (Dra. Helena + Post-its)",
+        "cutscene_post_1": "💬 Pós-Etapa 1 (Avaliação {stars}★ + Escolha Dia/Noite)",
+        "cutscene_pre_2": "💬 Briefing Etapa 2 (Placeholder)",
+        "cutscene_post_2_night": "🤖 Pós-Etapa 2: Resposta do Tipster Bot (Noturno → Dia 2)",
+        "cutscene_post_2_day": "👩‍💼 Pós-Etapa 2: Resposta da Malu (Diurno → Lobby)",
+        "screen_dashboard": "📋 Painel de Chamados (Dashboard)",
+        "game_stage_1": "🎮 Jogo Etapa 1: Rotações (Fases 1–10)",
+        "game_stage_2_night": "🎮 Jogo Etapa 2: Transformações Noturnas Difíceis (Fases 16–20)",
+        "game_stage_2_day": "🎮 Jogo Etapa 2: Transformações Diurnas Normais (Fases 11–15)",
+        "game_stage_2_multi": "⚡ Jogo Etapa 2: Fase Final Multi-Passos (2 Etapas)",
+        "game_stage_3": "🎨 Jogo Etapa 3: Sequência de Cores (Fases 21+)",
+        "screen_promotion": "🏆 Modal de Promoção de Cargo"
+      },
+      "feedback_shift_changed": "✓ Estado atualizado: {shift}",
+      "feedback_stars_changed": "✓ Desempenho pré-definido: {stars} ★",
+      "feedback_jumped": "⚡ Pulando para: {target}",
       "reset_label": "🗑️ Resetar Progresso Pinia / Storage",
       "reset_title": "Zera o progresso de todas as stores do Pinia e LocalStorage",
       "reset_done": "✓ Progresso do Pinia & LocalStorage resetado com sucesso!",
@@ -162,22 +194,64 @@
     "type_rotation": "Rotação de Formas",
     "type_transformation": "Transformação Espacial",
     "type_color": "Padrão de Cores",
-    "instruction_title": "INSTRUÇÃO DE TRANSFORMAÇÃO",
-    "drag_hint_transformation": "Arraste a forma resultante para o espaço '?'",
     "label_original": "FORMA BASE",
+    "label_step_result": "RESULTADO {step}",
     "label_result": "RESULTADO",
+    "label_final_result": "RESULTADO FINAL",
+    "step_confirmed_badge": "✓ PASSO {step} OK",
     "stats_level": "Fase Concluída: {num}",
     "stats_type": "Desafio: {type}",
-    "question_diff_1": "Qual é o próximo padrão?",
-    "drag_hint": "Arraste a resposta para o espaço vazio",
-    "question_diff_2": "Selecione o próximo padrão",
     "err_select_first": "Selecione uma opção antes de confirmar!",
     "err_incorrect": "Padrão incorreto! Observe com mais atenção.",
-    "transform_rotate_90_cw": "Gire a forma 90° no sentido horário.",
-    "transform_flip_horizontal": "Espelhe a forma horizontalmente (inverter esquerda e direita).",
-    "transform_rotate_180": "Gire a forma 180° (meia volta completa).",
-    "transform_flip_vertical": "Espelhe a forma verticalmente (inverter topo e base).",
-    "transform_rotate_90_flip_h": "Gire 90° no sentido horário e espelhe horizontalmente."
+    "hint_button_label": "Dica",
+    "hint_button_aria": "Mostrar ou ocultar dica da fase",
+    "mechanics": {
+      "drag_to_slot": "Arraste uma peça até o espaço '?'"
+    },
+    "prompts": {
+      "rotation_sequence": "Observe o giro e complete a sequência:",
+      "rotation_cycle": "Qual peça completa o ciclo?",
+      "color_sequence": "Complete a sequência de cores:",
+      "transform_rotate_90_cw": "Gire a forma 90° no sentido horário:",
+      "transform_rotate_90_ccw": "Gire a forma 90° no sentido anti-horário:",
+      "transform_flip_h": "Espelhe a forma na horizontal:",
+      "transform_rotate_180": "Gire a forma 180° (sentido horário):",
+      "transform_flip_v": "Espelhe a forma na vertical:",
+      "transform_rotate_90_flip_h": "Transformação em 2 etapas:",
+      "step_1_rotate_90_cw": "Gire a forma base 90° no sentido horário",
+      "step_1_rotate_90_ccw": "Gire a forma base 90° no sentido anti-horário",
+      "step_1_rotate_180": "Gire a forma base 180° (sentido horário)",
+      "step_1_flip_h": "Espelhe a forma base na horizontal",
+      "step_2_flip_h_result": "Espelhe o RESULTADO 1 na horizontal",
+      "step_2_flip_v_result": "Espelhe o RESULTADO 1 na vertical",
+      "step_2_rotate_90_cw_result": "Gire o RESULTADO 1 em 90° no sentido horário",
+      "step_2_rotate_90_ccw_result": "Gire o RESULTADO 1 em 90° no sentido anti-horário"
+    },
+    "hints": {
+      "rotate_cw_90": "A figura gira 90° no sentido horário a cada passo.",
+      "rotate_ccw_90": "A figura gira 90° no sentido anti-horário a cada passo.",
+      "alternate_180": "O padrão alterna entre duas posições opostas (meia-volta).",
+      "rotate_cw_45": "A figura gira em passos curtos (45°) no sentido horário.",
+      "cycle_cw_90": "Após completar uma volta inteira, o ciclo recomeça do início.",
+      "alternate_pingpong": "O padrão se repete alternando entre duas posições.",
+      "rotate_ccw_45": "A figura gira em passos curtos (45°) no sentido anti-horário.",
+      "transform_rotate_90_cw": "Imagine o topo da forma base tombando um quarto de volta para a direita.",
+      "transform_rotate_90_ccw": "Imagine o topo da forma base tombando um quarto de volta para a esquerda.",
+      "transform_flip_h": "Inverta os lados esquerdo e direito da forma base, como em um espelho.",
+      "transform_rotate_180": "Vire a forma de cabeça para baixo (meia volta completa).",
+      "transform_flip_v": "Inverta o topo e a base da forma original.",
+      "transform_rotate_90_flip_h": "Complete um passo por vez: primeiro transforme a forma base e confirme; depois aplique o segundo passo sobre o RESULTADO 1.",
+      "step_1_rotate_90_cw": "Girando 90° no sentido horário, a metade azul do topo vai para a direita.",
+      "step_1_rotate_90_ccw": "Girando 90° no sentido anti-horário, a metade azul da esquerda vai para a base.",
+      "step_1_rotate_180": "Dê meia-volta na forma base: o lado azul da esquerda passa para a direita.",
+      "step_1_flip_h": "Inverta os lados esquerdo e direito da forma base: o lado azul vai para a direita.",
+      "step_2_flip_h_result": "Olhe para o RESULTADO 1 à esquerda e inverta os lados esquerdo e direito.",
+      "step_2_flip_v_result": "Olhe para o RESULTADO 1 à esquerda e inverta o topo e a base.",
+      "step_2_rotate_90_cw_result": "Olhe para o RESULTADO 1 à esquerda e gire um quarto de volta no sentido horário.",
+      "step_2_rotate_90_ccw_result": "Olhe para o RESULTADO 1 à esquerda e gire um quarto de volta no sentido anti-horário.",
+      "color_alternate_2": "O padrão se repete alternando entre duas cores.",
+      "color_cycle_3": "A sequência repete um ciclo de três cores na mesma ordem."
+    }
   },
   "charade": {
     "level_title": "Fase {num}: {title}",
@@ -194,13 +268,34 @@
     "variables": {
       "assistantName": "Malu",
       "managerName": "Sérgio W.",
-      "companyName": "LogicHub",
-      "taskGiver01Name": "Dra. Helena"
+      "companyName": "Logicompany",
+      "taskGiver01Name": "Dra. Helena",
+      "formerITguyName": "Rardi",
+      "tipsterBotName": "Tipster Bot"
+    },
+    "chat": {
+      "joined": "{name} entrou no chat",
+      "left": "{name} saiu do chat",
+      "participants_you": "você",
+      "btn_typing": "...",
+      "btn_next_message": "Próxima mensagem",
+      "notes_title": "Anotações do {formerITguyName}",
+      "notes_counter": "{current} / {total}",
+      "notes_prev": "Anotação anterior",
+      "notes_next": "Próxima anotação",
+      "notes_goto": "Ir para a anotação {num}",
+      "forwarded": "Mensagem encaminhada",
+      "day_title": "DIA {day}",
+      "day_2": "DIA 2",
+      "placeholder_title": "Placeholder Fase {stage}",
+      "placeholder_desc": "O briefing narrativo desta fase está em desenvolvimento.",
+      "placeholder_btn": "Iniciar Fase"
     },
     "characters": {
       "assistant": "{assistantName}",
       "manager": "{managerName}",
-      "taskGiver01": "{taskGiver01Name}"
+      "taskGiver01": "{taskGiver01Name}",
+      "tipster_bot": "{tipsterBotName}"
     },
     "ranks": {
       "intern": "Estagiário(a)",
@@ -272,23 +367,45 @@
         "assistant_finish_player": "Vamos lá, meu bem. Abra seu Painel de Chamados para iniciar sua primeira tarefa."
       },
       "pre-pattern-recognition": {
-        "briefing": "O cliente deste chamado perdeu o controle das sequências de formas do sistema dele. Os padrões ficaram corrompidos, e alguém precisa restaurá-los. O cliente está ligando. Vamos ouvir!",
-        "client_call": "Socorro, {playerName}! Eu estava restaurando um banco de dados milenar quando o sistema travou exigindo a continuação de uma sequência de símbolos!",
-        "analysis": "Analisando os dados... Olhe com atenção para as figuras, recruta! Algumas mudam de formato, outras giram como os ponteiros de um relógio (0°, 90°, 180°...). Encontre a regra que comanda essa transformação e selecione o símbolo correto para restaurar o arquivo da {taskGiver01Name}.",
-        "tip": "Dica: observe o que muda de uma forma para a próxima. Depois, arraste a resposta certa para o espaço vazio e confirme!"
+        "briefing": "O cliente deste chamado é a {taskGiver01Name}. Ela me contou por cima o que aconteceu, vamos reler a mensagem dela pra entender melhor:",
+        "client_call": "Socorro, equipe da {companyName}! Eu estava rodando uma consulta num banco de dados milenar e, sem querer, apaguei algumas tabelas. O sistema está exigindo uma restauração lógica do HD e, pra isso, preciso da ajuda de vocês pra entender o que esses símbolos querem dizer!",
+        "analysis": "Analisando o que ela disse... Vamos precisar conversar com a máquina na língua dela pra conseguir restaurar esse banco de dados.",
+        "former_it": "Bom, pelo menos é isso que o {formerITguyName} costumava dizer... Ele saiu no último corte de gastos, hahaha! *rindo de nervoso*",
+        "notes_handoff": "Ele deixou umas anotações. Dá uma olhada, tenho certeza que você vai entender! Boa sorte.",
+        "notes": {
+          "rotation": "Algumas formas precisam ser rotacionadas conforme as anteriores.",
+          "repeat": "Certos padrões se repetem!",
+          "instructions": "Leia com cuidado as instruções do computador: algumas condições combinadas podem confundir.",
+          "rule": "Observe o que muda de uma forma para a outra, descubra a regra e encontre a próxima para o espaço vazio."
+        }
       },
       "post-pattern-recognition-1": {
-        "client_thanks": "Incrível, {playerName}! Os dados geométricos voltaram ao normal. O arquivo foi salvo graças à sua dedução!",
-        "assistant_praise": "Mandou muito bem! Você concluiu a tarefa e faturou seus primeiros pontos de experiência corporativa (XP).",
-        "manager_feedback": "Excelente trabalho! Estou de olho nas suas métricas. Se continuar resolvendo chamados e acumulando experiência, a vaga de Analista Júnior é sua!",
-        "choiceContinue": "Pode mandar mais chamados, Chefe!",
-        "choiceHumble": "Obrigado(a)! Vou continuar me esforçando.",
-        "manager_reply": "Essa é a atitude! Volte ao Painel de Chamados e pegue seu próximo lote de tarefas. Rumo ao topo!",
-        "assistant_dashboard": "Viu só? O Chefe gostou! Vamos voltar ao painel e ver o que mais tem pra resolver."
+        "client_thanks": "Incrível, equipe do {companyName}! Os dados geométricos voltaram ao normal.",
+        "assistant_praise_3stars": "Muito bem, querido(a), você foi perfeito nesse chamado! Que ótima primeira impressão!",
+        "assistant_praise_2stars": "Para seu primeiro chamado, você foi bem!",
+        "assistant_praise_1star": "Sabia que você não iria desistir! Quando eu entrei aqui, eu também fiquei meio perdida, mas olha pra mim agora! hahaha!",
+        "manager_enters": "Com licença, {assistantName}. Eu conheço um prodígio quando vejo um. Faça o possível para que esse(a) estagiário se sinta em casa.",
+        "manager_whisper": "*falando baixo* Não quero abrir outra vaga de novo...",
+        "assistant_reactions_1": "Viu só? O big boss gostou de você!",
+        "assistant_reactions_2": "Nós temos um plano de carreira bem sólido aqui na {companyName}. Continue se esforçando, que seu talento será reconhecido!",
+        "choiceContinueTask": "Tem mais alguma tarefa pra mim?",
+        "choiceCallItADay": "Por hoje é só então?",
+        "replyContinueTask": "Sim, claro! Eu tenho que resolver um pepino ali, mas pode abrir o painel de chamados que pedi pra encaminharem algo pra você. Te vejo por aí!",
+        "replyCallItADay": "Ah, uhmm, sim! As leis preveem que os estagiários devem ter uma carga horária reduzida. Ainda bem que você me avisou, haha!",
+        "malu_night_scared": "Oi, eu já acabei meu expediente. Vejo que está bem focado aí com suas tarefas... Te vejo amanhã!",
+        "malu_morning_greeting": "Bom dia! Prontinho(a) para mais um dia de trabalho? Abra seu painel de chamados, já temos novas tarefas nos esperando!"
       },
       "post-pattern-recognition-2": {
-        "manager_eval": "Impressionante, {playerName}! Você completou este lote com excelência e acumulou XP suficiente para a diretoria autorizar sua promoção!",
+        "tipster_bot_intro": "Bip-bop... me chamo Tipster. Notei que você é o único aqui nesse expediente...",
+        "tipster_bot_advice": "Os chamados da fila noturna acabaram por hoje. Não posso permitir que fique aqui. Vá para casa descansar e volte amanhã!",
+        "assistant_all_done": "Prontinho! Os chamados de hoje acabaram.",
+        "assistant_go_to_lobby": "Você já pode esperar lá na área de trabalho até algo novo aparecer, tá bom? Qualquer novidade eu te chamo!",
+        "manager_eval": "Impressionante! Você completou este lote com excelência e acumulou XP suficiente para a diretoria autorizar sua promoção!",
         "assistant_celebrate": "Olha só isso! Você recebeu uma promoção oficial no sistema! Parabéns pelo novo cargo!"
+      },
+      "pre-pattern-recognition-2": {
+        "placeholder_title": "Placeholder Fase {stage}",
+        "placeholder_desc": "O briefing narrativo desta fase está em desenvolvimento."
       }
     }
   },

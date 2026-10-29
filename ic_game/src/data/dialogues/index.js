@@ -1,3 +1,24 @@
+/**
+ * Grafos das cenas de diálogo (chat) do Modo História.
+ *
+ * Configuração de cena:
+ *   start         – id do primeiro nó
+ *   systemMessage – (opcional) exibe story.scenes.<cena>._system no topo
+ *   header        – (opcional) exibe o header de grupo (chamado atual + participantes)
+ *
+ * Tipos de nó (campo `type`; omitido = "message"):
+ *   message  – fala de um personagem. Campos: speaker, emotion, next | choices,
+ *              effects? (ids de ./effects.js), forwarded? (rótulo "encaminhada")
+ *   presence – aviso centralizado "<nome> entrou/saiu do chat"; avança sozinho.
+ *              Campos: action ("join" | "leave"), char, next
+ *   branch     – bifurcação condicional síncrona. Campos: branch: ({ stars, story }) => nextNodeId
+ *   transition  – fade out na tela com efeito sonoro, texto e limpeza de chat. Campos: effects, duration, overlayTextKey, clearChat, onTransition?, next
+ *   placeholder – tela com sprite e badge de placeholder para fases em desenvolvimento. Campos: image, next
+ *   notes    – carrossel de post-its. Campos: notes (ids em
+ *              story.scenes.<cena>.notes.<id>), next
+ *
+ * Os textos ficam em story.scenes.<cena>.<idDoNó> no pt-BR.json.
+ */
 export const scenes = {
   // Cena de abertura do Modo História
   intro: {
@@ -25,6 +46,13 @@ export const scenes = {
       call_manager: {
         speaker: "assistant",
         emotion: "neutral",
+        effects: ["phoneRing"], // tremida horizontal + telephone_ring
+        next: "manager_joins",
+      },
+      manager_joins: {
+        type: "presence",
+        action: "join",
+        char: "manager",
         next: "manager_enters",
       },
       manager_enters: {
@@ -40,6 +68,12 @@ export const scenes = {
       assistant_finish: {
         speaker: "assistant",
         emotion: "neutral",
+        next: "manager_leaves",
+      },
+      manager_leaves: {
+        type: "presence",
+        action: "leave",
+        char: "manager",
         next: "assistant_finish_player",
       },
       assistant_finish_player: {
@@ -51,8 +85,12 @@ export const scenes = {
   },
 
   // Briefing antes do desafio "pattern-recognition" (padrão: pre-<gameId>)
+  // TODO(história): hoje esta cena é compartilhada pelas Etapas 1, 2 e 3 (ver
+  // progressionConfig.js). Vamos removê-la das etapas seguintes OU criar novas
+  // histórias de clientes para narrar cada novo desafio.
   "pre-pattern-recognition": {
     start: "briefing",
+    header: true,
     nodes: {
       briefing: {
         speaker: "assistant",
@@ -62,41 +100,164 @@ export const scenes = {
       client_call: {
         speaker: "taskGiver01",
         emotion: "neutral",
+        forwarded: true, // a Malu está relendo a mensagem da cliente
         next: "analysis",
       },
-      analysis: { speaker: "assistant", emotion: "explaining", next: "tip" },
-      tip: { speaker: "assistant", emotion: "explaining", next: null },
+      analysis: {
+        speaker: "assistant",
+        emotion: "explaining",
+        next: "former_it",
+      },
+      former_it: {
+        speaker: "assistant",
+        emotion: "neutral",
+        next: "notes_handoff",
+      },
+      notes_handoff: {
+        speaker: "assistant",
+        emotion: "explaining",
+        next: "rardi_notes",
+      },
+      rardi_notes: {
+        type: "notes",
+        notes: ["rotation", "repeat", "instructions", "rule"],
+        next: null,
+      },
+    },
+  },
+
+  // Briefing da Etapa 2 (Placeholder com spritepaint.png)
+  "pre-pattern-recognition-2": {
+    start: "stage_placeholder",
+    nodes: {
+      stage_placeholder: {
+        type: "placeholder",
+        image: "spritepaint",
+        next: null,
+      },
     },
   },
 
   // Cutscene pós-conclusão da Etapa 1
   "post-pattern-recognition-1": {
     start: "client_thanks",
+    header: true,
     nodes: {
       client_thanks: {
         speaker: "taskGiver01",
         emotion: "neutral",
-        next: "assistant_praise",
+        next: "client_leaves",
       },
-      assistant_praise: {
+      client_leaves: {
+        type: "presence",
+        action: "leave",
+        char: "taskGiver01",
+        next: "assistant_praise_branch",
+      },
+      assistant_praise_branch: {
+        type: "branch",
+        branch: ({ stars }) => {
+          if (stars === 3) return "assistant_praise_3stars";
+          if (stars === 2) return "assistant_praise_2stars";
+          return "assistant_praise_1star";
+        },
+      },
+      assistant_praise_3stars: {
         speaker: "assistant",
         emotion: "explaining",
-        next: "manager_feedback",
+        next: "manager_joins",
       },
-      manager_feedback: {
+      assistant_praise_2stars: {
+        speaker: "assistant",
+        emotion: "explaining",
+        next: "manager_joins",
+      },
+      assistant_praise_1star: {
+        speaker: "assistant",
+        emotion: "explaining",
+        next: "manager_joins",
+      },
+      manager_joins: {
+        type: "presence",
+        action: "join",
+        char: "manager",
+        next: "manager_enters",
+      },
+      manager_enters: {
         speaker: "manager",
         emotion: "explaining",
-        choices: [
-          { id: "choiceContinue", next: "manager_reply" },
-          { id: "choiceHumble", next: "manager_reply" },
-        ],
+        next: "manager_whisper",
       },
-      manager_reply: {
+      manager_whisper: {
         speaker: "manager",
         emotion: "neutral",
-        next: "assistant_dashboard",
+        next: "manager_leaves",
       },
-      assistant_dashboard: {
+      manager_leaves: {
+        type: "presence",
+        action: "leave",
+        char: "manager",
+        next: "assistant_reactions_1",
+      },
+      assistant_reactions_1: {
+        speaker: "assistant",
+        emotion: "explaining",
+        next: "assistant_reactions_2",
+      },
+      assistant_reactions_2: {
+        speaker: "assistant",
+        emotion: "neutral",
+        choices: [
+          {
+            id: "choiceContinueTask",
+            next: "replyContinueTask",
+            onSelect: ({ story }) => {
+              story.recordDecision("stage2TimeOfDay", "night");
+              story.recordDecision("workedLateDay1", true);
+              story.setCurrentDay(1);
+            },
+          },
+          {
+            id: "choiceCallItADay",
+            next: "replyCallItADay",
+            onSelect: ({ story }) => {
+              story.recordDecision("stage2TimeOfDay", "day");
+              story.recordDecision("workedLateDay1", false);
+            },
+          },
+        ],
+      },
+      replyContinueTask: {
+        speaker: "assistant",
+        emotion: "explaining",
+        next: "transition_night",
+      },
+      transition_night: {
+        type: "transition",
+        effects: ["suspiciousSteps"],
+        duration: 1200,
+        next: "malu_night_scared",
+      },
+      malu_night_scared: {
+        speaker: "assistant",
+        emotion: "neutral",
+        next: null,
+      },
+      replyCallItADay: {
+        speaker: "assistant",
+        emotion: "explaining",
+        next: "transition_day",
+      },
+      transition_day: {
+        type: "transition",
+        effects: ["morningCock"],
+        duration: 1800,
+        overlayTextKey: "story.chat.day_2",
+        clearChat: true,
+        onTransition: ({ story }) => story.setCurrentDay(2),
+        next: "malu_morning_greeting",
+      },
+      malu_morning_greeting: {
         speaker: "assistant",
         emotion: "explaining",
         next: null,
@@ -105,15 +266,58 @@ export const scenes = {
   },
 
   // Cutscene pós-conclusão da Etapa 2
+  // Condicional conforme a escolha do Dia 1 (story.storyDecisions.stage2TimeOfDay):
+  // - "night" (trabalhou até tarde): aparece apenas o tipster_bot (neutral + explaining)
+  //   seguido da transição para o DIA 2.
+  // - "day" (já está no Dia 2): aparece apenas a assistente avisando que os chamados
+  //   acabaram e que o jogador pode aguardar na área de trabalho (Lobby).
   "post-pattern-recognition-2": {
-    start: "manager_eval",
+    start: "check_shift",
     nodes: {
-      manager_eval: {
-        speaker: "manager",
-        emotion: "explaining",
-        next: "assistant_celebrate",
+      check_shift: {
+        type: "branch",
+        branch: ({ story }) =>
+          story.storyDecisions?.stage2TimeOfDay === "night"
+            ? "tipster_bot_joins"
+            : "assistant_all_done",
       },
-      assistant_celebrate: {
+      tipster_bot_joins: {
+        type: "presence",
+        action: "join",
+        char: "tipster_bot",
+        next: "tipster_bot_intro",
+      },
+      tipster_bot_intro: {
+        speaker: "tipster_bot",
+        emotion: "neutral",
+        next: "tipster_bot_advice",
+      },
+      tipster_bot_advice: {
+        speaker: "tipster_bot",
+        emotion: "explaining",
+        next: "tipster_bot_leaves",
+      },
+      tipster_bot_leaves: {
+        type: "presence",
+        action: "leave",
+        char: "tipster_bot",
+        next: "transition_night_to_day2",
+      },
+      transition_night_to_day2: {
+        type: "transition",
+        effects: ["morningCock"],
+        duration: 1800,
+        overlayTextKey: "story.chat.day_2",
+        clearChat: true,
+        onTransition: ({ story }) => story.setCurrentDay(2),
+        next: null,
+      },
+      assistant_all_done: {
+        speaker: "assistant",
+        emotion: "neutral",
+        next: "assistant_go_to_lobby",
+      },
+      assistant_go_to_lobby: {
         speaker: "assistant",
         emotion: "explaining",
         next: null,

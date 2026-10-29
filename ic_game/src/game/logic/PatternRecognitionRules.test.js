@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import {
   AnswerSlot,
   AnswerStatus,
@@ -8,11 +9,23 @@ import {
   isOverSlot,
   shuffleLevelOptions,
 } from "./PatternRecognitionRules.js";
+import { LEVEL_CONFIGS } from "../data/PatternRecognitionLevels.js";
+import { STORY_STAGES } from "../data/progressionConfig.js";
+import { scenes } from "../../data/dialogues/index.js";
+import { characters } from "../../data/characters.js";
 import {
   computeColumns,
   computeGridPositions,
   getCellWidth,
 } from "../utils/gridLayout.js";
+
+const ptBR = JSON.parse(
+  fs.readFileSync(new URL("../../locales/pt-BR.json", import.meta.url), "utf8"),
+);
+
+function resolveI18nPath(obj, dotPath) {
+  return dotPath.split(".").reduce((acc, part) => acc?.[part], obj);
+}
 
 test("computeColumns: uma linha até 5 opções, duas linhas equilibradas acima disso", () => {
   assert.equal(computeColumns(0), 0);
@@ -163,4 +176,103 @@ test("shuffleLevelOptions: embaralha objetos de transformação preservando prop
     evaluateAnswer(shuffled.correctOptionIndex, shuffled.correctOptionIndex),
     AnswerStatus.CORRECT,
   );
+});
+
+test("LEVEL_CONFIGS: todas as fases possuem promptKey e hintKey traduzidos em pt-BR.json", () => {
+  assert.ok(LEVEL_CONFIGS.length >= 22);
+  assert.equal(
+    typeof resolveI18nPath(ptBR, "pattern.mechanics.drag_to_slot"),
+    "string",
+  );
+
+  LEVEL_CONFIGS.forEach((level, index) => {
+    assert.ok(level.promptKey, `Fase ${index + 1} sem promptKey`);
+    assert.ok(level.hintKey, `Fase ${index + 1} sem hintKey`);
+
+    const promptText = resolveI18nPath(ptBR, level.promptKey);
+    const hintText = resolveI18nPath(ptBR, level.hintKey);
+
+    assert.equal(
+      typeof promptText,
+      "string",
+      `Tradução ausente para promptKey "${level.promptKey}" na fase ${index + 1}`,
+    );
+    assert.ok(promptText.length > 0);
+
+    assert.equal(
+      typeof hintText,
+      "string",
+      `Tradução ausente para hintKey "${level.hintKey}" na fase ${index + 1}`,
+    );
+    assert.ok(hintText.length > 0);
+
+    if (Array.isArray(level.steps)) {
+      const shuffled = shuffleLevelOptions(level);
+      assert.equal(shuffled.steps.length, level.steps.length);
+
+      level.steps.forEach((step, stepIdx) => {
+        assert.equal(
+          typeof resolveI18nPath(ptBR, step.promptKey),
+          "string",
+          `Tradução ausente para step.promptKey "${step.promptKey}"`,
+        );
+        assert.equal(
+          typeof resolveI18nPath(ptBR, step.hintKey),
+          "string",
+          `Tradução ausente para step.hintKey "${step.hintKey}"`,
+        );
+
+        const expectedOption = level.answerOptions[step.correctOptionIndex];
+        const shuffledOption =
+          shuffled.answerOptions[shuffled.steps[stepIdx].correctOptionIndex];
+        assert.deepEqual(shuffledOption, expectedOption);
+      });
+    }
+  });
+});
+
+test("post-pattern-recognition-2 e Etapa 2: bifurcação dia/noite, tipster_bot e lobby", () => {
+  assert.ok(characters.tipster_bot);
+  assert.equal(
+    typeof resolveI18nPath(ptBR, "story.characters.tipster_bot"),
+    "string",
+  );
+
+  const stage2 = STORY_STAGES.find(
+    (s) => s.id === "stage-2-corrupted-archives",
+  );
+  assert.ok(stage2);
+  assert.equal(stage2.levelStartIndex, 11);
+  assert.equal(stage2.nightLevelStartIndex, 16);
+  assert.equal(stage2.opensLobbyOnComplete, true);
+
+  const postScene = scenes["post-pattern-recognition-2"];
+  assert.ok(postScene);
+  assert.equal(postScene.start, "check_shift");
+
+  const branchFn = postScene.nodes.check_shift.branch;
+  assert.equal(
+    branchFn({ story: { storyDecisions: { stage2TimeOfDay: "night" } } }),
+    "tipster_bot_joins",
+  );
+  assert.equal(
+    branchFn({ story: { storyDecisions: { stage2TimeOfDay: "day" } } }),
+    "assistant_all_done",
+  );
+
+  // Verifica que todos os nós de mensagem da cena possuem texto no pt-BR.json
+  Object.entries(postScene.nodes).forEach(([nodeId, node]) => {
+    if (!node.type || node.type === "message") {
+      const text = resolveI18nPath(
+        ptBR,
+        `story.scenes.post-pattern-recognition-2.${nodeId}`,
+      );
+      assert.equal(
+        typeof text,
+        "string",
+        `Texto ausente para post-pattern-recognition-2.${nodeId}`,
+      );
+      assert.ok(text.length > 0);
+    }
+  });
 });

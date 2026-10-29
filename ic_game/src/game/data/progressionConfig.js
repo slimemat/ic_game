@@ -112,7 +112,9 @@ export const STORY_STAGES = Object.freeze([
   {
     id: "stage-2-corrupted-archives",
     stageNumber: 2,
-    levelStartIndex: 11, // Fases 11 a 15 (Transformações Espaciais com formas split)
+    levelStartIndex: 11, // Fases 11 a 15 (Transformações Espaciais diurnas)
+    nightLevelStartIndex: 16, // Fases 16 a 20 (Transformações avançadas no turno noturno)
+    opensLobbyOnComplete: true, // Ao concluir a Etapa 2, introduz o jogador ao Lobby (HubShell.vue)
     titleKey: "story.stages.stage2.title",
     descriptionKey: "story.stages.stage2.description",
     gameId: "pattern-recognition",
@@ -127,14 +129,18 @@ export const STORY_STAGES = Object.freeze([
       maxSequenceLength: 6,
       allowedTypes: ["transformation", "color"],
     },
-    introCutsceneId: "pre-pattern-recognition",
+    // TODO(história): as Etapas 2 e 3 reaproveitam o briefing da Etapa 1, que
+    // fica repetitivo ("vamos reler a mensagem dela", "o Rardi saiu..."). Vamos
+    // remover o briefing destas etapas OU criar novas histórias de clientes
+    // (ex.: "pre-pattern-recognition-2") narrando os novos desafios.
+    introCutsceneId: "pre-pattern-recognition-2",
     postStageCutsceneId: "post-pattern-recognition-2",
     nextStageId: "stage-3-advanced-system",
   },
   {
     id: "stage-3-advanced-system",
     stageNumber: 3,
-    levelStartIndex: 16,
+    levelStartIndex: 21,
     titleKey: "story.stages.stage3.title",
     descriptionKey: "story.stages.stage3.description",
     gameId: "pattern-recognition",
@@ -149,7 +155,8 @@ export const STORY_STAGES = Object.freeze([
       maxSequenceLength: 7,
       allowedTypes: ["rotation", "color"],
     },
-    introCutsceneId: "pre-pattern-recognition",
+    // TODO(história): mesmo caso da Etapa 2 (briefing compartilhado/repetitivo).
+    introCutsceneId: null,
     postStageCutsceneId: "post-pattern-recognition-3",
     nextStageId: null, // End of available stages in this build
   },

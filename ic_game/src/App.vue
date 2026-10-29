@@ -60,6 +60,9 @@ function syncScreenWithCheckpoint() {
     case STORY_CHECKPOINTS.PROMOTION:
       activeScreen.value = "promotion";
       break;
+    case STORY_CHECKPOINTS.LOBBY:
+      goToMenu();
+      break;
   }
 }
 
@@ -71,6 +74,9 @@ watch(
   () => session.activeMode,
   (mode) => {
     if (mode === "story") {
+      if (story.checkpoint === STORY_CHECKPOINTS.LOBBY) {
+        story.advanceCheckpoint(STORY_CHECKPOINTS.DASHBOARD);
+      }
       syncScreenWithCheckpoint();
     } else if (mode === "level-select") {
       activeScreen.value = "home";
@@ -99,8 +105,11 @@ function goToMenu() {
  * Se existir a cena no diálogo, toca o briefing antes do jogo.
  */
 function startTask(gameId) {
-  const introScene = story.currentStage?.introCutsceneId || `pre-${gameId}`;
-  story.startTask(gameId, { withBriefing: Boolean(scenes[introScene]) });
+  const stageIntro = story.currentStage?.introCutsceneId;
+  const introScene = stageIntro !== undefined ? stageIntro : `pre-${gameId}`;
+  story.startTask(gameId, {
+    withBriefing: Boolean(introScene && scenes[introScene]),
+  });
 }
 
 /** Abre um mini-jogo escolhido nas abas do Hub (Desafios / Início). */
@@ -113,7 +122,11 @@ function playGame(gameId) {
   <!-- ── Main Menu ─────────────────────────────────────────────────────── -->
   <HubShell
     v-if="activeScreen === 'main-menu'"
-    @mode-selected="() => {}"
+    @mode-selected="
+      (mode) => {
+        if (mode === 'story') syncScreenWithCheckpoint();
+      }
+    "
     @play="playGame"
   />
 

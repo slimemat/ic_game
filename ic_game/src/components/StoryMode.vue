@@ -2,12 +2,18 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import { scenes } from "../data/dialogues";
+import { STORY_STAGES } from "../game/data/progressionConfig";
 import { characters } from "../data/characters";
 import { useGameSessionStore } from "../stores/gameSession";
 import { useStoryStore } from "../stores/story";
+import { useChatEffects } from "../composables/useChatEffects";
 import AudioManager from "../game/managers/AudioManager";
 import PauseModal from "./ui/PauseModal.vue";
 import PauseButton from "./ui/PauseButton.vue";
+import ChatHeader from "./story/ChatHeader.vue";
+import ChatSystemNotice from "./story/ChatSystemNotice.vue";
+import StickyNotesCarousel from "./story/StickyNotesCarousel.vue";
+import spritepaintImg from "../assets/images/spritepaint.png";
 
 /**
  * StoryMode: tela de diálogo estilo chat, genérica e reutilizável.
@@ -23,6 +29,8 @@ import PauseButton from "./ui/PauseButton.vue";
  *   quit     – o jogador escolheu sair pelo menu de pausa
  *
  * O componente não sabe o que vem depois: quem decide é o pai.
+ * Cada tipo de nó (message | presence | notes) tem seu próprio handler;
+ * o esquema dos nós está documentado em src/data/dialogues/index.js.
  */
 const props = defineProps({
   sceneId: { type: String, required: true },
@@ -30,9 +38,18 @@ const props = defineProps({
 });
 const emit = defineEmits(["finished", "quit"]);
 
-const { t } = useI18n();
+const PRESENCE_DELAY_MS = 900;
+const TYPING_DELAY_MS = 1500;
+const CHOICE_DELAY_MS = 500;
+
+const { t, tm, locale } = useI18n();
 const session = useGameSessionStore();
 const story = useStoryStore();
+const {
+  isShaking,
+  apply: applyEffects,
+  stopAll: stopEffects,
+} = useChatEffects();
 
 const chatContainer = ref(null);
 const chatLog = ref([]);
@@ -40,14 +57,21 @@ const chatLog = ref([]);
 const scene = computed(() => scenes[props.sceneId]);
 const i18nKey = (id) => `story.scenes.${props.sceneId}.${id}`;
 
-const storyVariables = computed(() => ({
-  assistantName: t("story.variables.assistantName"),
-  managerName: t("story.variables.managerName"),
-  companyName: t("story.variables.companyName"),
-  taskGiver01Name: t("story.variables.taskGiver01Name"),
+// Todas as chaves de story.variables viram variáveis de interpolação
+// automaticamente: para criar uma nova, basta adicioná-la no pt-BR.json.
+const storyVariables = computed(() => {
+  const vars = Object.fromEntries(
+    Object.keys(tm("story.variables")).map((key) => [
+      key,
+      t(`story.variables.${key}`),
+    ]),
+  );
   // Nome do estagiário; se ainda não foi definido, usa o nome da empresa
-  playerName: session.playerName || t("story.variables.companyName"),
-}));
+  vars.playerName = session.playerName || vars.companyName;
+  return vars;
+});
+
+const charName = (char) => t(`story.characters.${char}`, storyVariables.value);
 
 const currentNodeId = ref(null);
 const currentDialogue = computed(() =>
@@ -61,6 +85,57 @@ const typingChar = ref("");
 const typingName = ref("");
 let typingTimeout = null;
 let choiceTimeout = null;
+let presenceTimeout = null;
+let transitionTimeout = null;
+let clearChatTimeout = null;
+const pendingChoiceNextId = ref(null);
+const isFading = ref(false);
+const transitionText = ref("");
+
+const isPlaceholder = computed(
+  () => currentDialogue.value?.type === "placeholder",
+);
+
+const currentStageNumber = computed(() => {
+  const stage =
+    STORY_STAGES.find(
+      (s) =>
+        s.introCutsceneId === props.sceneId ||
+        s.postStageCutsceneId === props.sceneId,
+    ) || story.currentStage;
+  return stage?.stageNumber || 2;
+});
+
+// ── Header de grupo (chamado atual + participantes derivados da cena) ─────
+const headerInfo = computed(() => {
+  if (!scene.value?.header) return null;
+
+  const stage =
+    STORY_STAGES.find((s) => s.postStageCutsceneId === props.sceneId) ||
+    story.currentStage;
+  const participantIds = [
+    ...new Set(
+      Object.values(scene.value.nodes)
+        .map((node) => node.speaker ?? node.char)
+        .filter(Boolean),
+    ),
+  ];
+  const names = [
+    ...participantIds.map(charName),
+    t("story.chat.participants_you"),
+  ];
+
+  return {
+    eyebrow: t("story.dashboard.ticket_eyebrow", {
+      num: stage?.stageNumber || 1,
+    }),
+    title: stage?.titleKey ? t(stage.titleKey) : charName("assistant"),
+    participants: new Intl.ListFormat(locale.value, {
+      style: "long",
+      type: "conjunction",
+    }).format(names),
+  };
+});
 
 // ── Sprites (com fallback para <personagem>_neutral.png) ──────────────────
 const sprites = import.meta.glob("../assets/sprites/*.png", {
@@ -88,7 +163,107 @@ function scrollToBottom() {
   });
 }
 
+function pushLog(entry) {
+  chatLog.value.push({ id: Date.now() + Math.random(), ...entry });
+  scrollToBottom();
+}
+
+// ── Handlers por tipo de nó ───────────────────────────────────────────────
+
+/** Fala de personagem: mostra "digitando..." e depois a mensagem. */
+function playMessage(node, nodeId) {
+  isTyping.value = true;
+  typingChar.value = node.speaker;
+  typingName.value = charName(node.speaker);
+
+  scrollToBottom();
+
+  // Inicia som da máquina de escrever em loop
+  AudioManager.play("keyboard_sfx", { loop: true, volume: 0.5 });
+
+  typingTimeout = setTimeout(() => {
+    commitMessage(nodeId);
+  }, TYPING_DELAY_MS);
+}
+
+/** Aviso centralizado "<nome> entrou/saiu do chat"; avança sozinho. */
+function playPresence(node) {
+  // Ao entrar/sair alguém, efeitos pendentes (ex.: telefone tocando) param
+  stopEffects();
+
+  const messageKey = node.action === "leave" ? "left" : "joined";
+  pushLog({
+    kind: "presence",
+    variant: node.action === "leave" ? "leave" : "join",
+    text: t(`story.chat.${messageKey}`, { name: charName(node.char) }),
+  });
+
+  presenceTimeout = setTimeout(() => {
+    processNode(node.next);
+  }, PRESENCE_DELAY_MS);
+}
+
+/** Carrossel de post-its; o jogador segue pelo botão Continuar. */
+function playNotes(node) {
+  AudioManager.play("message_neutral", { volume: 1.0 });
+  pushLog({
+    kind: "notes",
+    title: t("story.chat.notes_title", storyVariables.value),
+    notes: node.notes.map((noteId) =>
+      t(i18nKey(`notes.${noteId}`), storyVariables.value),
+    ),
+  });
+}
+
+function playBranch(node) {
+  const nextNodeId = node.branch({
+    stars: story.lastStageStars,
+    story,
+  });
+  processNode(nextNodeId);
+}
+
+function playTransition(node) {
+  node.onTransition?.({ story });
+  transitionText.value = node.overlayTextKey
+    ? t(node.overlayTextKey, storyVariables.value)
+    : "";
+  isFading.value = true;
+  applyEffects(node.effects);
+
+  if (node.clearChat) {
+    clearChatTimeout = setTimeout(() => {
+      chatLog.value = [];
+    }, 450);
+  }
+
+  const duration = node.duration || 1600;
+  transitionTimeout = setTimeout(() => {
+    isFading.value = false;
+    transitionText.value = "";
+    processNode(node.next);
+  }, duration);
+}
+
+function playPlaceholder(node) {
+  isTyping.value = false;
+  scrollToBottom();
+}
+
+const nodeHandlers = {
+  message: playMessage,
+  presence: playPresence,
+  branch: playBranch,
+  transition: playTransition,
+  placeholder: playPlaceholder,
+  notes: playNotes,
+};
+
 function processNode(nodeId) {
+  clearTimeout(choiceTimeout);
+  clearTimeout(presenceTimeout);
+  pendingChoiceNextId.value = null;
+
   // next: null → fim da cena
   if (nodeId === null || nodeId === undefined) {
     currentNodeId.value = null;
@@ -98,22 +273,14 @@ function processNode(nodeId) {
 
   currentNodeId.value = nodeId;
   const node = scene.value.nodes[nodeId];
+  const handler = nodeHandlers[node.type ?? "message"];
 
-  isTyping.value = true;
-  typingChar.value = node.speaker;
-  typingName.value = t(
-    `story.characters.${node.speaker}`,
-    storyVariables.value,
-  );
-
-  scrollToBottom();
-
-  // Inicia som da máquina de escrever em loop
-  AudioManager.play("keyboard_sfx", { loop: true, volume: 0.5 });
-
-  typingTimeout = setTimeout(() => {
-    commitMessage(nodeId);
-  }, 1500);
+  if (!handler) {
+    console.warn(`[StoryMode] Tipo de nó "${node.type}" desconhecido.`);
+    processNode(node.next ?? null);
+    return;
+  }
+  handler(node, nodeId);
 }
 
 function commitMessage(nodeId) {
@@ -128,16 +295,17 @@ function commitMessage(nodeId) {
 
   const node = scene.value.nodes[nodeId];
 
-  chatLog.value.push({
-    id: Date.now() + Math.random(),
-    isPlayer: false,
+  pushLog({
+    kind: "npc",
     char: node.speaker,
     emotion: node.emotion,
     name: typingName.value,
+    forwarded: Boolean(node.forwarded),
     text: t(i18nKey(nodeId), storyVariables.value),
   });
 
-  scrollToBottom();
+  // Efeitos de cena declarados no nó (som, tremida, vibração)
+  applyEffects(node.effects);
 }
 
 function skipTyping() {
@@ -148,26 +316,89 @@ function skipTyping() {
 
 function handleChoice(choice) {
   AudioManager.play("reply_sfx", { volume: 1.0 });
+  choice.onSelect?.({ story });
 
-  chatLog.value.push({
-    id: Date.now() + Math.random(),
-    isPlayer: true,
+  pushLog({
+    kind: "player",
     text: t(i18nKey(choice.id), storyVariables.value),
   });
 
   currentNodeId.value = null;
-  scrollToBottom();
+  pendingChoiceNextId.value = choice.next;
 
   choiceTimeout = setTimeout(() => {
-    processNode(choice.next);
-  }, 500);
+    const nextId = pendingChoiceNextId.value;
+    pendingChoiceNextId.value = null;
+    processNode(nextId);
+  }, CHOICE_DELAY_MS);
 }
 
+const hasNextNode = computed(
+  () =>
+    currentDialogue.value?.next !== null &&
+    currentDialogue.value?.next !== undefined,
+);
+
+const canClickChatToAdvance = computed(() => {
+  if (!props.interactive || story.isPaused || isFading.value) return false;
+  if (isTyping.value || pendingChoiceNextId.value !== null) return true;
+  if (!currentDialogue.value) return false;
+  if (currentDialogue.value.type === "presence") return true;
+
+  return (
+    !currentDialogue.value.choices &&
+    currentDialogue.value.type !== "transition" &&
+    currentDialogue.value.type !== "placeholder" &&
+    hasNextNode.value
+  );
+});
+
 function handleNext() {
-  if (!isTyping.value) {
-    processNode(currentDialogue.value?.next ?? null);
+  if (isTyping.value) {
+    skipTyping();
+    return;
+  }
+  processNode(currentDialogue.value?.next ?? null);
+}
+
+function handleChatAreaClick() {
+  if (!props.interactive || story.isPaused || isFading.value) return;
+
+  if (isTyping.value) {
+    skipTyping();
+    return;
+  }
+
+  if (pendingChoiceNextId.value !== null) {
+    processNode(pendingChoiceNextId.value);
+    return;
+  }
+
+  if (currentDialogue.value?.type === "presence") {
+    processNode(currentDialogue.value.next);
+    return;
+  }
+
+  if (
+    currentDialogue.value &&
+    !currentDialogue.value.choices &&
+    currentDialogue.value.type !== "transition" &&
+    currentDialogue.value.type !== "placeholder" &&
+    hasNextNode.value
+  ) {
+    handleNext();
   }
 }
+
+// Mantém a área de resposta visível durante a digitação para evitar saltos de layout
+const showReplyArea = computed(
+  () =>
+    currentDialogue.value &&
+    currentDialogue.value.type !== "presence" &&
+    currentDialogue.value.type !== "branch" &&
+    currentDialogue.value.type !== "transition" &&
+    currentDialogue.value.type !== "placeholder",
+);
 
 onMounted(() => {
   if (!props.interactive) return;
@@ -185,12 +416,16 @@ onMounted(() => {
 onUnmounted(() => {
   clearTimeout(typingTimeout);
   clearTimeout(choiceTimeout);
+  clearTimeout(presenceTimeout);
+  clearTimeout(transitionTimeout);
+  clearTimeout(clearChatTimeout);
   AudioManager.stop("keyboard_sfx");
+  stopEffects();
 });
 </script>
 
 <template>
-  <div class="story-mode-container">
+  <div class="story-mode-container" :class="{ 'anim-screen-shake': isShaking }">
     <template v-if="interactive">
       <PauseButton class="pause-btn-fixed" @click="story.setPaused(true)" />
 
@@ -205,40 +440,102 @@ onUnmounted(() => {
       />
     </template>
 
-    <div class="chat-history" ref="chatContainer" @click="skipTyping">
-      <div v-if="scene?.systemMessage" class="system-message">
+    <ChatHeader
+      v-if="interactive && headerInfo"
+      :eyebrow="headerInfo.eyebrow"
+      :title="headerInfo.title"
+      :participants="headerInfo.participants"
+    />
+
+    <div
+      class="chat-history"
+      :class="{
+        'has-header': interactive && headerInfo,
+        'is-clickable': canClickChatToAdvance,
+      }"
+      ref="chatContainer"
+      @click="handleChatAreaClick"
+    >
+      <ChatSystemNotice v-if="scene?.systemMessage" class="system-intro">
         {{ $t(i18nKey("_system")) }}
-      </div>
+      </ChatSystemNotice>
 
-      <div
-        v-for="msg in chatLog"
-        :key="msg.id"
-        class="message-row anim-fade-in"
-        :class="msg.isPlayer ? 'player-row' : 'npc-row'"
-      >
-        <template v-if="!msg.isPlayer">
-          <div
-            class="message-bubble notebook-paper npc-bubble"
-            :style="charStyle(msg.char)"
-          >
-            <div class="avatar-container anim-bounce">
-              <img
-                :src="getSpriteUrl(msg.char, msg.emotion)"
-                class="avatar-icon"
-                :alt="msg.char"
-              />
+      <template v-for="msg in chatLog" :key="msg.id">
+        <!-- Aviso de presença (entrou / saiu do chat) -->
+        <ChatSystemNotice
+          v-if="msg.kind === 'presence'"
+          :variant="msg.variant"
+          class="anim-fade-in"
+        >
+          {{ msg.text }}
+        </ChatSystemNotice>
+
+        <!-- Post-its -->
+        <div v-else-if="msg.kind === 'notes'" class="anim-slide-up notes-row">
+          <StickyNotesCarousel :title="msg.title" :notes="msg.notes" />
+        </div>
+
+        <!-- Mensagens -->
+        <div
+          v-else
+          class="message-row anim-fade-in"
+          :class="msg.kind === 'player' ? 'player-row' : 'npc-row'"
+        >
+          <template v-if="msg.kind === 'npc'">
+            <div
+              class="message-bubble notebook-paper npc-bubble"
+              :class="{ 'is-forwarded': msg.forwarded }"
+              :style="charStyle(msg.char)"
+            >
+              <div class="avatar-container anim-bounce">
+                <img
+                  :src="getSpriteUrl(msg.char, msg.emotion)"
+                  class="avatar-icon"
+                  :alt="msg.char"
+                />
+              </div>
+
+              <span class="sender-name">{{ msg.name }}</span>
+              <span v-if="msg.forwarded" class="forwarded-label">
+                ↪ {{ $t("story.chat.forwarded") }}
+              </span>
+              <div class="text-content">{{ msg.text }}</div>
             </div>
+          </template>
 
-            <span class="sender-name">{{ msg.name }}</span>
-            <div class="text-content">{{ msg.text }}</div>
-          </div>
-        </template>
+          <template v-else>
+            <div class="message-bubble notebook-paper player-bubble">
+              <div class="text-content">{{ msg.text }}</div>
+            </div>
+          </template>
+        </div>
+      </template>
 
-        <template v-else>
-          <div class="message-bubble notebook-paper player-bubble">
-            <div class="text-content">{{ msg.text }}</div>
+      <!-- Card Placeholder de Fase em Desenvolvimento -->
+      <div v-if="isPlaceholder" class="placeholder-stage-wrap anim-slide-up">
+        <div class="placeholder-card notebook-paper">
+          <div class="placeholder-badge">
+            {{
+              $t("story.chat.placeholder_title", { stage: currentStageNumber })
+            }}
           </div>
-        </template>
+          <div class="placeholder-img-wrap">
+            <img
+              :src="spritepaintImg"
+              alt="Placeholder"
+              class="placeholder-sprite"
+            />
+          </div>
+          <p class="placeholder-desc">
+            {{ $t("story.chat.placeholder_desc") }}
+          </p>
+          <button
+            class="reply-btn notebook-paper btn-continue"
+            @click="handleNext"
+          >
+            {{ $t("story.chat.placeholder_btn") }} ➔
+          </button>
+        </div>
       </div>
 
       <!-- Indicador de Digitação -->
@@ -256,9 +553,16 @@ onUnmounted(() => {
       </div>
     </div>
 
+    <!-- OVERLAY DE TRANSIÇÃO (FADE OUT) -->
+    <div class="screen-fade-overlay" :class="{ 'is-faded': isFading }">
+      <span v-if="transitionText" class="transition-title anim-title-pop">
+        {{ transitionText }}
+      </span>
+    </div>
+
     <!-- ÁREA DE INPUT / OPÇÕES -->
-    <div class="reply-area" v-if="currentDialogue && !isTyping">
-      <template v-if="currentDialogue.choices">
+    <div class="reply-area" v-if="showReplyArea">
+      <template v-if="!isTyping && currentDialogue.choices">
         <button
           v-for="choice in currentDialogue.choices"
           :key="choice.id"
@@ -271,9 +575,19 @@ onUnmounted(() => {
       <template v-else>
         <button
           class="reply-btn notebook-paper btn-continue anim-slide-up"
+          :class="{
+            'is-typing': isTyping,
+            'is-finish': !isTyping && !hasNextNode,
+          }"
           @click="handleNext"
         >
-          {{ $t("global.buttons.continue") }} ➔
+          <template v-if="isTyping">
+            {{ $t("story.chat.btn_typing") }}
+          </template>
+          <template v-else-if="hasNextNode">
+            {{ $t("story.chat.btn_next_message") }} ➔
+          </template>
+          <template v-else> {{ $t("global.buttons.continue") }} ➔ </template>
         </button>
       </template>
     </div>
@@ -281,6 +595,101 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.screen-fade-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.transition-title {
+  color: #fef08a;
+  font-size: clamp(2rem, 8vw, 3.2rem);
+  font-weight: 900;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.8);
+  font-family: var(--font-main);
+}
+
+.anim-title-pop {
+  animation: title-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes title-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.placeholder-stage-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: auto 0;
+  padding: 1rem 0;
+}
+
+.placeholder-card {
+  width: 90%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem;
+  border-radius: 8px;
+  gap: 1rem;
+}
+
+.placeholder-badge {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #2b6cb0;
+  letter-spacing: 0.05em;
+}
+
+.placeholder-img-wrap {
+  width: 96px;
+  height: 96px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
+.placeholder-sprite {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.placeholder-desc {
+  font-size: 0.95rem;
+  color: #555;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.screen-fade-overlay.is-faded {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .story-mode-container {
   display: flex;
   flex-direction: column;
@@ -308,15 +717,24 @@ onUnmounted(() => {
   scroll-behavior: smooth;
 }
 
-.system-message {
-  text-align: center;
-  font-size: 0.85rem;
-  color: #666;
-  background: rgba(255, 255, 255, 0.4);
-  padding: 4px 12px;
-  border-radius: 12px;
-  align-self: center;
+/* Com header, o espaço do botão de pausa já está reservado nele */
+.chat-history.has-header {
+  padding-top: 1.5rem;
+}
+
+.chat-history.is-clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.system-intro {
   margin-bottom: 1rem;
+}
+
+.notes-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
 
 .message-row {
@@ -402,6 +820,20 @@ onUnmounted(() => {
   border-left: 3px solid rgba(80, 200, 80, 0.6);
 }
 
+/* Mensagem encaminhada (relida/citada por outro personagem) */
+.is-forwarded {
+  background-color: #f7f4ee;
+  border-left-style: dashed;
+}
+
+.forwarded-label {
+  display: block;
+  font-size: 0.75rem;
+  font-style: italic;
+  line-height: 1.4;
+  color: #888;
+}
+
 /* ── NOMES ── */
 .sender-name {
   font-weight: 900;
@@ -485,6 +917,18 @@ onUnmounted(() => {
   border-left-color: #2b6cb0;
 }
 
+.btn-continue.is-typing {
+  color: #6b7280;
+  border-left-color: #9ca3af;
+  letter-spacing: 0.2em;
+}
+
+.btn-continue.is-finish {
+  color: #1e40af;
+  border-left-color: #1e40af;
+  background-color: #eff6ff;
+}
+
 /* ── ANIMAÇÕES ── */
 .anim-fade-in {
   animation: fade-in 0.3s ease-out;
@@ -494,6 +938,11 @@ onUnmounted(() => {
 }
 .anim-bounce {
   animation: pop-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Tremida horizontal da tela (ex.: telefone tocando) */
+.anim-screen-shake {
+  animation: screen-shake 0.45s ease-in-out;
 }
 
 @keyframes fade-in {
@@ -522,6 +971,23 @@ onUnmounted(() => {
   to {
     transform: scale(1);
     opacity: 1;
+  }
+}
+@keyframes screen-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  15%,
+  55% {
+    transform: translateX(-6px);
+  }
+  35%,
+  75% {
+    transform: translateX(6px);
+  }
+  90% {
+    transform: translateX(-2px);
   }
 }
 

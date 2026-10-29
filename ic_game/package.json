@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test src/**/*.test.js",
+    "sfx:generate": "python scripts/generate-8bit-sfx.py",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "prepare": "cd .. && npx --prefix ic_game husky .husky"
