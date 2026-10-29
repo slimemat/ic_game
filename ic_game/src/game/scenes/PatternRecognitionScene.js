@@ -58,10 +58,7 @@ const WHITE_POST_IT_BG = 0xf8fafc;
 const WHITE_POST_IT_TAPE = 0xe2e8f0;
 const WHITE_POST_IT_BORDER = 0xcbd5e1;
 
-const QUESTION_KEY_BY_DIFFICULTY = {
-  1: "pattern.question_diff_1",
-  2: "pattern.question_diff_2",
-};
+const FONT_MAIN = '"Space Grotesk", system-ui, -apple-system, sans-serif';
 
 /**
  * Cena principal do jogo de Reconhecimento de Padrões.
@@ -70,11 +67,13 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   /**
    * @param {Function} onWinCallback Callback executado ao acertar a resposta.
    * @param {Function} onErrorCallback Callback executado em caso de erro na resposta.
+   * @param {Function} [onSlotChangeCallback] Callback executado quando o estado do slot muda.
    */
-  constructor(onWinCallback, onErrorCallback) {
+  constructor(onWinCallback, onErrorCallback, onSlotChangeCallback) {
     super("PatternRecognitionScene");
     this.onWinCallback = onWinCallback;
     this.onErrorCallback = onErrorCallback;
+    this.onSlotChangeCallback = onSlotChangeCallback;
 
     this.slot = new AnswerSlot();
     this.levelObjects = [];
@@ -210,6 +209,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     this.slot.clear();
     this.isDragging = false;
     this.isSolved = false;
+    this.onSlotChangeCallback?.({ isSlotFilled: false, isInteracting: false });
 
     this.theme = getThemeForLevel(level);
 
@@ -443,7 +443,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     const text = this.add
       .text(0, 0, "★ APROVADO ★", {
         fontSize: "20px",
-        fontFamily: "system-ui, -apple-system, sans-serif",
+        fontFamily: FONT_MAIN,
         fontStyle: "bold",
         fill: "#10b981",
         stroke: "#064e3b",
@@ -501,8 +501,6 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     const baseSize = Math.min(width, height);
 
     this.drawBackground(width, height);
-    this.drawProgressBar(width, height, baseSize);
-    this.drawTexts(width, height, baseSize);
     this.drawSequence(width, height, baseSize);
     this.drawSlot(width, height, baseSize);
     this.drawOptions(width, height, baseSize);
@@ -571,141 +569,6 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     }
   }
 
-  /**
-   * Componente visual da barra de progresso no topo da tela.
-   * @param {number} width
-   * @param {number} height
-   * @param {number} baseSize
-   */
-  drawProgressBar(width, height, baseSize) {
-    const level = this.registry.get("level") ?? 1;
-    const totalLevels = this.registry.get("totalLevels") ?? 10;
-    const stageLevel =
-      this.registry.get("stageLevel") ?? ((level - 1) % totalLevels) + 1;
-    const progress = Math.min(1, stageLevel / totalLevels);
-
-    const barWidth = Math.min(width * 0.78, 320);
-    const barHeight = Math.max(8, baseSize * 0.022);
-    const x = (width - barWidth) / 2;
-    const y = height * 0.04;
-    const radius = barHeight / 2;
-
-    const track = this.add.graphics();
-    track.fillStyle(0x0f172a, 0.55);
-    track.lineStyle(1.5, 0x334155, 0.75);
-    track.fillRoundedRect(x, y, barWidth, barHeight, radius);
-    track.strokeRoundedRect(x, y, barWidth, barHeight, radius);
-    this.track(track);
-
-    const fillWidth = Math.max(radius * 2, barWidth * progress);
-    const fill = this.add.graphics();
-    fill.fillStyle(0x38bdf8, 0.95);
-    fill.fillRoundedRect(x, y, fillWidth, barHeight, radius);
-    this.track(fill);
-
-    const labelText = `${t("pattern.level", { num: stageLevel })} / ${totalLevels}`;
-    const label = this.add
-      .text(width / 2, y + barHeight + 6, labelText, {
-        fontSize: `${Math.max(10, baseSize * 0.026)}px`,
-        fill: "#cbd5e1",
-        stroke: "#0f172a",
-        strokeThickness: 2,
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5, 0);
-    this.track(label);
-  }
-
-  drawTexts(width, height, baseSize) {
-    const isTransformation =
-      this.levelData.type === "transformation" ||
-      Boolean(this.levelData.instruction || this.levelData.instructionKey);
-
-    if (isTransformation) {
-      const instructionText = this.levelData.instructionKey
-        ? t(this.levelData.instructionKey)
-        : this.levelData.instruction || t("pattern.instruction_title");
-
-      // Tag / Categoria da tarefa
-      this.trackTask(
-        this.add
-          .text(width / 2, height * 0.095, t("pattern.instruction_title"), {
-            fontSize: `${Math.max(11, Math.min(14, baseSize * 0.028))}px`,
-            fill: "#38bdf8",
-            stroke: "#0f172a",
-            strokeThickness: 2,
-            align: "center",
-            fontStyle: "bold",
-            letterSpacing: 1,
-          })
-          .setOrigin(0.5),
-      );
-
-      // Frase imperativa principal em pt-BR (ex: "Gire a forma 90° no sentido horário.")
-      this.trackTask(
-        this.add
-          .text(width / 2, height * 0.155, instructionText, {
-            fontSize: `${Math.max(15, Math.min(22, width * 0.048))}px`,
-            fill: "#f8fafc",
-            stroke: "#0f172a",
-            strokeThickness: 3,
-            align: "center",
-            fontStyle: "bold",
-            wordWrap: { width: width * 0.9 },
-          })
-          .setOrigin(0.5),
-      );
-
-      // Dica de arrastar
-      this.trackTask(
-        this.add
-          .text(
-            width / 2,
-            height * 0.22,
-            t("pattern.drag_hint_transformation"),
-            {
-              fontSize: `${Math.max(11, baseSize * 0.026)}px`,
-              fill: this.theme.text.hint,
-              stroke: "#0f172a",
-              strokeThickness: 2,
-              align: "center",
-              wordWrap: { width: width * 0.9 },
-            },
-          )
-          .setOrigin(0.5),
-      );
-      return;
-    }
-
-    const questionKey = QUESTION_KEY_BY_DIFFICULTY[this.levelData.difficulty];
-
-    this.trackTask(
-      this.add
-        .text(width / 2, height * 0.12, t(questionKey), {
-          fontSize: `${Math.min(22, width * 0.055)}px`,
-          fill: this.theme.text.title,
-          stroke: "#0f172a",
-          strokeThickness: 3,
-          align: "center",
-          wordWrap: { width: width * 0.92 },
-        })
-        .setOrigin(0.5),
-    );
-
-    this.trackTask(
-      this.add
-        .text(width / 2, height * 0.19, t("pattern.drag_hint"), {
-          fontSize: `${Math.max(12, baseSize * 0.03)}px`,
-          fill: this.theme.text.hint,
-          stroke: "#0f172a",
-          strokeThickness: 2,
-          align: "center",
-          wordWrap: { width: width * 0.92 },
-        })
-        .setOrigin(0.5),
-    );
-  }
-
   getSequenceRow(width, height) {
     const seqLen = this.levelData?.sequence
       ? this.levelData.sequence.length
@@ -714,7 +577,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     return {
       totalItems,
       spacing: width / (totalItems + 1),
-      y: height * 0.33,
+      y: height * 0.36,
     };
   }
 
@@ -724,7 +587,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
       Boolean(this.levelData.baseShape !== undefined);
 
     if (isTransformation) {
-      const y = height * 0.34;
+      const y = height * 0.36;
       const tileSize = baseSize * 0.16;
       const baseX = width * 0.35;
       const arrowX = width * 0.5;
@@ -772,10 +635,11 @@ export default class PatternRecognitionScene extends Phaser.Scene {
       this.trackTask(
         this.add
           .text(baseX, y + tileSize / 2 + 10, t("pattern.label_original"), {
-            fontSize: `${Math.max(10, baseSize * 0.024)}px`,
+            fontFamily: FONT_MAIN,
+            fontSize: `${Math.max(12, baseSize * 0.028)}px`,
             fill: "#cbd5e1",
             stroke: "#0f172a",
-            strokeThickness: 2,
+            strokeThickness: 2.5,
             fontStyle: "bold",
           })
           .setOrigin(0.5, 0),
@@ -785,6 +649,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
       this.trackTask(
         this.add
           .text(arrowX, y, "➜", {
+            fontFamily: FONT_MAIN,
             fontSize: `${Math.max(26, baseSize * 0.065)}px`,
             fill: "#38bdf8",
             stroke: "#0f172a",
@@ -836,7 +701,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     let x, y, size;
     if (isTransformation) {
       x = width * 0.65;
-      y = height * 0.34;
+      y = height * 0.36;
       size = baseSize * 0.18;
     } else {
       const {
@@ -862,7 +727,8 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     this.questionMark = this.trackTask(
       this.add
         .text(x, y, "?", {
-          fontSize: `${baseSize * 0.07}px`,
+          fontFamily: FONT_MAIN,
+          fontSize: `${Math.max(24, baseSize * 0.07)}px`,
           fill: this.theme.text.hint,
           fontStyle: "bold",
         })
@@ -873,10 +739,11 @@ export default class PatternRecognitionScene extends Phaser.Scene {
       this.trackTask(
         this.add
           .text(x, y + size / 2 + 10, t("pattern.label_result"), {
-            fontSize: `${Math.max(10, baseSize * 0.024)}px`,
+            fontFamily: FONT_MAIN,
+            fontSize: `${Math.max(12, baseSize * 0.028)}px`,
             fill: "#38bdf8",
             stroke: "#0f172a",
-            strokeThickness: 2,
+            strokeThickness: 2.5,
             fontStyle: "bold",
           })
           .setOrigin(0.5, 0),
@@ -899,8 +766,8 @@ export default class PatternRecognitionScene extends Phaser.Scene {
       count: values.length,
       columns,
       width,
-      startY: height * 0.53,
-      rowGap: boxSize * 1.3,
+      startY: height * 0.55,
+      rowGap: boxSize * 1.25,
     });
 
     this.options = values.map((value, index) =>
@@ -1050,9 +917,9 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   drawConfirmButton(width, height, baseSize) {
     const { button, buttonPressed, buttonBorder } = this.theme.ui;
     const btnWidth = Math.min(260, width * 0.75);
-    const btnHeight = baseSize * 0.12;
+    const btnHeight = Math.max(46, baseSize * 0.12);
     const btnX = width / 2;
-    const btnY = height * 0.88;
+    const btnY = height * 0.89;
 
     this.trackTask(
       this.add.rectangle(
@@ -1075,7 +942,8 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     const btnText = this.trackTask(
       this.add
         .text(btnX, btnY, t("global.buttons.confirm"), {
-          fontSize: `${Math.min(24, baseSize * 0.05)}px`,
+          fontFamily: FONT_MAIN,
+          fontSize: `${Math.max(18, Math.min(22, baseSize * 0.05))}px`,
           fill: this.theme.text.button,
           fontStyle: "bold",
         })
@@ -1135,6 +1003,10 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     this.tweens.killTweensOf(piece);
     this.slot.release(piece.getData("optionIndex"));
     this.updateSlotVisuals();
+    this.onSlotChangeCallback?.({
+      isSlotFilled: !this.slot.isEmpty,
+      isInteracting: true,
+    });
 
     this.setPiecePostItStyle(piece, false);
 
@@ -1169,6 +1041,11 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     } else {
       this.sendHome(piece);
     }
+
+    this.onSlotChangeCallback?.({
+      isSlotFilled: !this.slot.isEmpty,
+      isInteracting: false,
+    });
   }
 
   dropIntoSlot(piece) {

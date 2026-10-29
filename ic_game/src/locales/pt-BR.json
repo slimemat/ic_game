@@ -162,22 +162,43 @@
     "type_rotation": "Rotação de Formas",
     "type_transformation": "Transformação Espacial",
     "type_color": "Padrão de Cores",
-    "instruction_title": "INSTRUÇÃO DE TRANSFORMAÇÃO",
-    "drag_hint_transformation": "Arraste a forma resultante para o espaço '?'",
     "label_original": "FORMA BASE",
     "label_result": "RESULTADO",
     "stats_level": "Fase Concluída: {num}",
     "stats_type": "Desafio: {type}",
-    "question_diff_1": "Qual é o próximo padrão?",
-    "drag_hint": "Arraste a resposta para o espaço vazio",
-    "question_diff_2": "Selecione o próximo padrão",
     "err_select_first": "Selecione uma opção antes de confirmar!",
     "err_incorrect": "Padrão incorreto! Observe com mais atenção.",
-    "transform_rotate_90_cw": "Gire a forma 90° no sentido horário.",
-    "transform_flip_horizontal": "Espelhe a forma horizontalmente (inverter esquerda e direita).",
-    "transform_rotate_180": "Gire a forma 180° (meia volta completa).",
-    "transform_flip_vertical": "Espelhe a forma verticalmente (inverter topo e base).",
-    "transform_rotate_90_flip_h": "Gire 90° no sentido horário e espelhe horizontalmente."
+    "hint_button_label": "Dica",
+    "hint_button_aria": "Mostrar ou ocultar dica da fase",
+    "mechanics": {
+      "drag_to_slot": "Arraste uma peça até o espaço '?'"
+    },
+    "prompts": {
+      "rotation_sequence": "Observe o giro e complete a sequência:",
+      "rotation_cycle": "Qual peça completa o ciclo?",
+      "color_sequence": "Complete a sequência de cores:",
+      "transform_rotate_90_cw": "Gire a forma 90° no sentido horário:",
+      "transform_flip_h": "Espelhe a forma na horizontal:",
+      "transform_rotate_180": "Gire a forma 180° (meia-volta):",
+      "transform_flip_v": "Espelhe a forma na vertical:",
+      "transform_rotate_90_flip_h": "Gire 90° no sentido horário e espelhe na horizontal:"
+    },
+    "hints": {
+      "rotate_cw_90": "A figura gira 90° no sentido horário a cada passo.",
+      "rotate_ccw_90": "A figura gira 90° no sentido anti-horário a cada passo.",
+      "alternate_180": "O padrão alterna entre duas posições opostas (meia-volta).",
+      "rotate_cw_45": "A figura gira em passos curtos (45°) no sentido horário.",
+      "cycle_cw_90": "Após completar uma volta inteira, o ciclo recomeça do início.",
+      "alternate_pingpong": "O padrão se repete alternando entre duas posições.",
+      "rotate_ccw_45": "A figura gira em passos curtos (45°) no sentido anti-horário.",
+      "transform_rotate_90_cw": "Imagine o topo da forma base tombando um quarto de volta para a direita.",
+      "transform_flip_h": "Inverta os lados esquerdo e direito da forma base, como em um espelho.",
+      "transform_rotate_180": "Vire a forma de cabeça para baixo (meia volta completa).",
+      "transform_flip_v": "Inverta o topo e a base da forma original.",
+      "transform_rotate_90_flip_h": "Primeiro gire um quarto de volta para a direita; depois inverta esquerda e direita.",
+      "color_alternate_2": "O padrão se repete alternando entre duas cores.",
+      "color_cycle_3": "A sequência repete um ciclo de três cores na mesma ordem."
+    }
   },
   "charade": {
     "level_title": "Fase {num}: {title}",
@@ -316,7 +337,7 @@
         "choiceCallItADay": "Por hoje é só então?",
         "replyContinueTask": "Sim, claro! Eu tenho que resolver um pepino ali, mas pode abrir o painel de chamados que pedi pra encaminharem algo pra você. Te vejo por aí!",
         "replyCallItADay": "Ah, uhmm, sim! As leis preveem que os estagiários devem ter uma carga horária reduzida. Ainda bem que você me avisou, haha!",
-        "malu_night_scared": "*olhando para os lados assustada* Sabe... pensando bem, eu já vou indo pra casa. Da última vez que fiquei aqui até tarde, ouvi uns barulhos muito estranhos pelo corredor... Não demora muito aí também, hein! Te vejo amanhã!",
+        "malu_night_scared": "Oi, eu já acabei meu expediente. Vejo que está bem focado aí com suas tarefas... Te vejo amanhã!",
         "malu_morning_greeting": "Bom dia! Prontinho(a) para mais um dia de trabalho? Abra seu painel de chamados, já temos novas tarefas nos esperando!"
       },
       "post-pattern-recognition-2": {

@@ -15,5 +15,5 @@ export const dialogueEffects = {
     shake: false,
     haptic: 40,
   },
-  morningCock: { sfx: "morning_cock", volume: 0.9, shake: false, haptic: 0 },
+  morningCock: { sfx: "morning_cock", volume: 0.3, shake: false, haptic: 0 },
 };

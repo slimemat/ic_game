@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import {
   AnswerSlot,
   AnswerStatus,
@@ -8,11 +9,20 @@ import {
   isOverSlot,
   shuffleLevelOptions,
 } from "./PatternRecognitionRules.js";
+import { LEVEL_CONFIGS } from "../data/PatternRecognitionLevels.js";
 import {
   computeColumns,
   computeGridPositions,
   getCellWidth,
 } from "../utils/gridLayout.js";
+
+const ptBR = JSON.parse(
+  fs.readFileSync(new URL("../../locales/pt-BR.json", import.meta.url), "utf8"),
+);
+
+function resolveI18nPath(obj, dotPath) {
+  return dotPath.split(".").reduce((acc, part) => acc?.[part], obj);
+}
 
 test("computeColumns: uma linha até 5 opções, duas linhas equilibradas acima disso", () => {
   assert.equal(computeColumns(0), 0);
@@ -163,4 +173,34 @@ test("shuffleLevelOptions: embaralha objetos de transformação preservando prop
     evaluateAnswer(shuffled.correctOptionIndex, shuffled.correctOptionIndex),
     AnswerStatus.CORRECT,
   );
+});
+
+test("LEVEL_CONFIGS: todas as fases possuem promptKey e hintKey traduzidos em pt-BR.json", () => {
+  assert.ok(LEVEL_CONFIGS.length >= 17);
+  assert.equal(
+    typeof resolveI18nPath(ptBR, "pattern.mechanics.drag_to_slot"),
+    "string",
+  );
+
+  LEVEL_CONFIGS.forEach((level, index) => {
+    assert.ok(level.promptKey, `Fase ${index + 1} sem promptKey`);
+    assert.ok(level.hintKey, `Fase ${index + 1} sem hintKey`);
+
+    const promptText = resolveI18nPath(ptBR, level.promptKey);
+    const hintText = resolveI18nPath(ptBR, level.hintKey);
+
+    assert.equal(
+      typeof promptText,
+      "string",
+      `Tradução ausente para promptKey "${level.promptKey}" na fase ${index + 1}`,
+    );
+    assert.ok(promptText.length > 0);
+
+    assert.equal(
+      typeof hintText,
+      "string",
+      `Tradução ausente para hintKey "${level.hintKey}" na fase ${index + 1}`,
+    );
+    assert.ok(hintText.length > 0);
+  });
 });
