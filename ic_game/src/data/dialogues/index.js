@@ -11,6 +11,9 @@
  *              effects? (ids de ./effects.js), forwarded? (rótulo "encaminhada")
  *   presence – aviso centralizado "<nome> entrou/saiu do chat"; avança sozinho.
  *              Campos: action ("join" | "leave"), char, next
+ *   branch     – bifurcação condicional síncrona. Campos: branch: ({ stars, story }) => nextNodeId
+ *   transition  – fade out na tela com efeito sonoro, texto e limpeza de chat. Campos: effects, duration, overlayTextKey, clearChat, next
+ *   placeholder – tela com sprite e badge de placeholder para fases em desenvolvimento. Campos: image, next
  *   notes    – carrossel de post-its. Campos: notes (ids em
  *              story.scenes.<cena>.notes.<id>), next
  *
@@ -123,34 +126,132 @@ export const scenes = {
     },
   },
 
+  // Briefing da Etapa 2 (Placeholder com spritepaint.png)
+  "pre-pattern-recognition-2": {
+    start: "stage_placeholder",
+    nodes: {
+      stage_placeholder: {
+        type: "placeholder",
+        image: "spritepaint",
+        next: null,
+      },
+    },
+  },
+
   // Cutscene pós-conclusão da Etapa 1
   "post-pattern-recognition-1": {
     start: "client_thanks",
+    header: true,
     nodes: {
       client_thanks: {
         speaker: "taskGiver01",
         emotion: "neutral",
-        next: "assistant_praise",
+        next: "client_leaves",
       },
-      assistant_praise: {
+      client_leaves: {
+        type: "presence",
+        action: "leave",
+        char: "taskGiver01",
+        next: "assistant_praise_branch",
+      },
+      assistant_praise_branch: {
+        type: "branch",
+        branch: ({ stars }) => {
+          if (stars === 3) return "assistant_praise_3stars";
+          if (stars === 2) return "assistant_praise_2stars";
+          return "assistant_praise_1star";
+        },
+      },
+      assistant_praise_3stars: {
         speaker: "assistant",
         emotion: "explaining",
-        next: "manager_feedback",
+        next: "manager_joins",
       },
-      manager_feedback: {
+      assistant_praise_2stars: {
+        speaker: "assistant",
+        emotion: "explaining",
+        next: "manager_joins",
+      },
+      assistant_praise_1star: {
+        speaker: "assistant",
+        emotion: "explaining",
+        next: "manager_joins",
+      },
+      manager_joins: {
+        type: "presence",
+        action: "join",
+        char: "manager",
+        next: "manager_enters",
+      },
+      manager_enters: {
         speaker: "manager",
         emotion: "explaining",
-        choices: [
-          { id: "choiceContinue", next: "manager_reply" },
-          { id: "choiceHumble", next: "manager_reply" },
-        ],
+        next: "manager_whisper",
       },
-      manager_reply: {
+      manager_whisper: {
         speaker: "manager",
         emotion: "neutral",
-        next: "assistant_dashboard",
+        next: "manager_leaves",
       },
-      assistant_dashboard: {
+      manager_leaves: {
+        type: "presence",
+        action: "leave",
+        char: "manager",
+        next: "assistant_reactions_1",
+      },
+      assistant_reactions_1: {
+        speaker: "assistant",
+        emotion: "explaining",
+        next: "assistant_reactions_2",
+      },
+      assistant_reactions_2: {
+        speaker: "assistant",
+        emotion: "neutral",
+        choices: [
+          {
+            id: "choiceContinueTask",
+            next: "replyContinueTask",
+            onSelect: ({ story }) =>
+              story.recordDecision("stage2TimeOfDay", "night"),
+          },
+          {
+            id: "choiceCallItADay",
+            next: "replyCallItADay",
+            onSelect: ({ story }) =>
+              story.recordDecision("stage2TimeOfDay", "day"),
+          },
+        ],
+      },
+      replyContinueTask: {
+        speaker: "assistant",
+        emotion: "explaining",
+        next: "transition_night",
+      },
+      transition_night: {
+        type: "transition",
+        effects: ["suspiciousSteps"],
+        duration: 1200,
+        next: "malu_night_scared",
+      },
+      malu_night_scared: {
+        speaker: "assistant",
+        emotion: "neutral",
+        next: null,
+      },
+      replyCallItADay: {
+        speaker: "assistant",
+        emotion: "explaining",
+        next: "transition_day",
+      },
+      transition_day: {
+        type: "transition",
+        effects: ["morningCock"],
+        duration: 1800,
+        overlayTextKey: "story.chat.day_2",
+        clearChat: true,
+        next: "malu_morning_greeting",
+      },
+      malu_morning_greeting: {
         speaker: "assistant",
         emotion: "explaining",
         next: null,

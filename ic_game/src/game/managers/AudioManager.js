@@ -17,7 +17,11 @@ const UI_SOUND_KEYS = [
   "keyboard_sfx",
   "message_neutral",
   "reply_sfx",
-  "telephone_ring", // placeholder: arquivo ainda não adicionado
+  "telephone_ring",
+  "suspicious_steps",
+  "morning_cock",
+  "rat_steps",
+  "rat_squeaks",
 ];
 
 /**

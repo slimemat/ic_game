@@ -99,8 +99,11 @@ function goToMenu() {
  * Se existir a cena no diálogo, toca o briefing antes do jogo.
  */
 function startTask(gameId) {
-  const introScene = story.currentStage?.introCutsceneId || `pre-${gameId}`;
-  story.startTask(gameId, { withBriefing: Boolean(scenes[introScene]) });
+  const stageIntro = story.currentStage?.introCutsceneId;
+  const introScene = stageIntro !== undefined ? stageIntro : `pre-${gameId}`;
+  story.startTask(gameId, {
+    withBriefing: Boolean(introScene && scenes[introScene]),
+  });
 }
 
 /** Abre um mini-jogo escolhido nas abas do Hub (Desafios / Início). */

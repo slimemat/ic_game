@@ -60,6 +60,12 @@ export const useStoryStore = defineStore("story", () => {
   /** Number of wrong attempts in the current stage run. */
   const currentStageMistakes = ref(0);
 
+  /** Stars (1-3) obtained in the most recently completed stage. */
+  const lastStageStars = ref(3);
+
+  /** Player choices made in story cutscenes (e.g. { stage2TimeOfDay: 'day' | 'night' }). */
+  const storyDecisions = ref({});
+
   /** Completed task/game IDs. */
   const completedTasks = ref([]);
 
@@ -113,6 +119,8 @@ export const useStoryStore = defineStore("story", () => {
           activeTaskId: activeTaskId.value,
           currentPatternCount: currentPatternCount.value,
           currentStageMistakes: currentStageMistakes.value,
+          lastStageStars: lastStageStars.value,
+          storyDecisions: storyDecisions.value,
           completedTasks: completedTasks.value,
         }),
       );
@@ -163,6 +171,13 @@ export const useStoryStore = defineStore("story", () => {
         0,
         Math.trunc(Number(data.currentStageMistakes) || 0),
       );
+      lastStageStars.value = [1, 2, 3].includes(data.lastStageStars)
+        ? data.lastStageStars
+        : 3;
+      storyDecisions.value =
+        data.storyDecisions && typeof data.storyDecisions === "object"
+          ? data.storyDecisions
+          : {};
       completedTasks.value = Array.isArray(data.completedTasks)
         ? data.completedTasks
         : [];
@@ -268,6 +283,8 @@ export const useStoryStore = defineStore("story", () => {
       }
     }
 
+    lastStageStars.value = currentStageRating.value.stars;
+
     progression.markStageCompleted(currentStageId.value);
 
     activeTaskId.value = null;
@@ -341,6 +358,11 @@ export const useStoryStore = defineStore("story", () => {
     isPaused.value = Boolean(paused);
   }
 
+  function recordDecision(key, value) {
+    storyDecisions.value[key] = value;
+    save();
+  }
+
   function togglePause() {
     isPaused.value = !isPaused.value;
   }
@@ -357,6 +379,8 @@ export const useStoryStore = defineStore("story", () => {
     activeTaskId.value = null;
     currentPatternCount.value = 0;
     currentStageMistakes.value = 0;
+    lastStageStars.value = 3;
+    storyDecisions.value = {};
     completedTasks.value = [];
     isPaused.value = false;
 
@@ -380,6 +404,8 @@ export const useStoryStore = defineStore("story", () => {
     activeTaskId,
     currentPatternCount,
     currentStageMistakes,
+    lastStageStars,
+    storyDecisions,
     completedTasks,
     isPaused,
     // getters
@@ -396,6 +422,7 @@ export const useStoryStore = defineStore("story", () => {
     completeTask,
     finishPostStageCutscene,
     finishPromotion,
+    recordDecision,
     setPatternProgress,
     setPaused,
     togglePause,

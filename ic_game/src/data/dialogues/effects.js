@@ -8,5 +8,12 @@
  *   haptic – duração (ms) da vibração do aparelho (mobile), se suportado
  */
 export const dialogueEffects = {
-  phoneRing: { sfx: "telephone_ring", volume: 0.2, shake: true, haptic: 100 },
+  phoneRing: { sfx: "telephone_ring", volume: 0.1, shake: true, haptic: 20 },
+  suspiciousSteps: {
+    sfx: "suspicious_steps",
+    volume: 0.9,
+    shake: false,
+    haptic: 40,
+  },
+  morningCock: { sfx: "morning_cock", volume: 0.9, shake: false, haptic: 0 },
 };

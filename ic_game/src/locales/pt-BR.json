@@ -62,7 +62,7 @@
     },
     "story": {
       "title": "Modo História",
-      "subtitle_new": "Comece sua carreira na LogicHub.",
+      "subtitle_new": "Comece sua carreira na {companyName}.",
       "subtitle_progress": "Continue de onde parou.",
       "btn_start": "Iniciar Jornada",
       "btn_continue": "Continuar Jornada"
@@ -194,7 +194,7 @@
     "variables": {
       "assistantName": "Malu",
       "managerName": "Sérgio W.",
-      "companyName": "LogicHub",
+      "companyName": "Logicompany",
       "taskGiver01Name": "Dra. Helena",
       "formerITguyName": "Rardi"
     },
@@ -207,7 +207,12 @@
       "notes_prev": "Anotação anterior",
       "notes_next": "Próxima anotação",
       "notes_goto": "Ir para a anotação {num}",
-      "forwarded": "Mensagem encaminhada"
+      "forwarded": "Mensagem encaminhada",
+      "day_title": "DIA {day}",
+      "day_2": "DIA 2",
+      "placeholder_title": "Placeholder Fase {stage}",
+      "placeholder_desc": "O briefing narrativo desta fase está em desenvolvimento.",
+      "placeholder_btn": "Iniciar Fase"
     },
     "characters": {
       "assistant": "{assistantName}",
@@ -297,17 +302,28 @@
         }
       },
       "post-pattern-recognition-1": {
-        "client_thanks": "Incrível, {playerName}! Os dados geométricos voltaram ao normal. O arquivo foi salvo graças à sua dedução!",
-        "assistant_praise": "Mandou muito bem! Você concluiu a tarefa e faturou seus primeiros pontos de experiência corporativa (XP).",
-        "manager_feedback": "Excelente trabalho! Estou de olho nas suas métricas. Se continuar resolvendo chamados e acumulando experiência, a vaga de Analista Júnior é sua!",
-        "choiceContinue": "Pode mandar mais chamados, Chefe!",
-        "choiceHumble": "Obrigado(a)! Vou continuar me esforçando.",
-        "manager_reply": "Essa é a atitude! Volte ao Painel de Chamados e pegue seu próximo lote de tarefas. Rumo ao topo!",
-        "assistant_dashboard": "Viu só? O Chefe gostou! Vamos voltar ao painel e ver o que mais tem pra resolver."
+        "client_thanks": "Incrível, equipe do {companyName}! Os dados geométricos voltaram ao normal.",
+        "assistant_praise_3stars": "Muito bem, querido(a), você foi perfeito nesse chamado! Que ótima primeira impressão!",
+        "assistant_praise_2stars": "Para seu primeiro chamado, você foi bem!",
+        "assistant_praise_1star": "Sabia que você não iria desistir! Quando eu entrei aqui, eu também fiquei meio perdida, mas olha pra mim agora! hahaha!",
+        "manager_enters": "Com licença, {assistantName}. Eu conheço um prodígio quando vejo um. Faça o possível para que esse(a) estagiário se sinta em casa.",
+        "manager_whisper": "*falando baixo* Não quero abrir outra vaga de novo...",
+        "assistant_reactions_1": "Viu só? O big boss gostou de você!",
+        "assistant_reactions_2": "Nós temos um plano de carreira bem sólido aqui na {companyName}. Continue se esforçando, que seu talento será reconhecido!",
+        "choiceContinueTask": "Tem mais alguma tarefa pra mim?",
+        "choiceCallItADay": "Por hoje é só então?",
+        "replyContinueTask": "Sim, claro! Eu tenho que resolver um pepino ali, mas pode abrir o painel de chamados que pedi pra encaminharem algo pra você. Te vejo por aí!",
+        "replyCallItADay": "Ah, uhmm, sim! As leis preveem que os estagiários devem ter uma carga horária reduzida. Ainda bem que você me avisou, haha!",
+        "malu_night_scared": "*olhando para os lados assustada* Sabe... pensando bem, eu já vou indo pra casa. Da última vez que fiquei aqui até tarde, ouvi uns barulhos muito estranhos pelo corredor... Não demora muito aí também, hein! Te vejo amanhã!",
+        "malu_morning_greeting": "Bom dia! Prontinho(a) para mais um dia de trabalho? Abra seu painel de chamados, já temos novas tarefas nos esperando!"
       },
       "post-pattern-recognition-2": {
         "manager_eval": "Impressionante, {playerName}! Você completou este lote com excelência e acumulou XP suficiente para a diretoria autorizar sua promoção!",
         "assistant_celebrate": "Olha só isso! Você recebeu uma promoção oficial no sistema! Parabéns pelo novo cargo!"
+      },
+      "pre-pattern-recognition-2": {
+        "placeholder_title": "Placeholder Fase {stage}",
+        "placeholder_desc": "O briefing narrativo desta fase está em desenvolvimento."
       }
     }
   },

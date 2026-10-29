@@ -90,6 +90,12 @@ function syncRegistry() {
     "totalLevels",
     props.storyMode ? targetPatternCount.value : 10,
   );
+  game.value?.registry.set(
+    "stage2TimeOfDay",
+    props.storyMode
+      ? story.storyDecisions?.stage2TimeOfDay || "night"
+      : "night",
+  );
 }
 
 // --- PAUSE: store (Vue) -> Phaser ---
@@ -146,6 +152,25 @@ onMounted(() => {
       mode: Phaser.Scale.RESIZE,
       width: "100%",
       height: "100%",
+    },
+    callbacks: {
+      preBoot: (gameInstance) => {
+        gameInstance.registry.set("level", currentLevel.value);
+        gameInstance.registry.set(
+          "stageLevel",
+          props.storyMode ? currentPatternCount.value + 1 : currentLevel.value,
+        );
+        gameInstance.registry.set(
+          "totalLevels",
+          props.storyMode ? targetPatternCount.value : 10,
+        );
+        gameInstance.registry.set(
+          "stage2TimeOfDay",
+          props.storyMode
+            ? story.storyDecisions?.stage2TimeOfDay || "night"
+            : "night",
+        );
+      },
     },
     scene,
   });

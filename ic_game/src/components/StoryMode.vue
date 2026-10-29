@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import { scenes } from "../data/dialogues";
+import { STORY_STAGES } from "../game/data/progressionConfig";
 import { characters } from "../data/characters";
 import { useGameSessionStore } from "../stores/gameSession";
 import { useStoryStore } from "../stores/story";
@@ -12,6 +13,7 @@ import PauseButton from "./ui/PauseButton.vue";
 import ChatHeader from "./story/ChatHeader.vue";
 import ChatSystemNotice from "./story/ChatSystemNotice.vue";
 import StickyNotesCarousel from "./story/StickyNotesCarousel.vue";
+import spritepaintImg from "../assets/images/spritepaint.png";
 
 /**
  * StoryMode: tela de diálogo estilo chat, genérica e reutilizável.
@@ -84,12 +86,32 @@ const typingName = ref("");
 let typingTimeout = null;
 let choiceTimeout = null;
 let presenceTimeout = null;
+let transitionTimeout = null;
+let clearChatTimeout = null;
+const isFading = ref(false);
+const transitionText = ref("");
+
+const isPlaceholder = computed(
+  () => currentDialogue.value?.type === "placeholder",
+);
+
+const currentStageNumber = computed(() => {
+  const stage =
+    STORY_STAGES.find(
+      (s) =>
+        s.introCutsceneId === props.sceneId ||
+        s.postStageCutsceneId === props.sceneId,
+    ) || story.currentStage;
+  return stage?.stageNumber || 2;
+});
 
 // ── Header de grupo (chamado atual + participantes derivados da cena) ─────
 const headerInfo = computed(() => {
   if (!scene.value?.header) return null;
 
-  const stage = story.currentStage;
+  const stage =
+    STORY_STAGES.find((s) => s.postStageCutsceneId === props.sceneId) ||
+    story.currentStage;
   const participantIds = [
     ...new Set(
       Object.values(scene.value.nodes)
@@ -192,9 +214,46 @@ function playNotes(node) {
   });
 }
 
+function playBranch(node) {
+  const nextNodeId = node.branch({
+    stars: story.lastStageStars,
+    story,
+  });
+  processNode(nextNodeId);
+}
+
+function playTransition(node) {
+  transitionText.value = node.overlayTextKey
+    ? t(node.overlayTextKey, storyVariables.value)
+    : "";
+  isFading.value = true;
+  applyEffects(node.effects);
+
+  if (node.clearChat) {
+    clearChatTimeout = setTimeout(() => {
+      chatLog.value = [];
+    }, 450);
+  }
+
+  const duration = node.duration || 1600;
+  transitionTimeout = setTimeout(() => {
+    isFading.value = false;
+    transitionText.value = "";
+    processNode(node.next);
+  }, duration);
+}
+
+function playPlaceholder(node) {
+  isTyping.value = false;
+  scrollToBottom();
+}
+
 const nodeHandlers = {
   message: playMessage,
   presence: playPresence,
+  branch: playBranch,
+  transition: playTransition,
+  placeholder: playPlaceholder,
   notes: playNotes,
 };
 
@@ -251,6 +310,7 @@ function skipTyping() {
 
 function handleChoice(choice) {
   AudioManager.play("reply_sfx", { volume: 1.0 });
+  choice.onSelect?.({ story });
 
   pushLog({
     kind: "player",
@@ -275,7 +335,10 @@ const showReplyArea = computed(
   () =>
     currentDialogue.value &&
     !isTyping.value &&
-    currentDialogue.value.type !== "presence",
+    currentDialogue.value.type !== "presence" &&
+    currentDialogue.value.type !== "branch" &&
+    currentDialogue.value.type !== "transition" &&
+    currentDialogue.value.type !== "placeholder",
 );
 
 onMounted(() => {
@@ -295,6 +358,8 @@ onUnmounted(() => {
   clearTimeout(typingTimeout);
   clearTimeout(choiceTimeout);
   clearTimeout(presenceTimeout);
+  clearTimeout(transitionTimeout);
+  clearTimeout(clearChatTimeout);
   AudioManager.stop("keyboard_sfx");
   stopEffects();
 });
@@ -384,6 +449,33 @@ onUnmounted(() => {
         </div>
       </template>
 
+      <!-- Card Placeholder de Fase em Desenvolvimento -->
+      <div v-if="isPlaceholder" class="placeholder-stage-wrap anim-slide-up">
+        <div class="placeholder-card notebook-paper">
+          <div class="placeholder-badge">
+            {{
+              $t("story.chat.placeholder_title", { stage: currentStageNumber })
+            }}
+          </div>
+          <div class="placeholder-img-wrap">
+            <img
+              :src="spritepaintImg"
+              alt="Placeholder"
+              class="placeholder-sprite"
+            />
+          </div>
+          <p class="placeholder-desc">
+            {{ $t("story.chat.placeholder_desc") }}
+          </p>
+          <button
+            class="reply-btn notebook-paper btn-continue"
+            @click="handleNext"
+          >
+            {{ $t("story.chat.placeholder_btn") }} ➔
+          </button>
+        </div>
+      </div>
+
       <!-- Indicador de Digitação -->
       <div v-if="isTyping" class="message-row npc-row anim-fade-in">
         <div
@@ -397,6 +489,13 @@ onUnmounted(() => {
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- OVERLAY DE TRANSIÇÃO (FADE OUT) -->
+    <div class="screen-fade-overlay" :class="{ 'is-faded': isFading }">
+      <span v-if="transitionText" class="transition-title anim-title-pop">
+        {{ transitionText }}
+      </span>
     </div>
 
     <!-- ÁREA DE INPUT / OPÇÕES -->
@@ -424,6 +523,101 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+.screen-fade-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.transition-title {
+  color: #fef08a;
+  font-size: clamp(2rem, 8vw, 3.2rem);
+  font-weight: 900;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  text-shadow: 0 4px 16px rgba(0, 0, 0, 0.8);
+  font-family: var(--font-main);
+}
+
+.anim-title-pop {
+  animation: title-pop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes title-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.placeholder-stage-wrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: auto 0;
+  padding: 1rem 0;
+}
+
+.placeholder-card {
+  width: 90%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem;
+  border-radius: 8px;
+  gap: 1rem;
+}
+
+.placeholder-badge {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #2b6cb0;
+  letter-spacing: 0.05em;
+}
+
+.placeholder-img-wrap {
+  width: 96px;
+  height: 96px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
+.placeholder-sprite {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.placeholder-desc {
+  font-size: 0.95rem;
+  color: #555;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.screen-fade-overlay.is-faded {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .story-mode-container {
   display: flex;
   flex-direction: column;

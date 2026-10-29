@@ -191,6 +191,18 @@ export default class PatternRecognitionScene extends Phaser.Scene {
 
   // --- ESTADO DO NÍVEL ---------------------------------------------------
 
+  /**
+   * Determina se o cenário deve ser renderizado no modo noturno.
+   * Fases 1 a 10 são sempre diurnas. Fases posteriores dependem da escolha do jogador.
+   * @returns {boolean}
+   */
+  isNightMode() {
+    const level = this.registry.get("level") ?? 1;
+    if (level <= 10) return false;
+    const stage2TimeOfDay = this.registry.get("stage2TimeOfDay") ?? "night";
+    return stage2TimeOfDay !== "day";
+  }
+
   loadLevel({ animateIn = false } = {}) {
     const level = this.registry.get("level") ?? 1;
     const rawConfig = LEVEL_CONFIGS[(level - 1) % LEVEL_CONFIGS.length];
@@ -201,10 +213,10 @@ export default class PatternRecognitionScene extends Phaser.Scene {
 
     this.theme = getThemeForLevel(level);
 
-    const isFirstStage = level <= 10;
-    const currentBgColor = isFirstStage
-      ? SKY_COLOR
-      : this.theme.backgroundColor;
+    const isNight = this.isNightMode();
+    const currentBgColor = isNight
+      ? this.theme.backgroundColor || "#101820"
+      : SKY_COLOR;
     this.cameras.main.setBackgroundColor(currentBgColor);
 
     const token = ++this.loadToken;
@@ -237,8 +249,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   initClouds() {
     this.destroyClouds();
     const { width, height } = this.scale;
-    const level = this.registry.get("level") ?? 1;
-    const isNight = level > 10;
+    const isNight = this.isNightMode();
 
     for (let i = 0; i < CLOUD_CONFIG.count; i++) {
       const x = Phaser.Math.Between(-50, width);
@@ -519,9 +530,8 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   }
 
   drawBackground(width, height) {
-    const level = this.registry.get("level") ?? 1;
-    const isFirstStage = level <= 10;
-    const bgKey = isFirstStage ? "scene1_clean" : "scene1_clean_night";
+    const isNight = this.isNightMode();
+    const bgKey = isNight ? "scene1_clean_night" : "scene1_clean";
     let bgRendered = false;
 
     if (this.textures.exists(bgKey)) {

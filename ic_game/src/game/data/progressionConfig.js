@@ -131,7 +131,7 @@ export const STORY_STAGES = Object.freeze([
     // fica repetitivo ("vamos reler a mensagem dela", "o Rardi saiu..."). Vamos
     // remover o briefing destas etapas OU criar novas histórias de clientes
     // (ex.: "pre-pattern-recognition-2") narrando os novos desafios.
-    introCutsceneId: "pre-pattern-recognition",
+    introCutsceneId: "pre-pattern-recognition-2",
     postStageCutsceneId: "post-pattern-recognition-2",
     nextStageId: "stage-3-advanced-system",
   },
@@ -154,7 +154,7 @@ export const STORY_STAGES = Object.freeze([
       allowedTypes: ["rotation", "color"],
     },
     // TODO(história): mesmo caso da Etapa 2 (briefing compartilhado/repetitivo).
-    introCutsceneId: "pre-pattern-recognition",
+    introCutsceneId: null,
     postStageCutsceneId: "post-pattern-recognition-3",
     nextStageId: null, // End of available stages in this build
   },
