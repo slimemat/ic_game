@@ -127,7 +127,7 @@ export const LEVEL_CONFIGS = [
     answerOptions: [45, 90, 135, 180, 225, 270, 315],
     correctOptionIndex: 3, // 180°
   },
-  // ── ETAPA 2: TRANSFORMAÇÃO ESPACIAL E DIRETIVAS (Fases 11 a 15) ──────────
+  // ── ETAPA 2 (DIURNO): TRANSFORMAÇÃO ESPACIAL E DIRETIVAS (Fases 11 a 15) ─
   {
     difficulty: 2,
     type: "transformation",
@@ -217,7 +217,145 @@ export const LEVEL_CONFIGS = [
       },
     ],
   },
-  // ── ETAPA 3+: CORES E COMPLEXIDADE ESTENDIDA (Fases 16+) ─────────────────
+  // ── ETAPA 2 (TURNO NOTURNO): TRANSFORMAÇÕES AVANÇADAS (Fases 16 a 20) ────
+  {
+    difficulty: 3,
+    type: "transformation",
+    shape: "split_triangle",
+    promptKey: "pattern.prompts.transform_rotate_90_ccw",
+    hintKey: "pattern.hints.transform_rotate_90_ccw",
+    baseShape: { angle: 0, flipX: false, flipY: false },
+    answerOptions: [
+      { angle: 0, flipX: false, flipY: false },
+      { angle: 90, flipX: false, flipY: false },
+      { angle: 180, flipX: false, flipY: false },
+      { angle: 270, flipX: false, flipY: false },
+      { angle: 0, flipX: true, flipY: false },
+      { angle: 270, flipX: true, flipY: false },
+    ],
+    correctOptionIndex: 3, // 90° anti-horário (270°)
+  },
+  {
+    difficulty: 3,
+    type: "transformation",
+    shape: "split_shield",
+    promptKey: "pattern.prompts.transform_rotate_90_flip_h",
+    hintKey: "pattern.hints.transform_rotate_90_flip_h",
+    baseShape: { angle: 0, flipX: false, flipY: false },
+    answerOptions: [
+      { angle: 0, flipX: false, flipY: false },
+      { angle: 90, flipX: false, flipY: false },
+      { angle: 180, flipX: false, flipY: false },
+      { angle: 270, flipX: false, flipY: false },
+      { angle: 180, flipX: true, flipY: false },
+      { angle: 0, flipX: true, flipY: false },
+    ],
+    correctOptionIndex: 4, // Meia-volta + espelho horizontal
+    steps: [
+      {
+        promptKey: "pattern.prompts.step_1_rotate_180",
+        hintKey: "pattern.hints.step_1_rotate_180",
+        baseShape: { angle: 0, flipX: false, flipY: false },
+        correctOptionIndex: 2, // 180° (Ponta p/ cima, Azul na direita)
+      },
+      {
+        promptKey: "pattern.prompts.step_2_flip_h_result",
+        hintKey: "pattern.hints.step_2_flip_h_result",
+        baseShape: { angle: 180, flipX: false, flipY: false },
+        correctOptionIndex: 4, // 180° + flipX (Ponta p/ cima, Azul na esquerda)
+      },
+    ],
+  },
+  {
+    difficulty: 3,
+    type: "transformation",
+    shape: "split_square",
+    promptKey: "pattern.prompts.transform_rotate_90_flip_h",
+    hintKey: "pattern.hints.transform_rotate_90_flip_h",
+    baseShape: { angle: 0, flipX: false, flipY: false },
+    answerOptions: [
+      { angle: 0, flipX: false, flipY: false },
+      { angle: 90, flipX: false, flipY: false },
+      { angle: 180, flipX: false, flipY: false },
+      { angle: 270, flipX: false, flipY: false },
+    ],
+    correctOptionIndex: 1, // 90° (Topo Azul / Base Laranja)
+    steps: [
+      {
+        promptKey: "pattern.prompts.step_1_rotate_90_ccw",
+        hintKey: "pattern.hints.step_1_rotate_90_ccw",
+        baseShape: { angle: 0, flipX: false, flipY: false },
+        correctOptionIndex: 3, // 270° (Base Azul / Topo Laranja)
+      },
+      {
+        promptKey: "pattern.prompts.step_2_flip_v_result",
+        hintKey: "pattern.hints.step_2_flip_v_result",
+        baseShape: { angle: 270, flipX: false, flipY: false },
+        correctOptionIndex: 1, // 90° (Topo Azul / Base Laranja)
+      },
+    ],
+  },
+  {
+    difficulty: 3,
+    type: "transformation",
+    shape: "split_triangle",
+    promptKey: "pattern.prompts.transform_rotate_90_flip_h",
+    hintKey: "pattern.hints.transform_rotate_90_flip_h",
+    baseShape: { angle: 0, flipX: false, flipY: false },
+    answerOptions: [
+      { angle: 0, flipX: false, flipY: false },
+      { angle: 90, flipX: false, flipY: false },
+      { angle: 180, flipX: false, flipY: false },
+      { angle: 270, flipX: false, flipY: false },
+      { angle: 0, flipX: true, flipY: false },
+      { angle: 90, flipX: true, flipY: false },
+    ],
+    correctOptionIndex: 5, // Espelho horizontal + giro 90° horário
+    steps: [
+      {
+        promptKey: "pattern.prompts.step_1_flip_h",
+        hintKey: "pattern.hints.step_1_flip_h",
+        baseShape: { angle: 0, flipX: false, flipY: false },
+        correctOptionIndex: 4, // 0° + flipX (Topo p/ cima, Azul na direita)
+      },
+      {
+        promptKey: "pattern.prompts.step_2_rotate_90_cw_result",
+        hintKey: "pattern.hints.step_2_rotate_90_cw_result",
+        baseShape: { angle: 0, flipX: true, flipY: false },
+        correctOptionIndex: 5, // 90° + flipX (Ponta p/ direita, Azul na base)
+      },
+    ],
+  },
+  {
+    difficulty: 3,
+    type: "transformation",
+    shape: "split_circle",
+    promptKey: "pattern.prompts.transform_rotate_90_flip_h",
+    hintKey: "pattern.hints.transform_rotate_90_flip_h",
+    baseShape: { angle: 0, flipX: false, flipY: false },
+    answerOptions: [
+      { angle: 0, flipX: false, flipY: false },
+      { angle: 90, flipX: false, flipY: false },
+      { angle: 180, flipX: false, flipY: false },
+      { angle: 270, flipX: false, flipY: false },
+    ],
+    correctOptionIndex: 1, // Meia-volta + 90° anti-horário = 90° horário
+    steps: [
+      {
+        promptKey: "pattern.prompts.step_1_rotate_180",
+        hintKey: "pattern.hints.step_1_rotate_180",
+        baseShape: { angle: 0, flipX: false, flipY: false },
+        correctOptionIndex: 2, // 180° (Azul na direita)
+      },
+      {
+        promptKey: "pattern.prompts.step_2_rotate_90_ccw_result",
+        hintKey: "pattern.hints.step_2_rotate_90_ccw_result",
+        baseShape: { angle: 180, flipX: false, flipY: false },
+        correctOptionIndex: 1, // 90° (Azul no topo)
+      },
+    ],
+  },
+  // ── ETAPA 3+: CORES E COMPLEXIDADE ESTENDIDA (Fases 21+) ─────────────────
   {
     difficulty: 2,
     type: "color",

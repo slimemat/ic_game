@@ -10,6 +10,9 @@ import {
   shuffleLevelOptions,
 } from "./PatternRecognitionRules.js";
 import { LEVEL_CONFIGS } from "../data/PatternRecognitionLevels.js";
+import { STORY_STAGES } from "../data/progressionConfig.js";
+import { scenes } from "../../data/dialogues/index.js";
+import { characters } from "../../data/characters.js";
 import {
   computeColumns,
   computeGridPositions,
@@ -176,7 +179,7 @@ test("shuffleLevelOptions: embaralha objetos de transformação preservando prop
 });
 
 test("LEVEL_CONFIGS: todas as fases possuem promptKey e hintKey traduzidos em pt-BR.json", () => {
-  assert.ok(LEVEL_CONFIGS.length >= 17);
+  assert.ok(LEVEL_CONFIGS.length >= 22);
   assert.equal(
     typeof resolveI18nPath(ptBR, "pattern.mechanics.drag_to_slot"),
     "string",
@@ -224,6 +227,52 @@ test("LEVEL_CONFIGS: todas as fases possuem promptKey e hintKey traduzidos em pt
           shuffled.answerOptions[shuffled.steps[stepIdx].correctOptionIndex];
         assert.deepEqual(shuffledOption, expectedOption);
       });
+    }
+  });
+});
+
+test("post-pattern-recognition-2 e Etapa 2: bifurcação dia/noite, tipster_bot e lobby", () => {
+  assert.ok(characters.tipster_bot);
+  assert.equal(
+    typeof resolveI18nPath(ptBR, "story.characters.tipster_bot"),
+    "string",
+  );
+
+  const stage2 = STORY_STAGES.find(
+    (s) => s.id === "stage-2-corrupted-archives",
+  );
+  assert.ok(stage2);
+  assert.equal(stage2.levelStartIndex, 11);
+  assert.equal(stage2.nightLevelStartIndex, 16);
+  assert.equal(stage2.opensLobbyOnComplete, true);
+
+  const postScene = scenes["post-pattern-recognition-2"];
+  assert.ok(postScene);
+  assert.equal(postScene.start, "check_shift");
+
+  const branchFn = postScene.nodes.check_shift.branch;
+  assert.equal(
+    branchFn({ story: { storyDecisions: { stage2TimeOfDay: "night" } } }),
+    "tipster_bot_joins",
+  );
+  assert.equal(
+    branchFn({ story: { storyDecisions: { stage2TimeOfDay: "day" } } }),
+    "assistant_all_done",
+  );
+
+  // Verifica que todos os nós de mensagem da cena possuem texto no pt-BR.json
+  Object.entries(postScene.nodes).forEach(([nodeId, node]) => {
+    if (!node.type || node.type === "message") {
+      const text = resolveI18nPath(
+        ptBR,
+        `story.scenes.post-pattern-recognition-2.${nodeId}`,
+      );
+      assert.equal(
+        typeof text,
+        "string",
+        `Texto ausente para post-pattern-recognition-2.${nodeId}`,
+      );
+      assert.ok(text.length > 0);
     }
   });
 });

@@ -60,6 +60,9 @@ function syncScreenWithCheckpoint() {
     case STORY_CHECKPOINTS.PROMOTION:
       activeScreen.value = "promotion";
       break;
+    case STORY_CHECKPOINTS.LOBBY:
+      goToMenu();
+      break;
   }
 }
 
@@ -71,6 +74,9 @@ watch(
   () => session.activeMode,
   (mode) => {
     if (mode === "story") {
+      if (story.checkpoint === STORY_CHECKPOINTS.LOBBY) {
+        story.advanceCheckpoint(STORY_CHECKPOINTS.DASHBOARD);
+      }
       syncScreenWithCheckpoint();
     } else if (mode === "level-select") {
       activeScreen.value = "home";

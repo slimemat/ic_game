@@ -59,7 +59,15 @@ let inactivityTimer = null;
 let warningTimer = null;
 
 const stageStartLevel = computed(() => {
-  return props.storyMode ? story.currentStage?.levelStartIndex || 1 : 1;
+  if (!props.storyMode) return 1;
+  const stage = story.currentStage;
+  if (
+    story.storyDecisions?.stage2TimeOfDay === "night" &&
+    stage?.nightLevelStartIndex
+  ) {
+    return stage.nightLevelStartIndex;
+  }
+  return stage?.levelStartIndex || 1;
 });
 
 /** Nível inicial: no Modo História retoma do checkpoint da etapa atual. */

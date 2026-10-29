@@ -12,7 +12,7 @@
  *   presence – aviso centralizado "<nome> entrou/saiu do chat"; avança sozinho.
  *              Campos: action ("join" | "leave"), char, next
  *   branch     – bifurcação condicional síncrona. Campos: branch: ({ stars, story }) => nextNodeId
- *   transition  – fade out na tela com efeito sonoro, texto e limpeza de chat. Campos: effects, duration, overlayTextKey, clearChat, next
+ *   transition  – fade out na tela com efeito sonoro, texto e limpeza de chat. Campos: effects, duration, overlayTextKey, clearChat, onTransition?, next
  *   placeholder – tela com sprite e badge de placeholder para fases em desenvolvimento. Campos: image, next
  *   notes    – carrossel de post-its. Campos: notes (ids em
  *              story.scenes.<cena>.notes.<id>), next
@@ -211,14 +211,19 @@ export const scenes = {
           {
             id: "choiceContinueTask",
             next: "replyContinueTask",
-            onSelect: ({ story }) =>
-              story.recordDecision("stage2TimeOfDay", "night"),
+            onSelect: ({ story }) => {
+              story.recordDecision("stage2TimeOfDay", "night");
+              story.recordDecision("workedLateDay1", true);
+              story.setCurrentDay(1);
+            },
           },
           {
             id: "choiceCallItADay",
             next: "replyCallItADay",
-            onSelect: ({ story }) =>
-              story.recordDecision("stage2TimeOfDay", "day"),
+            onSelect: ({ story }) => {
+              story.recordDecision("stage2TimeOfDay", "day");
+              story.recordDecision("workedLateDay1", false);
+            },
           },
         ],
       },
@@ -249,6 +254,7 @@ export const scenes = {
         duration: 1800,
         overlayTextKey: "story.chat.day_2",
         clearChat: true,
+        onTransition: ({ story }) => story.setCurrentDay(2),
         next: "malu_morning_greeting",
       },
       malu_morning_greeting: {
@@ -260,15 +266,58 @@ export const scenes = {
   },
 
   // Cutscene pós-conclusão da Etapa 2
+  // Condicional conforme a escolha do Dia 1 (story.storyDecisions.stage2TimeOfDay):
+  // - "night" (trabalhou até tarde): aparece apenas o tipster_bot (neutral + explaining)
+  //   seguido da transição para o DIA 2.
+  // - "day" (já está no Dia 2): aparece apenas a assistente avisando que os chamados
+  //   acabaram e que o jogador pode aguardar na área de trabalho (Lobby).
   "post-pattern-recognition-2": {
-    start: "manager_eval",
+    start: "check_shift",
     nodes: {
-      manager_eval: {
-        speaker: "manager",
-        emotion: "explaining",
-        next: "assistant_celebrate",
+      check_shift: {
+        type: "branch",
+        branch: ({ story }) =>
+          story.storyDecisions?.stage2TimeOfDay === "night"
+            ? "tipster_bot_joins"
+            : "assistant_all_done",
       },
-      assistant_celebrate: {
+      tipster_bot_joins: {
+        type: "presence",
+        action: "join",
+        char: "tipster_bot",
+        next: "tipster_bot_intro",
+      },
+      tipster_bot_intro: {
+        speaker: "tipster_bot",
+        emotion: "neutral",
+        next: "tipster_bot_advice",
+      },
+      tipster_bot_advice: {
+        speaker: "tipster_bot",
+        emotion: "explaining",
+        next: "tipster_bot_leaves",
+      },
+      tipster_bot_leaves: {
+        type: "presence",
+        action: "leave",
+        char: "tipster_bot",
+        next: "transition_night_to_day2",
+      },
+      transition_night_to_day2: {
+        type: "transition",
+        effects: ["morningCock"],
+        duration: 1800,
+        overlayTextKey: "story.chat.day_2",
+        clearChat: true,
+        onTransition: ({ story }) => story.setCurrentDay(2),
+        next: null,
+      },
+      assistant_all_done: {
+        speaker: "assistant",
+        emotion: "neutral",
+        next: "assistant_go_to_lobby",
+      },
+      assistant_go_to_lobby: {
         speaker: "assistant",
         emotion: "explaining",
         next: null,

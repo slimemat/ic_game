@@ -21,6 +21,8 @@ export const STORY_CHECKPOINTS = Object.freeze({
   POST_STAGE_CUTSCENE: "post-stage-cutscene",
   /** Promotion celebration screen/modal */
   PROMOTION: "promotion",
+  /** Redirects to the Hub/Lobby (HubShell.vue) */
+  LOBBY: "lobby",
 });
 
 const STORAGE_KEY = "ic_game:story-progress";
@@ -63,8 +65,14 @@ export const useStoryStore = defineStore("story", () => {
   /** Stars (1-3) obtained in the most recently completed stage. */
   const lastStageStars = ref(3);
 
-  /** Player choices made in story cutscenes (e.g. { stage2TimeOfDay: 'day' | 'night' }). */
+  /** Player choices made in story cutscenes (e.g. { stage2TimeOfDay: 'day' | 'night', workedLateDay1: boolean }). */
   const storyDecisions = ref({});
+
+  /** Current narrative day in the story (starts at Day 1). */
+  const currentDay = ref(1);
+
+  /** Whether the player has been introduced to the Lobby (HubShell.vue). */
+  const lobbyUnlocked = ref(false);
 
   /** Completed task/game IDs. */
   const completedTasks = ref([]);
@@ -121,6 +129,8 @@ export const useStoryStore = defineStore("story", () => {
           currentStageMistakes: currentStageMistakes.value,
           lastStageStars: lastStageStars.value,
           storyDecisions: storyDecisions.value,
+          currentDay: currentDay.value,
+          lobbyUnlocked: lobbyUnlocked.value,
           completedTasks: completedTasks.value,
         }),
       );
@@ -178,6 +188,8 @@ export const useStoryStore = defineStore("story", () => {
         data.storyDecisions && typeof data.storyDecisions === "object"
           ? data.storyDecisions
           : {};
+      currentDay.value = Math.max(1, Math.trunc(Number(data.currentDay) || 1));
+      lobbyUnlocked.value = Boolean(data.lobbyUnlocked);
       completedTasks.value = Array.isArray(data.completedTasks)
         ? data.completedTasks
         : [];
@@ -253,6 +265,22 @@ export const useStoryStore = defineStore("story", () => {
   }
 
   /**
+   * Concludes the active stage and routes either to the Lobby (if configured)
+   * or back to the Story Dashboard.
+   */
+  function concludeStageAndRoute() {
+    const shouldOpenLobby = Boolean(currentStage.value.opensLobbyOnComplete);
+    if (shouldOpenLobby) {
+      currentDay.value = Math.max(currentDay.value, 2);
+      lobbyUnlocked.value = true;
+    }
+    advanceToNextStage();
+    checkpoint.value = shouldOpenLobby
+      ? STORY_CHECKPOINTS.LOBBY
+      : STORY_CHECKPOINTS.DASHBOARD;
+  }
+
+  /**
    * Concludes the current stage run:
    * - Awards completion bonus XP
    * - Marks stage completed
@@ -298,8 +326,7 @@ export const useStoryStore = defineStore("story", () => {
     } else if (promoResult.promoted || progression.pendingPromotion) {
       checkpoint.value = STORY_CHECKPOINTS.PROMOTION;
     } else {
-      advanceToNextStage();
-      checkpoint.value = STORY_CHECKPOINTS.DASHBOARD;
+      concludeStageAndRoute();
     }
 
     save();
@@ -312,8 +339,7 @@ export const useStoryStore = defineStore("story", () => {
     if (progression.pendingPromotion) {
       checkpoint.value = STORY_CHECKPOINTS.PROMOTION;
     } else {
-      advanceToNextStage();
-      checkpoint.value = STORY_CHECKPOINTS.DASHBOARD;
+      concludeStageAndRoute();
     }
     save();
   }
@@ -323,8 +349,7 @@ export const useStoryStore = defineStore("story", () => {
    */
   function finishPromotion() {
     progression.consumePendingPromotion();
-    advanceToNextStage();
-    checkpoint.value = STORY_CHECKPOINTS.DASHBOARD;
+    concludeStageAndRoute();
     save();
   }
 
@@ -352,7 +377,7 @@ export const useStoryStore = defineStore("story", () => {
     save();
   }
 
-  // ── Actions: Pause ──────────────────────────────────────────────────────
+  // ── Actions: Pause & Decisions ──────────────────────────────────────────
 
   function setPaused(paused) {
     isPaused.value = Boolean(paused);
@@ -360,6 +385,11 @@ export const useStoryStore = defineStore("story", () => {
 
   function recordDecision(key, value) {
     storyDecisions.value[key] = value;
+    save();
+  }
+
+  function setCurrentDay(day) {
+    currentDay.value = Math.max(1, Math.trunc(Number(day) || 1));
     save();
   }
 
@@ -381,6 +411,8 @@ export const useStoryStore = defineStore("story", () => {
     currentStageMistakes.value = 0;
     lastStageStars.value = 3;
     storyDecisions.value = {};
+    currentDay.value = 1;
+    lobbyUnlocked.value = false;
     completedTasks.value = [];
     isPaused.value = false;
 
@@ -406,6 +438,8 @@ export const useStoryStore = defineStore("story", () => {
     currentStageMistakes,
     lastStageStars,
     storyDecisions,
+    currentDay,
+    lobbyUnlocked,
     completedTasks,
     isPaused,
     // getters
@@ -423,6 +457,7 @@ export const useStoryStore = defineStore("story", () => {
     finishPostStageCutscene,
     finishPromotion,
     recordDecision,
+    setCurrentDay,
     setPatternProgress,
     setPaused,
     togglePause,

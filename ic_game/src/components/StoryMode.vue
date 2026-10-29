@@ -224,6 +224,7 @@ function playBranch(node) {
 }
 
 function playTransition(node) {
+  node.onTransition?.({ story });
   transitionText.value = node.overlayTextKey
     ? t(node.overlayTextKey, storyVariables.value)
     : "";

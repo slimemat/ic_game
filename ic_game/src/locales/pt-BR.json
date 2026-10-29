@@ -181,12 +181,19 @@
       "rotation_cycle": "Qual peça completa o ciclo?",
       "color_sequence": "Complete a sequência de cores:",
       "transform_rotate_90_cw": "Gire a forma 90° no sentido horário:",
+      "transform_rotate_90_ccw": "Gire a forma 90° no sentido anti-horário:",
       "transform_flip_h": "Espelhe a forma na horizontal:",
       "transform_rotate_180": "Gire a forma 180° (meia-volta):",
       "transform_flip_v": "Espelhe a forma na vertical:",
       "transform_rotate_90_flip_h": "Transformação em 2 etapas:",
       "step_1_rotate_90_cw": "Gire a forma base 90° no sentido horário",
-      "step_2_flip_h_result": "Espelhe o RESULTADO 1 na horizontal"
+      "step_1_rotate_90_ccw": "Gire a forma base 90° no sentido anti-horário",
+      "step_1_rotate_180": "Gire a forma base 180° (meia-volta)",
+      "step_1_flip_h": "Espelhe a forma base na horizontal",
+      "step_2_flip_h_result": "Espelhe o RESULTADO 1 na horizontal",
+      "step_2_flip_v_result": "Espelhe o RESULTADO 1 na vertical",
+      "step_2_rotate_90_cw_result": "Gire o RESULTADO 1 em 90° no sentido horário",
+      "step_2_rotate_90_ccw_result": "Gire o RESULTADO 1 em 90° no sentido anti-horário"
     },
     "hints": {
       "rotate_cw_90": "A figura gira 90° no sentido horário a cada passo.",
@@ -197,12 +204,19 @@
       "alternate_pingpong": "O padrão se repete alternando entre duas posições.",
       "rotate_ccw_45": "A figura gira em passos curtos (45°) no sentido anti-horário.",
       "transform_rotate_90_cw": "Imagine o topo da forma base tombando um quarto de volta para a direita.",
+      "transform_rotate_90_ccw": "Imagine o topo da forma base tombando um quarto de volta para a esquerda.",
       "transform_flip_h": "Inverta os lados esquerdo e direito da forma base, como em um espelho.",
       "transform_rotate_180": "Vire a forma de cabeça para baixo (meia volta completa).",
       "transform_flip_v": "Inverta o topo e a base da forma original.",
-      "transform_rotate_90_flip_h": "Complete um passo por vez: primeiro gire a forma base e confirme; depois espelhe o resultado obtido.",
+      "transform_rotate_90_flip_h": "Complete um passo por vez: primeiro transforme a forma base e confirme; depois aplique o segundo passo sobre o RESULTADO 1.",
       "step_1_rotate_90_cw": "Girando 90° no sentido horário, a metade azul do topo vai para a direita.",
+      "step_1_rotate_90_ccw": "Girando 90° no sentido anti-horário, a metade azul da esquerda vai para a base.",
+      "step_1_rotate_180": "Dê meia-volta na forma base: o lado azul da esquerda passa para a direita.",
+      "step_1_flip_h": "Inverta os lados esquerdo e direito da forma base: o lado azul vai para a direita.",
       "step_2_flip_h_result": "Olhe para o RESULTADO 1 à esquerda e inverta os lados esquerdo e direito.",
+      "step_2_flip_v_result": "Olhe para o RESULTADO 1 à esquerda e inverta o topo e a base.",
+      "step_2_rotate_90_cw_result": "Olhe para o RESULTADO 1 à esquerda e gire um quarto de volta no sentido horário.",
+      "step_2_rotate_90_ccw_result": "Olhe para o RESULTADO 1 à esquerda e gire um quarto de volta no sentido anti-horário.",
       "color_alternate_2": "O padrão se repete alternando entre duas cores.",
       "color_cycle_3": "A sequência repete um ciclo de três cores na mesma ordem."
     }
@@ -224,7 +238,8 @@
       "managerName": "Sérgio W.",
       "companyName": "Logicompany",
       "taskGiver01Name": "Dra. Helena",
-      "formerITguyName": "Rardi"
+      "formerITguyName": "Rardi",
+      "tipsterBotName": "Tipster Bot"
     },
     "chat": {
       "joined": "{name} entrou no chat",
@@ -247,7 +262,8 @@
     "characters": {
       "assistant": "{assistantName}",
       "manager": "{managerName}",
-      "taskGiver01": "{taskGiver01Name}"
+      "taskGiver01": "{taskGiver01Name}",
+      "tipster_bot": "{tipsterBotName}"
     },
     "ranks": {
       "intern": "Estagiário(a)",
@@ -348,6 +364,10 @@
         "malu_morning_greeting": "Bom dia! Prontinho(a) para mais um dia de trabalho? Abra seu painel de chamados, já temos novas tarefas nos esperando!"
       },
       "post-pattern-recognition-2": {
+        "tipster_bot_intro": "Bip-bop... me chamo Tipster. Notei que você é o único aqui nesse expediente...",
+        "tipster_bot_advice": "Os chamados da fila noturna acabaram por hoje. Não posso permitir que fique aqui. Vá para casa descansar e volte amanhã!",
+        "assistant_all_done": "Prontinho! Os chamados de hoje acabaram.",
+        "assistant_go_to_lobby": "Você já pode esperar lá na área de trabalho até algo novo aparecer, tá bom? Qualquer novidade eu te chamo!",
         "manager_eval": "Impressionante! Você completou este lote com excelência e acumulou XP suficiente para a diretoria autorizar sua promoção!",
         "assistant_celebrate": "Olha só isso! Você recebeu uma promoção oficial no sistema! Parabéns pelo novo cargo!"
       },
