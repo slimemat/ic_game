@@ -3,6 +3,7 @@ import { onBeforeUnmount, onMounted, ref, shallowRef, computed } from "vue";
 import Phaser from "phaser";
 import MatrixMirrorScene from "../game/scenes/MatrixMirrorScene";
 import { LEVELS } from "../game/data/MatrixMirrorLevels";
+import { useStagePerformance } from "../composables/useStagePerformance";
 import PauseModal from "./ui/PauseModal.vue";
 import PauseButton from "./ui/PauseButton.vue";
 import VictoryModal from "./ui/VictoryModal.vue";
@@ -24,6 +25,10 @@ const warningType = ref("info");
 const currentLevel = ref(1);
 const correctBlocks = ref(0);
 const totalBlocks = ref(0);
+const performance = useStagePerformance({
+  storyMode: false,
+  totalChallenges: 1,
+});
 
 const currentLevelData = computed(() => {
   const idx = (currentLevel.value - 1) % LEVELS.length;
@@ -67,6 +72,7 @@ onBeforeUnmount(() => {
 
 // --- CONTROLS ---
 const resetLevel = () => {
+  performance.resetPerformance();
   gameScene.value?.resetLevel();
   hasWon.value = false;
   isPaused.value = false;
@@ -75,6 +81,7 @@ const resetLevel = () => {
 
 const nextLevel = () => {
   hasWon.value = false;
+  performance.resetPerformance();
   currentLevel.value++;
   game.value.registry.set("level", currentLevel.value);
   gameScene.value?.resetLevel();
@@ -127,7 +134,13 @@ const triggerWarning = (msg, type = "info") => {
       @quit="$emit('back')"
     />
 
-    <VictoryModal :isOpen="hasWon" @next="nextLevel" @menu="$emit('back')">
+    <VictoryModal
+      :isOpen="hasWon"
+      :stars="performance.stars.value"
+      :maxStars="performance.maxStars.value"
+      @next="nextLevel"
+      @menu="$emit('back')"
+    >
       <template #stats>
         <div>
           <p>{{ $t("matrix.stats_level").replace("{num}", currentLevel) }}</p>

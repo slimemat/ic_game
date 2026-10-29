@@ -3,7 +3,7 @@ import { computed, ref, watch } from "vue";
 import { useGameSessionStore } from "./stores/gameSession";
 import { useStoryStore, STORY_CHECKPOINTS } from "./stores/story";
 import { scenes } from "./data/dialogues";
-import MainMenu from "./components/MainMenu.vue";
+import HubShell from "./components/HubShell.vue";
 import Home from "./components/Home.vue";
 import GameSelection from "./components/GameSelection.vue";
 import TestGame from "./components/TestGame.vue";
@@ -12,6 +12,7 @@ import MatrixMirrorGame from "./components/MatrixMirrorGame.vue";
 import CharadeGame from "./components/CharadeGame.vue";
 import StoryMode from "./components/StoryMode.vue";
 import StoryDashboard from "./components/StoryDashboard.vue";
+import PromotionModal from "./components/ui/PromotionModal.vue";
 
 const session = useGameSessionStore();
 const story = useStoryStore();
@@ -19,9 +20,11 @@ const story = useStoryStore();
 /**
  * Top-level navigation state.
  *
- * 'main-menu'       → MainMenu entry screen
+ * 'main-menu'       → HubShell entry screen (abas do Hub)
  * 'story'           → Modo História: cutscene inicial / Painel de Chamados
  * 'dialogue'        → Modo História: cutscene de introdução da tarefa
+ * 'post-cutscene'   → Modo História: cutscene de conclusão da etapa
+ * 'promotion'       → Modo História: tela/modal de promoção
  * 'home'            → existing Home / hub screen
  * 'selection'       → GameSelection component
  * <game-id>         → a specific mini-game
@@ -30,8 +33,8 @@ const story = useStoryStore();
  */
 const activeScreen = ref("main-menu");
 
-/** Cena da cutscene de introdução da tarefa ativa (padrão: pre-<tarefaId>). */
-const taskIntroSceneId = computed(() => `pre-${story.activeTaskId}`);
+/** Cena da cutscene ativa (vem de story.activeCutsceneId). */
+const activeCutsceneSceneId = computed(() => story.activeCutsceneId || "intro");
 
 /** Converte o checkpoint salvo na tela correspondente. */
 function syncScreenWithCheckpoint() {
@@ -51,6 +54,15 @@ function syncScreenWithCheckpoint() {
         story.advanceCheckpoint(STORY_CHECKPOINTS.DASHBOARD);
       }
       break;
+    case STORY_CHECKPOINTS.POST_STAGE_CUTSCENE:
+      activeScreen.value = "post-cutscene";
+      break;
+    case STORY_CHECKPOINTS.PROMOTION:
+      activeScreen.value = "promotion";
+      break;
+    case STORY_CHECKPOINTS.LOBBY:
+      goToMenu();
+      break;
   }
 }
 
@@ -62,6 +74,9 @@ watch(
   () => session.activeMode,
   (mode) => {
     if (mode === "story") {
+      if (story.checkpoint === STORY_CHECKPOINTS.LOBBY) {
+        story.advanceCheckpoint(STORY_CHECKPOINTS.DASHBOARD);
+      }
       syncScreenWithCheckpoint();
     } else if (mode === "level-select") {
       activeScreen.value = "home";
@@ -87,16 +102,33 @@ function goToMenu() {
 
 /**
  * Inicia uma tarefa pelo Painel de Chamados.
- * Se existir a cena "pre-<gameId>", toca o briefing antes do jogo.
+ * Se existir a cena no diálogo, toca o briefing antes do jogo.
  */
 function startTask(gameId) {
-  story.startTask(gameId, { withBriefing: Boolean(scenes[`pre-${gameId}`]) });
+  const stageIntro = story.currentStage?.introCutsceneId;
+  const introScene = stageIntro !== undefined ? stageIntro : `pre-${gameId}`;
+  story.startTask(gameId, {
+    withBriefing: Boolean(introScene && scenes[introScene]),
+  });
+}
+
+/** Abre um mini-jogo escolhido nas abas do Hub (Desafios / Início). */
+function playGame(gameId) {
+  activeScreen.value = gameId;
 }
 </script>
 
 <template>
   <!-- ── Main Menu ─────────────────────────────────────────────────────── -->
-  <MainMenu v-if="activeScreen === 'main-menu'" @mode-selected="() => {}" />
+  <HubShell
+    v-if="activeScreen === 'main-menu'"
+    @mode-selected="
+      (mode) => {
+        if (mode === 'story') syncScreenWithCheckpoint();
+      }
+    "
+    @play="playGame"
+  />
 
   <!-- ── Modo História: cutscene inicial + Painel de Chamados (overlay) ── -->
   <template v-else-if="activeScreen === 'story'">
@@ -116,11 +148,26 @@ function startTask(gameId) {
   <!-- ── Cutscene de introdução da tarefa ──────────────────────────────── -->
   <StoryMode
     v-else-if="activeScreen === 'dialogue'"
-    :key="taskIntroSceneId"
-    :sceneId="taskIntroSceneId"
+    :key="'task-intro-' + activeCutsceneSceneId"
+    :sceneId="activeCutsceneSceneId"
     @finished="story.advanceCheckpoint(STORY_CHECKPOINTS.MINIGAME)"
     @quit="goToMenu"
   />
+
+  <!-- ── Cutscene de conclusão da etapa ────────────────────────────────── -->
+  <StoryMode
+    v-else-if="activeScreen === 'post-cutscene'"
+    :key="'post-stage-' + activeCutsceneSceneId"
+    :sceneId="activeCutsceneSceneId"
+    @finished="story.finishPostStageCutscene()"
+    @quit="goToMenu"
+  />
+
+  <!-- ── Promoção de Cargo ─────────────────────────────────────────────── -->
+  <template v-else-if="activeScreen === 'promotion'">
+    <StoryDashboard @play="startTask" />
+    <PromotionModal :isOpen="true" @continue="story.finishPromotion()" />
+  </template>
 
   <!-- ── Existing Hub flow ──────────────────────────────────────────────── -->
   <Home

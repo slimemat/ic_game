@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Patrick+Hand&family=Space+Grotesk:wght@400;500;600;700&display=swap");
 
 :root {
   /* Brand Colors */
@@ -30,11 +30,21 @@
 
   --font-main: "Space Grotesk", sans-serif;
   --font-mono: "DM Mono", monospace;
+  --font-handwritten:
+    "Patrick Hand", "Comic Sans MS", cursive; /* post-its / anotações */
 
   /* Overlays e bordas de UI flutuante */
   --bg-overlay: rgba(0, 0, 0, 0.5);
   --bg-overlay-hover: rgba(0, 0, 0, 0.8);
   --border-strong: #4a5568;
+
+  /* Cores de Pasta (Windows Folder Style) */
+  --folder-bg: #fef08a;
+  --folder-surface: #fffbeb;
+  --folder-tab-bg: #fde047;
+  --folder-border: #ca8a04;
+  --folder-shadow: #a16207;
+  --folder-text: #422006;
 }
 
 * {
@@ -72,6 +82,22 @@ button {
   width: 100%;
   height: 100vh;
   background-color: var(--bg-app);
+}
+
+/* ── Conteúdo das abas do Hub ── */
+.tab-content {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 16px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tab-content h2 {
+  margin: 0;
+  font-size: 1.4rem;
 }
 
 .placeholder-screen {

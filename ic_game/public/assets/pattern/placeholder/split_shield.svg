@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <pattern id="hatch-shield" width="10" height="10" patternTransform="rotate(45 0 0)" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="0" y2="10" stroke="#ffffff" stroke-width="3" opacity="0.85" />
+    </pattern>
+  </defs>
+  <!-- Left half shield (Blue + White diagonal hatch stripes) -->
+  <path d="M 64,24 L 24,24 Q 24,70 64,108 Z" fill="#1d4ed8"/>
+  <path d="M 64,24 L 24,24 Q 24,70 64,108 Z" fill="url(#hatch-shield)"/>
+  <!-- Right half shield (Warm Amber solid) -->
+  <path d="M 64,24 L 104,24 Q 104,70 64,108 Z" fill="#f59e0b"/>
+  <!-- Outer border & center divider -->
+  <path d="M 24,24 L 104,24 Q 104,70 64,108 Q 24,70 24,24 Z" fill="none" stroke="#0f172a" stroke-width="3"/>
+  <line x1="64" y1="24" x2="64" y2="108" stroke="#0f172a" stroke-width="2.5"/>
+</svg>

@@ -3,6 +3,7 @@ import { onBeforeUnmount, onMounted, ref, shallowRef, computed } from "vue";
 import Phaser from "phaser";
 import CharadeGameScene from "../game/scenes/CharadeScene";
 import { CHARADES_LEVELS } from "../game/data/CharadeLevels";
+import { useStagePerformance } from "../composables/useStagePerformance";
 import PauseModal from "./ui/PauseModal.vue";
 import PauseButton from "./ui/PauseButton.vue";
 import VictoryModal from "./ui/VictoryModal.vue";
@@ -23,6 +24,10 @@ const warningMessage = ref("");
 const warningType = ref("info");
 
 const currentLevel = ref(0);
+const performance = useStagePerformance({
+  storyMode: false,
+  totalChallenges: 1,
+});
 
 const currentCharade = computed(() => CHARADES_LEVELS[currentLevel.value]);
 
@@ -59,6 +64,7 @@ const checkAnswer = (suspect) => {
     hasWon.value = true;
   } else {
     AudioManager.play("error");
+    performance.recordMistake();
     triggerWarning(
       "Parece que esse não é o culpado. Revise as pistas!",
       "error",
@@ -68,6 +74,7 @@ const checkAnswer = (suspect) => {
 
 const nextLevel = () => {
   hasWon.value = false;
+  performance.resetPerformance();
   if (currentLevel.value < CHARADES_LEVELS.length - 1) {
     currentLevel.value++;
     if (gameScene.value) {
@@ -91,6 +98,7 @@ const resumeGame = () => {
 const restartGame = () => {
   hasWon.value = false;
   isPaused.value = false;
+  performance.resetPerformance();
   resumeGame();
   if (gameScene.value) {
     gameScene.value.loadLevel(currentCharade.value);
@@ -131,10 +139,23 @@ const triggerWarning = (msg, type = "info") => {
       @quit="$emit('back')"
     />
 
-    <VictoryModal :isOpen="hasWon" @next="nextLevel" @menu="$emit('back')">
+    <VictoryModal
+      :isOpen="hasWon"
+      :stars="performance.stars.value"
+      :maxStars="performance.maxStars.value"
+      @next="nextLevel"
+      @menu="$emit('back')"
+    >
       <template #stats>
         <div>
           <p>{{ $t("charade.stats_level", { num: currentLevel + 1 }) }}</p>
+          <p>
+            {{
+              $t("global.modals.stats_mistakes", {
+                count: performance.mistakes.value,
+              })
+            }}
+          </p>
         </div>
       </template>
       <template #actions>
