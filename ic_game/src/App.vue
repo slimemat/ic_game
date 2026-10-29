@@ -122,7 +122,11 @@ function playGame(gameId) {
   <!-- ── Main Menu ─────────────────────────────────────────────────────── -->
   <HubShell
     v-if="activeScreen === 'main-menu'"
-    @mode-selected="() => {}"
+    @mode-selected="
+      (mode) => {
+        if (mode === 'story') syncScreenWithCheckpoint();
+      }
+    "
     @play="playGame"
   />
 
