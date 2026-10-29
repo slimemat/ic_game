@@ -48,12 +48,13 @@ const showWarning = ref(false);
 const warningMessage = ref("");
 const warningType = ref("info");
 
-// Estado de UX: Dica contextual e Microcopy mecânico de arrastar
+// Estado de UX: Dica contextual, Sub-etapas e Microcopy mecânico de arrastar
 const isHintOpen = ref(false);
 const shouldPulseHint = ref(false);
 const isSlotFilled = ref(false);
 const isDraggingPiece = ref(false);
 const showInactivityHint = ref(false);
+const currentStepIndex = ref(0);
 let inactivityTimer = null;
 let warningTimer = null;
 
@@ -96,6 +97,10 @@ const currentLevelConfig = computed(() => {
   return LEVEL_CONFIGS[idx];
 });
 
+const currentLevelSteps = computed(
+  () => currentLevelConfig.value?.steps || null,
+);
+
 const currentPromptText = computed(() => {
   const key =
     currentLevelConfig.value?.promptKey || "pattern.prompts.rotation_sequence";
@@ -103,6 +108,14 @@ const currentPromptText = computed(() => {
 });
 
 const currentHintText = computed(() => {
+  if (currentLevelSteps.value?.length) {
+    const activeIdx = Math.min(
+      currentStepIndex.value,
+      currentLevelSteps.value.length - 1,
+    );
+    const stepHintKey = currentLevelSteps.value[activeIdx]?.hintKey;
+    if (stepHintKey) return t(stepHintKey);
+  }
   const key = currentLevelConfig.value?.hintKey;
   return key ? t(key) : "";
 });
@@ -153,6 +166,7 @@ function resetLevelUxState() {
   isSlotFilled.value = false;
   isDraggingPiece.value = false;
   showInactivityHint.value = false;
+  currentStepIndex.value = 0;
   scheduleInactivityTimer();
 }
 
@@ -245,10 +259,16 @@ onMounted(() => {
     }
   };
 
+  const handleStepChange = ({ stepIndex = 0 } = {}) => {
+    currentStepIndex.value = stepIndex;
+    shouldPulseHint.value = false;
+  };
+
   const scene = new PatternRecognitionScene(
     handleWin,
     handleError,
     handleSlotChange,
+    handleStepChange,
   );
   gameScene.value = scene;
 
@@ -379,7 +399,26 @@ const triggerWarning = (msg, type = "info") => {
       </div>
 
       <div class="pattern-prompt-card">
-        <h1 :key="currentLevel" class="pattern-prompt-title">
+        <template v-if="currentLevelSteps">
+          <ol class="pattern-steps-list" :key="currentLevel">
+            <li
+              v-for="(step, idx) in currentLevelSteps"
+              :key="idx"
+              class="pattern-step-item"
+              :class="{
+                'is-done': idx < currentStepIndex,
+                'is-active': idx === currentStepIndex,
+                'is-pending': idx > currentStepIndex,
+              }"
+            >
+              <span class="step-badge" aria-hidden="true">
+                {{ idx < currentStepIndex ? "✓" : idx + 1 }}
+              </span>
+              <span class="step-text">{{ $t(step.promptKey) }}</span>
+            </li>
+          </ol>
+        </template>
+        <h1 v-else :key="currentLevel" class="pattern-prompt-title">
           {{ currentPromptText }}
         </h1>
 
@@ -607,6 +646,82 @@ const triggerWarning = (msg, type = "info") => {
   line-height: 1.25;
   letter-spacing: -0.01em;
   color: #f8fafc;
+}
+
+.pattern-steps-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pattern-step-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(30, 41, 59, 0.55);
+  font-family: var(--font-main);
+  font-size: clamp(0.95rem, 3vw, 1.15rem);
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: left;
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.pattern-step-item.is-active {
+  border-color: rgba(56, 189, 248, 0.65);
+  background: rgba(14, 165, 233, 0.16);
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.pattern-step-item.is-done {
+  border-color: rgba(16, 185, 129, 0.65);
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+}
+
+.pattern-step-item.is-pending {
+  opacity: 0.55;
+  color: #94a3b8;
+}
+
+.step-badge {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: rgba(148, 163, 184, 0.2);
+  color: #cbd5e1;
+}
+
+.pattern-step-item.is-active .step-badge {
+  background: #38bdf8;
+  color: #0f172a;
+}
+
+.pattern-step-item.is-done .step-badge {
+  background: #10b981;
+  color: #064e3b;
+}
+
+.step-text {
+  flex: 1;
 }
 
 .pattern-hint-text {

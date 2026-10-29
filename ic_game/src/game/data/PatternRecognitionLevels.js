@@ -194,14 +194,28 @@ export const LEVEL_CONFIGS = [
     shape: "split_diamond",
     promptKey: "pattern.prompts.transform_rotate_90_flip_h",
     hintKey: "pattern.hints.transform_rotate_90_flip_h",
-    baseShape: { angle: 0, flipX: false, flipY: false },
+    baseShape: { angle: 90, flipX: false, flipY: false },
     answerOptions: [
+      { angle: 0, flipX: false, flipY: false },
       { angle: 90, flipX: false, flipY: false },
-      { angle: 0, flipX: true, flipY: false },
+      { angle: 180, flipX: false, flipY: false },
       { angle: 270, flipX: false, flipY: false },
-      { angle: 90, flipX: true, flipY: false },
     ],
-    correctOptionIndex: 3, // 90° horário + espelhado horizontal
+    correctOptionIndex: 0, // Resultado final após os 2 passos (0°: Esq Azul / Dir Laranja)
+    steps: [
+      {
+        promptKey: "pattern.prompts.step_1_rotate_90_cw",
+        hintKey: "pattern.hints.step_1_rotate_90_cw",
+        baseShape: { angle: 90, flipX: false, flipY: false }, // Topo Azul / Base Laranja
+        correctOptionIndex: 2, // 180° (Esq Laranja / Dir Azul)
+      },
+      {
+        promptKey: "pattern.prompts.step_2_flip_h_result",
+        hintKey: "pattern.hints.step_2_flip_h_result",
+        baseShape: { angle: 180, flipX: false, flipY: false }, // Usa o Resultado 1 como nova base
+        correctOptionIndex: 0, // 0° (Esq Azul / Dir Laranja)
+      },
+    ],
   },
   // ── ETAPA 3+: CORES E COMPLEXIDADE ESTENDIDA (Fases 16+) ─────────────────
   {

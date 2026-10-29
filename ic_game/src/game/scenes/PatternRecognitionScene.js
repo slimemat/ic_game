@@ -68,14 +68,22 @@ export default class PatternRecognitionScene extends Phaser.Scene {
    * @param {Function} onWinCallback Callback executado ao acertar a resposta.
    * @param {Function} onErrorCallback Callback executado em caso de erro na resposta.
    * @param {Function} [onSlotChangeCallback] Callback executado quando o estado do slot muda.
+   * @param {Function} [onStepChangeCallback] Callback executado ao avançar sub-etapas de transformação.
    */
-  constructor(onWinCallback, onErrorCallback, onSlotChangeCallback) {
+  constructor(
+    onWinCallback,
+    onErrorCallback,
+    onSlotChangeCallback,
+    onStepChangeCallback,
+  ) {
     super("PatternRecognitionScene");
     this.onWinCallback = onWinCallback;
     this.onErrorCallback = onErrorCallback;
     this.onSlotChangeCallback = onSlotChangeCallback;
+    this.onStepChangeCallback = onStepChangeCallback;
 
     this.slot = new AnswerSlot();
+    this.currentStepIndex = 0;
     this.levelObjects = [];
     this.taskObjects = [];
     this.options = [];
@@ -206,10 +214,12 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     const level = this.registry.get("level") ?? 1;
     const rawConfig = LEVEL_CONFIGS[(level - 1) % LEVEL_CONFIGS.length];
     this.levelData = shuffleLevelOptions(rawConfig);
+    this.currentStepIndex = 0;
     this.slot.clear();
     this.isDragging = false;
     this.isSolved = false;
     this.onSlotChangeCallback?.({ isSlotFilled: false, isInteracting: false });
+    this.onStepChangeCallback?.({ stepIndex: 0, completedStep: 0 });
 
     this.theme = getThemeForLevel(level);
 
@@ -569,6 +579,11 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     }
   }
 
+  getActiveStep() {
+    if (!Array.isArray(this.levelData?.steps)) return null;
+    return this.levelData.steps[this.currentStepIndex] ?? null;
+  }
+
   getSequenceRow(width, height) {
     const seqLen = this.levelData?.sequence
       ? this.levelData.sequence.length
@@ -591,8 +606,10 @@ export default class PatternRecognitionScene extends Phaser.Scene {
       const tileSize = baseSize * 0.16;
       const baseX = width * 0.35;
       const arrowX = width * 0.5;
+      const activeStep = this.getActiveStep();
+      const isChainedStep = this.currentStepIndex > 0;
 
-      // Sombra e Post-it da Forma Original
+      // Sombra e Post-it da Forma Base (ou Resultado da etapa anterior)
       this.trackTask(
         this.add.rectangle(
           baseX + 2,
@@ -604,10 +621,14 @@ export default class PatternRecognitionScene extends Phaser.Scene {
         ),
       );
 
-      this.trackTask(
+      this.basePostItBox = this.trackTask(
         this.add
           .rectangle(baseX, y, tileSize, tileSize, POST_IT_BG)
-          .setStrokeStyle(1.5, POST_IT_BORDER, 0.6),
+          .setStrokeStyle(
+            isChainedStep ? 2.5 : 1.5,
+            isChainedStep ? 0x10b981 : POST_IT_BORDER,
+            isChainedStep ? 0.95 : 0.6,
+          ),
       );
 
       const stripH = tileSize * 0.18;
@@ -617,27 +638,32 @@ export default class PatternRecognitionScene extends Phaser.Scene {
           y - tileSize / 2 + stripH / 2,
           tileSize,
           stripH,
-          POST_IT_TAPE,
+          isChainedStep ? 0x6ee7b7 : POST_IT_TAPE,
           0.85,
         ),
       );
 
-      const baseValue = this.levelData.baseShape ?? {
-        angle: 0,
-        flipX: false,
-        flipY: false,
-      };
+      const baseValue = activeStep?.baseShape ??
+        this.levelData.baseShape ?? {
+          angle: 0,
+          flipX: false,
+          flipY: false,
+        };
       this.trackTask(
         this.createShape(baseX, y + stripH * 0.2, baseValue, baseSize),
       );
 
-      // Rótulo da forma original
+      const baseLabelText = isChainedStep
+        ? t("pattern.label_step_result", { step: this.currentStepIndex })
+        : t("pattern.label_original");
+
+      // Rótulo da forma original ou do resultado intermediário
       this.trackTask(
         this.add
-          .text(baseX, y + tileSize / 2 + 10, t("pattern.label_original"), {
+          .text(baseX, y + tileSize / 2 + 10, baseLabelText, {
             fontFamily: FONT_MAIN,
             fontSize: `${Math.max(12, baseSize * 0.028)}px`,
-            fill: "#cbd5e1",
+            fill: isChainedStep ? "#34d399" : "#cbd5e1",
             stroke: "#0f172a",
             strokeThickness: 2.5,
             fontStyle: "bold",
@@ -651,7 +677,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
           .text(arrowX, y, "➜", {
             fontFamily: FONT_MAIN,
             fontSize: `${Math.max(26, baseSize * 0.065)}px`,
-            fill: "#38bdf8",
+            fill: isChainedStep ? "#34d399" : "#38bdf8",
             stroke: "#0f172a",
             strokeThickness: 2,
             fontStyle: "bold",
@@ -736,9 +762,16 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     );
 
     if (isTransformation) {
+      const hasSteps = Array.isArray(this.levelData.steps);
+      const slotLabel = hasSteps
+        ? this.currentStepIndex < this.levelData.steps.length - 1
+          ? t("pattern.label_step_result", { step: this.currentStepIndex + 1 })
+          : t("pattern.label_final_result")
+        : t("pattern.label_result");
+
       this.trackTask(
         this.add
-          .text(x, y + size / 2 + 10, t("pattern.label_result"), {
+          .text(x, y + size / 2 + 10, slotLabel, {
             fontFamily: FONT_MAIN,
             fontSize: `${Math.max(12, baseSize * 0.028)}px`,
             fill: "#38bdf8",
@@ -1101,12 +1134,72 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   checkAnswer() {
     if (this.isTransitioning || this.isDragging || this.isSolved) return;
 
-    const status = evaluateAnswer(
-      this.slot.occupant,
-      this.levelData.correctOptionIndex,
-    );
+    const activeStep = this.getActiveStep();
+    const targetCorrectIndex =
+      activeStep?.correctOptionIndex ?? this.levelData.correctOptionIndex;
+
+    const status = evaluateAnswer(this.slot.occupant, targetCorrectIndex);
 
     if (status === AnswerStatus.CORRECT) {
+      const hasNextStep =
+        Array.isArray(this.levelData.steps) &&
+        this.currentStepIndex < this.levelData.steps.length - 1;
+
+      if (hasNextStep) {
+        this.isTransitioning = true;
+        const completedStepNum = this.currentStepIndex + 1;
+        AudioManager.play("stamp", { volume: 0.35 });
+
+        this.onStepChangeCallback?.({
+          stepIndex: this.currentStepIndex + 1,
+          completedStep: completedStepNum,
+        });
+
+        const occupantPiece = this.options[this.slot.occupant];
+        const { width, height } = this.scale;
+        const targetBaseX = width * 0.35;
+        const targetBaseY = height * 0.36;
+
+        if (occupantPiece) {
+          occupantPiece.setDepth(DEPTH_DRAGGING);
+          this.tweens.add({
+            targets: occupantPiece,
+            x: targetBaseX,
+            y: targetBaseY,
+            scale: 1.08,
+            duration: 320,
+            ease: "Cubic.easeInOut",
+            onComplete: () => {
+              this.currentStepIndex += 1;
+              this.slot.clear();
+              this.isTransitioning = false;
+              this.onSlotChangeCallback?.({
+                isSlotFilled: false,
+                isInteracting: false,
+              });
+              this.renderLevel({ animateIn: false });
+            },
+          });
+        } else {
+          this.currentStepIndex += 1;
+          this.slot.clear();
+          this.isTransitioning = false;
+          this.onSlotChangeCallback?.({
+            isSlotFilled: false,
+            isInteracting: false,
+          });
+          this.renderLevel({ animateIn: false });
+        }
+        return;
+      }
+
+      if (Array.isArray(this.levelData.steps)) {
+        this.onStepChangeCallback?.({
+          stepIndex: this.levelData.steps.length,
+          completedStep: this.currentStepIndex + 1,
+        });
+      }
+
       this.isSolved = true;
       this.isTransitioning = true;
       const level = this.registry.get("level") ?? 1;

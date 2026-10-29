@@ -202,5 +202,28 @@ test("LEVEL_CONFIGS: todas as fases possuem promptKey e hintKey traduzidos em pt
       `Tradução ausente para hintKey "${level.hintKey}" na fase ${index + 1}`,
     );
     assert.ok(hintText.length > 0);
+
+    if (Array.isArray(level.steps)) {
+      const shuffled = shuffleLevelOptions(level);
+      assert.equal(shuffled.steps.length, level.steps.length);
+
+      level.steps.forEach((step, stepIdx) => {
+        assert.equal(
+          typeof resolveI18nPath(ptBR, step.promptKey),
+          "string",
+          `Tradução ausente para step.promptKey "${step.promptKey}"`,
+        );
+        assert.equal(
+          typeof resolveI18nPath(ptBR, step.hintKey),
+          "string",
+          `Tradução ausente para step.hintKey "${step.hintKey}"`,
+        );
+
+        const expectedOption = level.answerOptions[step.correctOptionIndex];
+        const shuffledOption =
+          shuffled.answerOptions[shuffled.steps[stepIdx].correctOptionIndex];
+        assert.deepEqual(shuffledOption, expectedOption);
+      });
+    }
   });
 });

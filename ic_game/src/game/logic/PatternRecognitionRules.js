@@ -61,7 +61,8 @@ export function isOverSlot(px, py, slotX, slotY, slotSize, tolerance = 0.7) {
 
 /**
  * Clona a configuração de uma fase e embaralha as opções de resposta,
- * recalculando o correctOptionIndex para apontar para a nova posição da resposta correta.
+ * recalculando o correctOptionIndex (inclusive em fases multi-etapas `steps`)
+ * para apontar para a nova posição de cada resposta correta.
  * @param {object} levelConfig
  * @param {() => number} [rng=Math.random]
  * @returns {object}
@@ -82,9 +83,10 @@ export function shuffleLevelOptions(levelConfig, rng = Math.random) {
     return levelConfig;
   }
 
-  // Mapeia os itens preservando quem é a resposta correta
+  // Mapeia os itens preservando o índice original e quem é a resposta correta
   const items = answerOptions.map((val, idx) => ({
     val,
+    origIdx: idx,
     isCorrect: idx === correctOptionIndex,
   }));
 
@@ -99,10 +101,25 @@ export function shuffleLevelOptions(levelConfig, rng = Math.random) {
   const newOptions = items.map((item) => item.val);
   const newCorrectIndex = items.findIndex((item) => item.isCorrect);
 
-  return {
+  const result = {
     ...levelConfig,
     answerOptions: newOptions,
     correctOptionIndex:
       newCorrectIndex !== -1 ? newCorrectIndex : correctOptionIndex,
   };
+
+  if (Array.isArray(levelConfig.steps)) {
+    result.steps = levelConfig.steps.map((step) => {
+      const mappedStepIdx = items.findIndex(
+        (item) => item.origIdx === step.correctOptionIndex,
+      );
+      return {
+        ...step,
+        correctOptionIndex:
+          mappedStepIdx !== -1 ? mappedStepIdx : step.correctOptionIndex,
+      };
+    });
+  }
+
+  return result;
 }

@@ -163,7 +163,10 @@
     "type_transformation": "Transformação Espacial",
     "type_color": "Padrão de Cores",
     "label_original": "FORMA BASE",
+    "label_step_result": "RESULTADO {step}",
     "label_result": "RESULTADO",
+    "label_final_result": "RESULTADO FINAL",
+    "step_confirmed_badge": "✓ PASSO {step} OK",
     "stats_level": "Fase Concluída: {num}",
     "stats_type": "Desafio: {type}",
     "err_select_first": "Selecione uma opção antes de confirmar!",
@@ -181,7 +184,9 @@
       "transform_flip_h": "Espelhe a forma na horizontal:",
       "transform_rotate_180": "Gire a forma 180° (meia-volta):",
       "transform_flip_v": "Espelhe a forma na vertical:",
-      "transform_rotate_90_flip_h": "Gire 90° no sentido horário e espelhe na horizontal:"
+      "transform_rotate_90_flip_h": "Transformação em 2 etapas:",
+      "step_1_rotate_90_cw": "Gire a forma base 90° no sentido horário",
+      "step_2_flip_h_result": "Espelhe o RESULTADO 1 na horizontal"
     },
     "hints": {
       "rotate_cw_90": "A figura gira 90° no sentido horário a cada passo.",
@@ -195,7 +200,9 @@
       "transform_flip_h": "Inverta os lados esquerdo e direito da forma base, como em um espelho.",
       "transform_rotate_180": "Vire a forma de cabeça para baixo (meia volta completa).",
       "transform_flip_v": "Inverta o topo e a base da forma original.",
-      "transform_rotate_90_flip_h": "Primeiro gire um quarto de volta para a direita; depois inverta esquerda e direita.",
+      "transform_rotate_90_flip_h": "Complete um passo por vez: primeiro gire a forma base e confirme; depois espelhe o resultado obtido.",
+      "step_1_rotate_90_cw": "Girando 90° no sentido horário, a metade azul do topo vai para a direita.",
+      "step_2_flip_h_result": "Olhe para o RESULTADO 1 à esquerda e inverta os lados esquerdo e direito.",
       "color_alternate_2": "O padrão se repete alternando entre duas cores.",
       "color_cycle_3": "A sequência repete um ciclo de três cores na mesma ordem."
     }
@@ -341,7 +348,7 @@
         "malu_morning_greeting": "Bom dia! Prontinho(a) para mais um dia de trabalho? Abra seu painel de chamados, já temos novas tarefas nos esperando!"
       },
       "post-pattern-recognition-2": {
-        "manager_eval": "Impressionante, {playerName}! Você completou este lote com excelência e acumulou XP suficiente para a diretoria autorizar sua promoção!",
+        "manager_eval": "Impressionante! Você completou este lote com excelência e acumulou XP suficiente para a diretoria autorizar sua promoção!",
         "assistant_celebrate": "Olha só isso! Você recebeu uma promoção oficial no sistema! Parabéns pelo novo cargo!"
       },
       "pre-pattern-recognition-2": {
