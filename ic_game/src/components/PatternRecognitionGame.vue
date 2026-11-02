@@ -35,7 +35,8 @@ const { isPaused, currentPatternCount, targetPatternCount } =
 
 const performance = useStagePerformance({
   storyMode: () => props.storyMode,
-  totalChallenges: () => (props.storyMode ? targetPatternCount.value : 10),
+  totalChallenges: () =>
+    props.storyMode ? targetPatternCount.value : LEVEL_CONFIGS.length,
 });
 
 // --- VUE STATE ---
@@ -87,7 +88,7 @@ const { t } = useI18n();
 const currentLevel = ref(getStartLevel());
 
 const totalLevels = computed(() =>
-  props.storyMode ? targetPatternCount.value : 10,
+  props.storyMode ? targetPatternCount.value : LEVEL_CONFIGS.length,
 );
 
 const stageLevel = computed(() =>
@@ -101,7 +102,7 @@ const progressPercent = computed(() =>
 );
 
 const currentLevelConfig = computed(() => {
-  const idx = (currentLevel.value - 1) % LEVEL_CONFIGS.length;
+  const idx = Math.min(currentLevel.value - 1, LEVEL_CONFIGS.length - 1);
   return LEVEL_CONFIGS[idx];
 });
 

@@ -320,4 +320,26 @@ export const scenes = {
       },
     },
   },
+  "post-pattern-recognition-3": {
+    start: "assistant_colors_restored",
+    header: true,
+    nodes: {
+      assistant_colors_restored: {
+        speaker: "assistant",
+        emotion: "explaining",
+        header: {
+          variant: "default",
+          eyebrowKey: "story.dashboard.ticket_eyebrow",
+          titleKey: "story.stages.stage3.title",
+          participants: ["assistant"],
+        },
+        next: "assistant_intro_matrix",
+      },
+      assistant_intro_matrix: {
+        speaker: "assistant",
+        emotion: "neutral",
+        next: null,
+      },
+    },
+  },
 };

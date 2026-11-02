@@ -225,7 +225,10 @@
       "step_2_flip_h_result": "Espelhe o RESULTADO 1 na horizontal",
       "step_2_flip_v_result": "Espelhe o RESULTADO 1 na vertical",
       "step_2_rotate_90_cw_result": "Gire o RESULTADO 1 em 90° no sentido horário",
-      "step_2_rotate_90_ccw_result": "Gire o RESULTADO 1 em 90° no sentido anti-horário"
+      "step_2_rotate_90_ccw_result": "Gire o RESULTADO 1 em 90° no sentido anti-horário",
+      "color_palindrome": "Encontre o bloco que completa a simetria da sequência:",
+      "color_pairs": "Observe o agrupamento e complete o par correto:",
+      "color_intercalated": "Identifique a alternância e insira o próximo bloco:"
     },
     "hints": {
       "rotate_cw_90": "A figura gira 90° no sentido horário a cada passo.",
@@ -250,7 +253,17 @@
       "step_2_rotate_90_cw_result": "Olhe para o RESULTADO 1 à esquerda e gire um quarto de volta no sentido horário.",
       "step_2_rotate_90_ccw_result": "Olhe para o RESULTADO 1 à esquerda e gire um quarto de volta no sentido anti-horário.",
       "color_alternate_2": "O padrão se repete alternando entre duas cores.",
-      "color_cycle_3": "A sequência repete um ciclo de três cores na mesma ordem."
+      "color_cycle_3": "A sequência repete um ciclo de três cores na mesma ordem.",
+      "color_palindrome": "A sequência forma um padrão espelhado a partir das extremidades.",
+      "color_pairs": "As cores aparecem em duplas consecutivas.",
+      "color_intercalated": "A cor principal alterna repetidamente com uma nova cor."
+    },
+    "colors": {
+      "red": "Vermelho (▲)",
+      "blue": "Azul (+)",
+      "green": "Verde (■)",
+      "yellow": "Amarelo (▼)",
+      "purple": "Roxo (◆)"
     }
   },
   "charade": {
@@ -325,6 +338,10 @@
       "stage3": {
         "title": "Diagnóstico Avançado de Padrões",
         "description": "Análise crítica de anomalias com sequências profundas."
+      },
+      "stage4": {
+        "title": "Chamado #04 - Espelhamento de Matrizes",
+        "description": "Calibre e espelhe os blocos de dados na matriz para restaurar os setores lógicos corrompidos."
       }
     },
     "dashboard": {
@@ -409,6 +426,10 @@
       "pre-pattern-recognition-2": {
         "placeholder_title": "Placeholder Fase {stage}",
         "placeholder_desc": "O briefing narrativo desta fase está em desenvolvimento."
+      },
+      "post-pattern-recognition-3": {
+        "assistant_colors_restored": "Excelente trabalho com os padrões cromáticos! Conseguimos restaurar as sequências de alta prioridade sem qualquer anomalia de contraste.",
+        "assistant_intro_matrix": "Acabamos de receber um chamado crítico nos servidores centrais: anomalias em matrizes bidimensionais. Abra o Chamado #04 para calibrarmos o espelhamento de matrizes!"
       }
     }
   },

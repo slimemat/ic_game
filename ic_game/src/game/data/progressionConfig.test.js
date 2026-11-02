@@ -73,3 +73,39 @@ test("STORY_STAGES: Stage 1 + Stage 2 yields cumulative XP while keeping intern 
   assert.equal(total, 400);
   assert.equal(getRankForXp(total).id, "intern");
 });
+
+test("STORY_STAGES: Stage 3 focuses exclusively on 5 pure color challenges and points to Stage 4", () => {
+  const stage3 = STORY_STAGES.find((s) => s.id === "stage-3-advanced-system");
+  assert.ok(stage3);
+  assert.equal(stage3.targetChallengesCount, 5);
+  assert.deepEqual(stage3.patternConfig.allowedTypes, ["color"]);
+  assert.equal(stage3.postStageCutsceneId, "post-pattern-recognition-3");
+  assert.equal(stage3.nextStageId, "stage-4-matrix-manipulation");
+});
+
+test("STORY_STAGES: Stage 4 integrates Matrix Mirror with 3 levels and keeps player as intern", () => {
+  const stage4 = STORY_STAGES.find(
+    (s) => s.id === "stage-4-matrix-manipulation",
+  );
+  assert.ok(stage4);
+  assert.equal(stage4.gameId, "matrix-mirror");
+  assert.equal(stage4.targetChallengesCount, 3);
+
+  // Cumulative payout across all 4 stages
+  const totalBaseAndCompletion = STORY_STAGES.reduce(
+    (acc, s) => acc + calculateStageTotalPayout(s),
+    0,
+  );
+  // Stage 1 (200) + Stage 2 (200) + Stage 3 (275) + Stage 4 (300) = 975 XP
+  assert.equal(totalBaseAndCompletion, 975);
+
+  const totalWithPerfectStars = STORY_STAGES.reduce(
+    (acc, s) => acc + calculateStageTotalPayout(s) + (s.perfectBonusXp || 0),
+    0,
+  );
+  // 975 + 25 + 30 + 40 + 50 = 1120 XP
+  assert.equal(totalWithPerfectStars, 1120);
+
+  // Player remains as intern through the entire current storyline!
+  assert.equal(getRankForXp(totalWithPerfectStars).id, "intern");
+});

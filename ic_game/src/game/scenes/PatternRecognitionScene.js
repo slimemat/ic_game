@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { LEVEL_CONFIGS } from "../data/PatternRecognitionLevels";
+import { LEVEL_CONFIGS, COLOR_SYMBOLS } from "../data/PatternRecognitionLevels";
 import {
   AnswerSlot,
   AnswerStatus,
@@ -212,7 +212,8 @@ export default class PatternRecognitionScene extends Phaser.Scene {
 
   loadLevel({ animateIn = false } = {}) {
     const level = this.registry.get("level") ?? 1;
-    const rawConfig = LEVEL_CONFIGS[(level - 1) % LEVEL_CONFIGS.length];
+    const rawConfig =
+      LEVEL_CONFIGS[Math.min(level - 1, LEVEL_CONFIGS.length - 1)];
     this.levelData = shuffleLevelOptions(rawConfig);
     this.currentStepIndex = 0;
     this.slot.clear();
@@ -885,6 +886,73 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   }
 
   /**
+   * Desenha o símbolo geométrico de acessibilidade (Alto Contraste) para daltonismo.
+   * @param {Phaser.GameObjects.Graphics} gfx
+   * @param {number} x
+   * @param {number} y
+   * @param {number} size
+   * @param {string} symId
+   */
+  drawColorSymbolGraphic(gfx, x, y, size, symId) {
+    const s = size * 0.44;
+    gfx.lineStyle(3, 0x0f172a, 1);
+    gfx.fillStyle(0xffffff, 1);
+
+    switch (symId) {
+      case "triangle_up": {
+        const points = [
+          { x: x, y: y - s * 1.05 },
+          { x: x + s * 0.95, y: y + s * 0.8 },
+          { x: x - s * 0.95, y: y + s * 0.8 },
+        ];
+        gfx.fillPoints(points, true);
+        gfx.strokePoints(points, true);
+        break;
+      }
+      case "triangle_down": {
+        const points = [
+          { x: x, y: y + s * 1.05 },
+          { x: x + s * 0.95, y: y - s * 0.8 },
+          { x: x - s * 0.95, y: y - s * 0.8 },
+        ];
+        gfx.fillPoints(points, true);
+        gfx.strokePoints(points, true);
+        break;
+      }
+      case "cross": {
+        const w = s * 0.45;
+        // Barras cruzadas com contorno
+        gfx.fillRect(x - w / 2, y - s, w, s * 2);
+        gfx.strokeRect(x - w / 2, y - s, w, s * 2);
+        gfx.fillRect(x - s, y - w / 2, s * 2, w);
+        gfx.strokeRect(x - s, y - w / 2, s * 2, w);
+        // Preenche o centro para limpar linhas internas
+        gfx.fillRect(x - w / 2 + 1, y - w / 2 + 1, w - 2, w - 2);
+        break;
+      }
+      case "square": {
+        const side = s * 1.5;
+        gfx.fillRect(x - side / 2, y - side / 2, side, side);
+        gfx.strokeRect(x - side / 2, y - side / 2, side, side);
+        break;
+      }
+      case "diamond": {
+        const points = [
+          { x: x, y: y - s * 1.05 },
+          { x: x + s * 0.9, y: y },
+          { x: x, y: y + s * 1.05 },
+          { x: x - s * 0.9, y: y },
+        ];
+        gfx.fillPoints(points, true);
+        gfx.strokePoints(points, true);
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  /**
    * @param {number} x
    * @param {number} y
    * @param {*} value
@@ -934,6 +1002,20 @@ export default class PatternRecognitionScene extends Phaser.Scene {
         typeof value === "object" ? (value.angle ?? 0) : Number(value) || 0;
       triangle.setAngle(angle);
       return triangle;
+    }
+
+    if (this.levelData.type === "color") {
+      const symInfo = COLOR_SYMBOLS[value];
+      const circle = this.add.circle(0, 0, r, value);
+      // Borda sutil de alto contraste ao redor do círculo colorido
+      circle.setStrokeStyle(2, 0xffffff, 0.45);
+
+      const gfx = this.add.graphics();
+      if (symInfo?.id) {
+        this.drawColorSymbolGraphic(gfx, 0, 0, r, symInfo.id);
+      }
+
+      return this.add.container(x, y, [circle, gfx]);
     }
 
     const spriteKey = this.getDragSpriteKey();

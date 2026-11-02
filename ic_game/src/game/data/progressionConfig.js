@@ -153,12 +153,34 @@ export const STORY_STAGES = Object.freeze([
       difficultyTier: 3,
       minSequenceLength: 5,
       maxSequenceLength: 7,
-      allowedTypes: ["rotation", "color"],
+      allowedTypes: ["color"],
     },
     // TODO(história): mesmo caso da Etapa 2 (briefing compartilhado/repetitivo).
     introCutsceneId: null,
     postStageCutsceneId: "post-pattern-recognition-3",
-    nextStageId: null, // End of available stages in this build
+    nextStageId: "stage-4-matrix-manipulation",
+  },
+  {
+    id: "stage-4-matrix-manipulation",
+    stageNumber: 4,
+    levelStartIndex: 1,
+    titleKey: "story.stages.stage4.title",
+    descriptionKey: "story.stages.stage4.description",
+    gameId: "matrix-mirror",
+    targetChallengesCount: 3,
+    tags: ["hard", "special"],
+    xpRewardPerChallenge: 50,
+    completionBonusXp: 150,
+    perfectBonusXp: 50,
+    patternConfig: {
+      difficultyTier: 3,
+      minSequenceLength: 1,
+      maxSequenceLength: 9,
+      allowedTypes: ["matrix"],
+    },
+    introCutsceneId: null,
+    postStageCutsceneId: null,
+    nextStageId: null, // Fim das etapas disponíveis nesta versão
   },
 ]);
 

@@ -194,6 +194,7 @@ function playGame(gameId) {
   />
   <MatrixMirrorGame
     v-else-if="activeScreen === 'matrix-mirror'"
+    :story-mode="session.activeMode === 'story'"
     @back="goToMenu()"
     @quit="goToMenu()"
   />
