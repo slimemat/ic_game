@@ -126,18 +126,6 @@ export const scenes = {
     },
   },
 
-  // Briefing da Etapa 2 (Placeholder com spritepaint.png)
-  "pre-pattern-recognition-2": {
-    start: "stage_placeholder",
-    nodes: {
-      stage_placeholder: {
-        type: "placeholder",
-        image: "spritepaint",
-        next: null,
-      },
-    },
-  },
-
   // Cutscene pós-conclusão da Etapa 1
   "post-pattern-recognition-1": {
     start: "client_thanks",

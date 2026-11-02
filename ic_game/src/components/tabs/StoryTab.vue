@@ -184,14 +184,6 @@ function handleJump(presetId) {
 
           <button
             type="button"
-            class="btn-debug btn-debug-cutscene"
-            @click="handleJump('cutscene-pre-2')"
-          >
-            {{ $t("hub.debug.presets.cutscene_pre_2") }}
-          </button>
-
-          <button
-            type="button"
             class="btn-debug btn-debug-highlight"
             :class="selectedShift === 'night' ? 'is-night' : 'is-day'"
             @click="handleJump('cutscene-post-2')"

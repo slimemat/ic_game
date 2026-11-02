@@ -7,7 +7,7 @@ import {
 } from "../game/data/progressionConfig";
 
 const PROGRESSION_STORAGE_KEY = "ic_game:progression-state";
-const PROGRESSION_SAVE_VERSION = 1;
+const PROGRESSION_SAVE_VERSION = 2;
 
 /**
  * Progression and Career Store.

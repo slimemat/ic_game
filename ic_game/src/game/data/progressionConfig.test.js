@@ -16,19 +16,23 @@ test("RANKS: initial rank is intern with 0 required XP", () => {
   assert.equal(getRankForXp(100).id, "intern");
 });
 
-test("RANKS: junior_analyst requires 350 XP (grinding requirement)", () => {
+test("RANKS: junior_analyst requires 2000 XP (grinding requirement)", () => {
   const junior = RANKS.find((r) => r.id === "junior_analyst");
   assert.ok(junior);
-  assert.equal(junior.requiredTotalXp, 350);
+  assert.equal(junior.requiredTotalXp, 2000);
 
-  // Player at 349 XP is still intern
-  assert.equal(getRankForXp(349).id, "intern");
-  // Player at 350 XP promotes to junior_analyst
-  assert.equal(getRankForXp(350).id, "junior_analyst");
-  // Player at 899 XP is still junior_analyst
-  assert.equal(getRankForXp(899).id, "junior_analyst");
-  // Player at 900 XP promotes to pleno_analyst
-  assert.equal(getRankForXp(900).id, "pleno_analyst");
+  // Player at 1999 XP is still intern
+  assert.equal(getRankForXp(1999).id, "intern");
+  // Player at 2000 XP promotes to junior_analyst
+  assert.equal(getRankForXp(2000).id, "junior_analyst");
+  // Player at 4999 XP is still junior_analyst
+  assert.equal(getRankForXp(4999).id, "junior_analyst");
+  // Player at 5000 XP promotes to pleno_analyst
+  assert.equal(getRankForXp(5000).id, "pleno_analyst");
+  // Player at 9999 XP is still pleno_analyst
+  assert.equal(getRankForXp(9999).id, "pleno_analyst");
+  // Player at 10000 XP promotes to senior_analyst
+  assert.equal(getRankForXp(10000).id, "senior_analyst");
 });
 
 test("getNextRank: correctly identifies subsequent rank or null at ceiling", () => {
@@ -49,23 +53,23 @@ test("STORY_STAGES: stage payout calculates base challenge rewards plus completi
   const stage1 = STORY_STAGES[0];
   assert.ok(stage1);
   assert.equal(stage1.targetChallengesCount, 10);
-  assert.equal(stage1.xpRewardPerChallenge, 25);
-  assert.equal(stage1.completionBonusXp, 100);
+  assert.equal(stage1.xpRewardPerChallenge, 15);
+  assert.equal(stage1.completionBonusXp, 50);
 
-  // 10 * 25 = 250; 250 + 100 = 350 XP
+  // 10 * 15 = 150; 150 + 50 = 200 XP
   const payout = calculateStageTotalPayout(stage1);
-  assert.equal(payout, 350);
+  assert.equal(payout, 200);
 
-  // Verifies that completing all 10 Stage 1 tasks awards Junior Analyst promotion
-  assert.equal(getRankForXp(payout).id, "junior_analyst");
+  // Verifies that completing Stage 1 keeps player as intern (200 XP < 2000 XP)
+  assert.equal(getRankForXp(payout).id, "intern");
 });
 
-test("STORY_STAGES: Stage 1 + Stage 2 yields enough XP for advancement towards Pleno", () => {
+test("STORY_STAGES: Stage 1 + Stage 2 yields cumulative XP while keeping intern status", () => {
   const stage1Payout = calculateStageTotalPayout(STORY_STAGES[0]);
   const stage2Payout = calculateStageTotalPayout(STORY_STAGES[1]);
   const total = stage1Payout + stage2Payout;
 
-  // 350 + 280 = 630 XP (advancing towards Pleno Analyst at 900 XP)
-  assert.equal(total, 630);
-  assert.equal(getRankForXp(total).id, "junior_analyst");
+  // 200 + 200 = 400 XP (progressing towards Junior Analyst at 2000 XP)
+  assert.equal(total, 400);
+  assert.equal(getRankForXp(total).id, "intern");
 });

@@ -2,12 +2,17 @@ import { computed, onBeforeUnmount, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useStoryStore, STORY_CHECKPOINTS } from "../stores/story";
 import { useProgressionStore } from "../stores/progression";
-import { RANKS, STORY_STAGES } from "../game/data/progressionConfig";
+import {
+  RANKS,
+  STORY_STAGES,
+  calculateStageTotalPayout,
+} from "../game/data/progressionConfig";
 
 const FEEDBACK_MS = 4000;
 const [STAGE_1, STAGE_2, STAGE_3] = STORY_STAGES;
-const STAGE_2_START_XP = RANKS[1].requiredTotalXp;
-const STAGE_3_START_XP = RANKS[2].requiredTotalXp;
+const STAGE_2_START_XP = calculateStageTotalPayout(STAGE_1);
+const STAGE_3_START_XP =
+  calculateStageTotalPayout(STAGE_1) + calculateStageTotalPayout(STAGE_2);
 
 /**
  * Ações de desenvolvimento (switches de decisões, reset e atalhos para qualquer checkpoint).

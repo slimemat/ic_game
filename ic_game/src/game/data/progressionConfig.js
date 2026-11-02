@@ -13,21 +13,21 @@ export const RANKS = Object.freeze([
   {
     id: "junior_analyst",
     titleKey: "story.ranks.junior_analyst", // "Analista Júnior"
-    requiredTotalXp: 350, // Requires grinding across multiple tasks/challenges
+    requiredTotalXp: 2000, // Requires completing multiple stages and challenges
     badgeColor: "#319795",
     badgeLabel: "JR. ANALYST",
   },
   {
     id: "pleno_analyst",
     titleKey: "story.ranks.pleno_analyst", // "Analista Pleno"
-    requiredTotalXp: 900,
+    requiredTotalXp: 5000,
     badgeColor: "#3182ce",
     badgeLabel: "PLENO",
   },
   {
     id: "senior_analyst",
     titleKey: "story.ranks.senior_analyst", // "Analista Sênior"
-    requiredTotalXp: 1800,
+    requiredTotalXp: 10000,
     badgeColor: "#805ad5",
     badgeLabel: "SR. ANALYST",
   },
@@ -95,9 +95,9 @@ export const STORY_STAGES = Object.freeze([
     targetChallengesCount: 10,
     // Task tags: "easy" + "special" gives a generous starting payout!
     tags: ["easy", "special"],
-    xpRewardPerChallenge: 25, // 10 * 25 = 250 XP
-    completionBonusXp: 100, // 250 + 100 = 350 XP (earns promotion to Junior Analyst right upon completion!)
-    perfectBonusXp: 50, // Bônus extra ao concluir com 3 estrelas (0 erros)
+    xpRewardPerChallenge: 15, // 10 * 15 = 150 XP
+    completionBonusXp: 50, // 150 + 50 = 200 XP
+    perfectBonusXp: 25, // Bônus extra ao concluir com 3 estrelas (0 erros) -> Total 225 XP
     // Future-proofing placeholder for dynamic/procedural level generator
     patternConfig: {
       difficultyTier: 1,
@@ -120,9 +120,9 @@ export const STORY_STAGES = Object.freeze([
     gameId: "pattern-recognition",
     targetChallengesCount: 5,
     tags: ["medium", "urgent"],
-    xpRewardPerChallenge: 40, // 5 * 40 = 200 XP
-    completionBonusXp: 80, // 200 + 80 = 280 XP
-    perfectBonusXp: 40, // Bônus extra ao concluir com 3 estrelas (0 erros)
+    xpRewardPerChallenge: 25, // 5 * 25 = 125 XP
+    completionBonusXp: 75, // 125 + 75 = 200 XP
+    perfectBonusXp: 30, // Bônus extra ao concluir com 3 estrelas (0 erros) -> Total 230 XP
     patternConfig: {
       difficultyTier: 2,
       minSequenceLength: 4,
@@ -133,7 +133,7 @@ export const STORY_STAGES = Object.freeze([
     // fica repetitivo ("vamos reler a mensagem dela", "o Rardi saiu..."). Vamos
     // remover o briefing destas etapas OU criar novas histórias de clientes
     // (ex.: "pre-pattern-recognition-2") narrando os novos desafios.
-    introCutsceneId: "pre-pattern-recognition-2",
+    introCutsceneId: null,
     postStageCutsceneId: "post-pattern-recognition-2",
     nextStageId: "stage-3-advanced-system",
   },
@@ -146,9 +146,9 @@ export const STORY_STAGES = Object.freeze([
     gameId: "pattern-recognition",
     targetChallengesCount: 5,
     tags: ["hard", "special"],
-    xpRewardPerChallenge: 50,
-    completionBonusXp: 120,
-    perfectBonusXp: 60, // Bônus extra ao concluir com 3 estrelas (0 erros)
+    xpRewardPerChallenge: 35, // 5 * 35 = 175 XP
+    completionBonusXp: 100, // 175 + 100 = 275 XP
+    perfectBonusXp: 40, // Bônus extra ao concluir com 3 estrelas (0 erros) -> Total 315 XP
     patternConfig: {
       difficultyTier: 3,
       minSequenceLength: 5,
