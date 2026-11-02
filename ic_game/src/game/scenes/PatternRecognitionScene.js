@@ -893,10 +893,10 @@ export default class PatternRecognitionScene extends Phaser.Scene {
    * @param {number} size
    * @param {string} symId
    */
-  drawColorSymbolGraphic(gfx, x, y, size, symId) {
+  drawColorSymbolGraphic(gfx, x, y, size, symId, symbolColor = 0x0f172a) {
     const s = size * 0.44;
-    gfx.lineStyle(3, 0x0f172a, 1);
-    gfx.fillStyle(0xffffff, 1);
+    gfx.lineStyle(2, symbolColor, 0.95);
+    gfx.fillStyle(symbolColor, 1);
 
     switch (symId) {
       case "triangle_up": {
@@ -1012,7 +1012,14 @@ export default class PatternRecognitionScene extends Phaser.Scene {
 
       const gfx = this.add.graphics();
       if (symInfo?.id) {
-        this.drawColorSymbolGraphic(gfx, 0, 0, r, symInfo.id);
+        this.drawColorSymbolGraphic(
+          gfx,
+          0,
+          0,
+          r,
+          symInfo.id,
+          symInfo.symbolColor,
+        );
       }
 
       return this.add.container(x, y, [circle, gfx]);

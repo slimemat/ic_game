@@ -20,22 +20,31 @@ export const COLOR_SYMBOLS = Object.freeze({
     id: "triangle_up",
     symbol: "▲",
     labelKey: "pattern.colors.red",
+    symbolColor: 0x5a1f00, // Tom sombra vinho/marrom escuro profundo (WCAG ~4.8:1)
   },
-  [COLORS.BLUE]: { id: "cross", symbol: "+", labelKey: "pattern.colors.blue" },
+  [COLORS.BLUE]: {
+    id: "cross",
+    symbol: "+",
+    labelKey: "pattern.colors.blue",
+    symbolColor: 0x0f4366, // Tom sombra azul marinho profundo (WCAG ~4.5:1)
+  },
   [COLORS.GREEN]: {
     id: "square",
     symbol: "■",
     labelKey: "pattern.colors.green",
+    symbolColor: 0x003829, // Tom sombra verde floresta profundo (WCAG ~4.2:1)
   },
   [COLORS.YELLOW]: {
     id: "triangle_down",
     symbol: "▼",
     labelKey: "pattern.colors.yellow",
+    symbolColor: 0x574f00, // Tom sombra âmbar/oliva escuro profundo (WCAG ~5.1:1)
   },
   [COLORS.PURPLE]: {
     id: "diamond",
     symbol: "◆",
     labelKey: "pattern.colors.purple",
+    symbolColor: 0x4a1d37, // Tom sombra berinjela/vinho escuro profundo (WCAG ~4.3:1)
   },
 });
 
