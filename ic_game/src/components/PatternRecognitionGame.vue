@@ -20,6 +20,8 @@ import PauseModal from "./ui/PauseModal.vue";
 import PauseButton from "./ui/PauseButton.vue";
 import VictoryModal from "./ui/VictoryModal.vue";
 import WarningCard from "./ui/WarningCard.vue";
+import { useTutorialTrigger } from "../composables/useTutorialTrigger";
+import InteractiveTutorialModal from "./tutorials/InteractiveTutorialModal.vue";
 
 const INACTIVITY_HINT_DELAY_MS = 8000;
 
@@ -86,6 +88,12 @@ function getStartLevel() {
 const { t } = useI18n();
 
 const currentLevel = ref(getStartLevel());
+
+const { activeTutorial, completeActiveTutorial, skipActiveTutorial } =
+  useTutorialTrigger({
+    gameId: "pattern-recognition",
+    currentLevel,
+  });
 
 const totalLevels = computed(() =>
   props.storyMode ? targetPatternCount.value : LEVEL_CONFIGS.length,
@@ -159,6 +167,7 @@ function clearInactivityTimer() {
 }
 
 function scheduleInactivityTimer() {
+  if (activeTutorial.value) return;
   clearInactivityTimer();
   if (isSlotFilled.value || isPaused.value || hasWon.value) return;
 
@@ -202,6 +211,12 @@ function syncRegistry() {
 
 watch(currentLevel, () => {
   resetLevelUxState();
+});
+
+watch(activeTutorial, (tutorial) => {
+  if (!tutorial) {
+    scheduleInactivityTimer();
+  }
 });
 
 // --- PAUSE: store (Vue) -> Phaser ---
@@ -460,6 +475,14 @@ const triggerWarning = (msg, type = "info") => {
         </span>
       </div>
     </transition>
+
+    <!-- Micro-Tutorial Interativo Just-in-Time (Bancada de Edição) -->
+    <InteractiveTutorialModal
+      v-if="activeTutorial"
+      :tutorial="activeTutorial"
+      @complete="completeActiveTutorial"
+      @skip="skipActiveTutorial"
+    />
 
     <!-- Modals Compartilhados -->
     <PauseModal

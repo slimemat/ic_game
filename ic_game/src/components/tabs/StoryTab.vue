@@ -257,7 +257,51 @@ function handleJump(presetId) {
         </div>
       </div>
 
-      <!-- 4. Reset Pinia / LocalStorage -->
+      <!-- 4. Atalhos de Tutoriais Interativos (Oficina) -->
+      <div class="debug-section">
+        <h3 class="debug-section-title">
+          🎓 {{ $t("hub.debug.tutorials_title") }}
+        </h3>
+        <div class="debug-btn-list">
+          <button
+            type="button"
+            class="btn-debug btn-debug-tutorial"
+            @click="handleJump('tutorial-rotation-cw')"
+          >
+            ↷ {{ $t("hub.debug.btn_tut_rot_cw") }}
+          </button>
+          <button
+            type="button"
+            class="btn-debug btn-debug-tutorial"
+            @click="handleJump('tutorial-rotation-ccw')"
+          >
+            ↶ {{ $t("hub.debug.btn_tut_rot_ccw") }}
+          </button>
+          <button
+            type="button"
+            class="btn-debug btn-debug-tutorial"
+            @click="handleJump('tutorial-flip-h')"
+          >
+            ⇄ {{ $t("hub.debug.btn_tut_flip_h") }}
+          </button>
+          <button
+            type="button"
+            class="btn-debug btn-debug-tutorial"
+            @click="handleJump('tutorial-flip-v')"
+          >
+            ⇅ {{ $t("hub.debug.btn_tut_flip_v") }}
+          </button>
+          <button
+            type="button"
+            class="btn-debug btn-debug-reset-tut"
+            @click="jumpToPreset('tutorial-reset')"
+          >
+            ↺ {{ $t("hub.debug.btn_tut_reset") }}
+          </button>
+        </div>
+      </div>
+
+      <!-- 5. Reset Pinia / LocalStorage -->
       <button
         type="button"
         class="btn-debug btn-debug-reset"
@@ -548,5 +592,25 @@ function handleJump(presetId) {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.btn-debug-tutorial {
+  border-color: rgba(56, 189, 248, 0.45);
+  color: #38bdf8;
+  background: rgba(14, 165, 233, 0.1);
+}
+.btn-debug-tutorial:hover {
+  background: rgba(14, 165, 233, 0.22);
+  border-color: #38bdf8;
+}
+
+.btn-debug-reset-tut {
+  border-color: rgba(234, 179, 8, 0.45);
+  color: #eab308;
+  background: rgba(234, 179, 8, 0.08);
+}
+.btn-debug-reset-tut:hover {
+  background: rgba(234, 179, 8, 0.2);
+  border-color: #eab308;
 }
 </style>

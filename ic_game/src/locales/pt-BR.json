@@ -120,7 +120,13 @@
       "reset_done": "✓ Progresso do Pinia & LocalStorage resetado com sucesso!",
       "jump_label": "⚡ Jogar Novos Jogos (Etapa 2 Direto)",
       "jump_title": "Avança direto para a Etapa 2 com os novos jogos de transformação",
-      "jump_done": "⚡ Iniciando Etapa 2 com os novos jogos de transformação!"
+      "jump_done": "⚡ Iniciando Etapa 2 com os novos jogos de transformação!",
+      "tutorials_title": "Tutoriais Interativos (Oficina)",
+      "btn_tut_rot_cw": "Oficina Rotação Horária (Fase 1)",
+      "btn_tut_rot_ccw": "Oficina Rotação Anti-horária (Fase 2)",
+      "btn_tut_flip_h": "Oficina Espelho Horizontal (Fase 12)",
+      "btn_tut_flip_v": "Oficina Espelho Vertical (Fase 14)",
+      "btn_tut_reset": "Resetar Conclusão dos Tutoriais"
     }
   },
   "mainMenu": {
@@ -441,6 +447,50 @@
     "charade": {
       "library": "Biblioteca",
       "canvas": "Canvas"
+    }
+  },
+  "tutorials": {
+    "unified": {
+      "title": "Memorando: Orientação Espacial",
+      "badge": "Laboratório Prático",
+      "instruction": "Toque nas ferramentas para observar como a peça se transforma:",
+      "btn_start": "Iniciar Desafio",
+      "btn_skip": "Pular Tutorial",
+      "btn_reset": "Restaurar",
+      "tools_label": "Operadores Espaciais",
+      "tip_mental": "Lembre-se: nos testes reais, você fará essas projeções mentalmente!",
+      "tool_cw": "Girar 90° no sentido horário (↷)",
+      "tool_ccw": "Girar 90° no sentido anti-horário (↶)",
+      "tool_flip_h": "Espelhar horizontalmente no eixo vertical (⇄)",
+      "tool_flip_v": "Espelhar verticalmente no eixo horizontal (⇅)"
+    },
+    "degree_steps": {
+      "deg_0": "Posição inicial (0°). Toque nos botões para transformar:",
+      "deg_90": "90° Horário — Um quarto de volta para a direita (↷)",
+      "deg_180": "180° (90° + 90°) — Meia volta! O sprite fica de cabeça para baixo",
+      "deg_270": "270° — Três quartos de volta (o mesmo que 90° à esquerda)",
+      "deg_360": "360° — Volta completa! O ciclo recomeça da posição original",
+      "deg_cycle": "Ciclo contínuo: mais uma volta de 360° acumulada!",
+      "deg_ccw_90": "90° Anti-horário — Um quarto de volta para a esquerda (↶)",
+      "flip_h_done": "Espelho Horizontal ⇄ : inverte esquerda e direita (mantém topo e base)",
+      "flip_h_normal": "Espelho desfeito: orientação horizontal normal restaurada",
+      "flip_v_done": "Espelho Vertical ⇅ : inverte topo e base (mantém esquerda e direita)",
+      "flip_v_normal": "Espelho desfeito: orientação vertical normal restaurada"
+    },
+    "confirm_skip": {
+      "title": "Pular tutorial?",
+      "message": "Deseja pular esta oficina? Você poderá revê-la a qualquer momento no menu.",
+      "btn_stay": "Continuar Aqui",
+      "btn_confirm": "Sim, Pular"
+    },
+    "notification": {
+      "sender": "{assistantName}",
+      "step_counter": "Passo {current} de {total}",
+      "step_1": "Toque no giro anti-horário (↶) para girar a imagem para a esquerda.",
+      "step_2": "Agora toque no giro horário (↷) para girar a imagem para a direita.",
+      "step_3": "Toque no Espelho Horizontal (⇄) para inverter esquerda e direita.",
+      "step_4": "Toque no Espelho Vertical (⇅) para inverter de ponta-cabeça.",
+      "completed": "Excelente! Você experimentou todos os operadores. Prossiga para o desafio!"
     }
   }
 }

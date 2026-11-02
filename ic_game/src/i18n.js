@@ -7,6 +7,7 @@ const i18n = createI18n({
   fallbackLocale: "pt-BR",
   messages: {
     "pt-BR": ptBR,
+    pt: ptBR,
   },
 });
 
