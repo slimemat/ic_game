@@ -230,17 +230,6 @@ export const scenes = {
       replyContinueTask: {
         speaker: "assistant",
         emotion: "explaining",
-        next: "transition_night",
-      },
-      transition_night: {
-        type: "transition",
-        effects: ["suspiciousSteps"],
-        duration: 1200,
-        next: "malu_night_scared",
-      },
-      malu_night_scared: {
-        speaker: "assistant",
-        emotion: "neutral",
         next: null,
       },
       replyCallItADay: {
@@ -260,6 +249,12 @@ export const scenes = {
       malu_morning_greeting: {
         speaker: "assistant",
         emotion: "explaining",
+        header: {
+          variant: "morning",
+          eyebrowKey: "story.chat.morning_eyebrow",
+          titleKey: "story.chat.day_2_title",
+          participants: ["assistant"],
+        },
         next: null,
       },
     },
@@ -273,6 +268,7 @@ export const scenes = {
   //   acabaram e que o jogador pode aguardar na área de trabalho (Lobby).
   "post-pattern-recognition-2": {
     start: "check_shift",
+    header: true,
     nodes: {
       check_shift: {
         type: "branch",
@@ -285,6 +281,12 @@ export const scenes = {
         type: "presence",
         action: "join",
         char: "tipster_bot",
+        header: {
+          variant: "bot",
+          eyebrowKey: "story.chat.night_shift_eyebrow",
+          titleKey: "story.variables.tipsterBotName",
+          participants: ["tipster_bot"],
+        },
         next: "tipster_bot_intro",
       },
       tipster_bot_intro: {
@@ -315,6 +317,12 @@ export const scenes = {
       assistant_all_done: {
         speaker: "assistant",
         emotion: "neutral",
+        header: {
+          variant: "default",
+          eyebrowKey: "story.dashboard.ticket_eyebrow",
+          titleKey: "story.stages.stage2.title",
+          participants: ["assistant"],
+        },
         next: "assistant_go_to_lobby",
       },
       assistant_go_to_lobby: {

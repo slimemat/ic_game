@@ -289,7 +289,10 @@
       "day_2": "DIA 2",
       "placeholder_title": "Placeholder Fase {stage}",
       "placeholder_desc": "O briefing narrativo desta fase está em desenvolvimento.",
-      "placeholder_btn": "Iniciar Fase"
+      "placeholder_btn": "Iniciar Fase",
+      "day_2_title": "Dia 2",
+      "morning_eyebrow": "EXPEDIENTE",
+      "night_shift_eyebrow": "EXPEDIENTE NOTURNO"
     },
     "characters": {
       "assistant": "{assistantName}",
