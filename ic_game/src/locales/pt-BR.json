@@ -122,6 +122,7 @@
       "jump_title": "Avança direto para a Etapa 2 com os novos jogos de transformação",
       "jump_done": "⚡ Iniciando Etapa 2 com os novos jogos de transformação!",
       "tutorials_title": "Tutoriais Interativos (Oficina)",
+      "btn_tut_spatial_orientation": "Mesa do Rardi: Oficina Espacial (Fase 1)",
       "btn_tut_rot_cw": "Oficina Rotação Horária (Fase 1)",
       "btn_tut_rot_ccw": "Oficina Rotação Anti-horária (Fase 2)",
       "btn_tut_flip_h": "Oficina Espelho Horizontal (Fase 12)",
@@ -397,7 +398,7 @@
         "client_call": "Socorro, equipe da {companyName}! Eu estava rodando uma consulta num banco de dados milenar e, sem querer, apaguei algumas tabelas. O sistema está exigindo uma restauração lógica do HD e, pra isso, preciso da ajuda de vocês pra entender o que esses símbolos querem dizer!",
         "analysis": "Analisando o que ela disse... Vamos precisar conversar com a máquina na língua dela pra conseguir restaurar esse banco de dados.",
         "former_it": "Bom, pelo menos é isso que o {formerITguyName} costumava dizer... Ele saiu no último corte de gastos, hahaha! *rindo de nervoso*",
-        "notes_handoff": "Ele deixou umas anotações. Dá uma olhada, tenho certeza que você vai entender! Boa sorte.",
+        "notes_handoff": "Ele deixou as anotações dele e uma prancheta de testes na sua mesa de trabalho. Dá uma olhada e pratica as ferramentas antes de iniciar a restauração! Boa sorte.",
         "notes": {
           "rotation": "Algumas formas precisam ser rotacionadas conforme as anteriores.",
           "repeat": "Certos padrões se repetem!",
@@ -486,11 +487,42 @@
     "notification": {
       "sender": "{assistantName}",
       "step_counter": "Passo {current} de {total}",
-      "step_1": "Toque no giro anti-horário (↶) para girar a imagem para a esquerda.",
-      "step_2": "Agora toque no giro horário (↷) para girar a imagem para a direita.",
+      "step_1": "Toque no giro horário (↷) para girar a imagem para a direita.",
+      "step_2": "Toque no giro anti-horário (↶) para girar a imagem para a esquerda.",
       "step_3": "Toque no Espelho Horizontal (⇄) para inverter esquerda e direita.",
       "step_4": "Toque no Espelho Vertical (⇅) para inverter de ponta-cabeça.",
       "completed": "Excelente! Você experimentou todos os operadores. Prossiga para o desafio!"
+    },
+    "desk": {
+      "desk_title": "Bancada do {formerITguyName}",
+      "desk_subtitle": "Anotações e Prancheta de Calibração",
+      "desk_badge": "Mesa de Trabalho",
+      "notes_tray_title": "Anotações do Rardi (toque para ler):",
+      "btn_minimize": "Praticar na Prancheta ⬆",
+      "swipe_tip": "Deslize para cima ⬆ ou toque no botão para praticar",
+      "step_counter": "Passo {current} de {total}",
+      "step_prompt_cw": "Gire a imagem 90° no sentido horário (↷) usando o botão destacado.",
+      "step_prompt_ccw": "Gire a imagem 90° no sentido anti-horário (↶) usando o botão destacado.",
+      "step_prompt_flip_h": "Inverta a imagem no eixo horizontal (⇄) usando o botão destacado.",
+      "step_prompt_flip_v": "Inverta a imagem de ponta-cabeça (⇅) usando o botão destacado.",
+      "step_prompt_done": "Todas as anotações foram testadas! Agora inicie seu chamado real.",
+      "note_status_focus": "Em Foco",
+      "note_status_pending": "Pendente",
+      "note_status_done": "Concluído ✓"
+    },
+    "rardi_notes": {
+      "note_1_title": "Nota 1: Giro Horário (↷)",
+      "note_1_tag": "Giro Horário ↷",
+      "note_1_text": "Sentido dos ponteiros do relógio! A cada toque giramos 90° para a direita. 90° + 90° dá 180° (meia volta), mais 90° vai a 270°, e com 360° você dá uma volta inteira de volta ao começo!",
+      "note_2_title": "Nota 2: Giro Anti-Horário (↶)",
+      "note_2_tag": "Anti-Horário ↶",
+      "note_2_text": "Sentido contrário aos ponteiros! Gira para a esquerda. Girar 90° anti-horário deixa a imagem na mesma orientação de um giro de 270° no sentido horário!",
+      "note_3_title": "Nota 3: Espelho Horizontal (⇄)",
+      "note_3_tag": "Espelho H ⇄",
+      "note_3_text": "Reflexão no eixo vertical: inverte o lado esquerdo com o lado direito, como no espelho. Mas atenção: o topo continua no topo!",
+      "note_4_title": "Nota 4: Espelho Vertical (⇅)",
+      "note_4_tag": "Espelho V ⇅",
+      "note_4_text": "Reflexão no eixo horizontal: vira o objeto de ponta-cabeça! A base vai para o topo, mas a esquerda e a direita continuam onde estavam."
     }
   }
 }

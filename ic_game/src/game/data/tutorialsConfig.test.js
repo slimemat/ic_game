@@ -87,3 +87,31 @@ test("getTutorialForLevel: respeita o predicado isCompletedFn para não re-exibi
     "Tutorial concluído deve retornar null",
   );
 });
+
+test("TUTORIALS_CONFIG: spatial_orientation possui as 4 notas do Rardi configuradas e traduzidas na ordem correta", () => {
+  const tut = TUTORIALS_CONFIG.spatial_orientation;
+  assert.ok(tut);
+  assert.ok(Array.isArray(tut.rardiNotes));
+  assert.equal(tut.rardiNotes.length, 4);
+
+  const expectedActions = ["rotate_cw", "rotate_ccw", "flip_h", "flip_v"];
+  tut.rardiNotes.forEach((note, idx) => {
+    assert.equal(note.actionKey, expectedActions[idx]);
+    assert.ok(
+      resolveI18nPath(ptBR, note.titleKey),
+      `Missing titleKey ${note.titleKey}`,
+    );
+    assert.ok(
+      resolveI18nPath(ptBR, note.shortTagKey),
+      `Missing shortTagKey ${note.shortTagKey}`,
+    );
+    assert.ok(
+      resolveI18nPath(ptBR, note.textKey),
+      `Missing textKey ${note.textKey}`,
+    );
+    assert.ok(
+      resolveI18nPath(ptBR, note.promptKey),
+      `Missing promptKey ${note.promptKey}`,
+    );
+  });
+});

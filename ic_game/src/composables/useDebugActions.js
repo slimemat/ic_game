@@ -264,6 +264,25 @@ export function useDebugActions() {
         break;
       }
 
+      case "tutorial-spatial-orientation": {
+        progression.completedTutorialIds =
+          progression.completedTutorialIds.filter(
+            (id) =>
+              id !== "spatial_orientation" &&
+              id !== "rotation_cw" &&
+              id !== "rotation_ccw" &&
+              id !== "flip_h" &&
+              id !== "flip_v",
+          );
+        progression.save();
+        story.currentStageId = STAGE_1.id;
+        story.currentDay = 1;
+        story.setPatternProgress(0);
+        story.startTask(STAGE_1.gameId, { withBriefing: false });
+        flash(t("hub.debug.btn_tut_spatial_orientation"));
+        break;
+      }
+
       case "tutorial-rotation-cw": {
         progression.completedTutorialIds =
           progression.completedTutorialIds.filter((id) => id !== "rotation_cw");

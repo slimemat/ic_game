@@ -116,11 +116,6 @@ export const scenes = {
       notes_handoff: {
         speaker: "assistant",
         emotion: "explaining",
-        next: "rardi_notes",
-      },
-      rardi_notes: {
-        type: "notes",
-        notes: ["rotation", "repeat", "instructions", "rule"],
         next: null,
       },
     },

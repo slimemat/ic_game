@@ -27,10 +27,22 @@ const isSubmitting = ref(false);
 
 const COOLDOWN_MS = 380;
 
-// Máquina de estados do onboarding guiado obrigatório
-// Ordem exigida: 1. Anti-horário (↶) -> 2. Horário (↷) -> 3. Espelho H (⇄) -> 4. Espelho V (⇅)
-const GUIDED_STEPS = ["rotate_ccw", "rotate_cw", "flip_h", "flip_v"];
-const currentStepIndex = ref(0); // 0 a 3, ou 4 quando todos concluídos
+// Ordem dos passos guiados do Rardi:
+// 1. Horário (↷) -> 2. Anti-horário (↶) -> 3. Espelho H (⇄) -> 4. Espelho V (⇅)
+const GUIDED_STEPS = ["rotate_cw", "rotate_ccw", "flip_h", "flip_v"];
+const currentStepIndex = ref(0);
+
+const rardiNotes = computed(() => props.tutorial?.rardiNotes || []);
+
+// Nota atualmente ampliada no centro da mesa (inicia com a Nota 1 em zoom)
+const activeZoomedNoteId = ref("note_1");
+
+const activeZoomedNote = computed(() => {
+  if (!activeZoomedNoteId.value) return null;
+  return (
+    rardiNotes.value.find((n) => n.id === activeZoomedNoteId.value) || null
+  );
+});
 
 const isAllStepsCompleted = computed(
   () => currentStepIndex.value >= GUIDED_STEPS.length,
@@ -41,13 +53,45 @@ const currentTargetStep = computed(() => {
   return GUIDED_STEPS[currentStepIndex.value];
 });
 
-const notificationMessage = computed(() => {
+const currentStepPrompt = computed(() => {
   if (isAllStepsCompleted.value) {
-    return t("tutorials.notification.completed");
+    return t("tutorials.desk.step_prompt_done");
   }
-  const stepNum = currentStepIndex.value + 1;
-  return t(`tutorials.notification.step_${stepNum}`);
+  const currentNote = rardiNotes.value[currentStepIndex.value];
+  return currentNote?.promptKey ? t(currentNote.promptKey) : "";
 });
+
+// Detecção do gesto de arrastar para cima (Swipe Up) para minimizar nota
+let touchStartY = 0;
+let touchStartX = 0;
+
+function handleTouchStart(e) {
+  if (!e.touches || e.touches.length === 0) return;
+  touchStartY = e.touches[0].clientY;
+  touchStartX = e.touches[0].clientX;
+}
+
+function handleTouchEnd(e) {
+  if (!e.changedTouches || e.changedTouches.length === 0) return;
+  const deltaY = touchStartY - e.changedTouches[0].clientY;
+  const deltaX = Math.abs(touchStartX - e.changedTouches[0].clientX);
+  // Arrastou para cima mais de 45px e movimento vertical foi predominante
+  if (deltaY > 45 && deltaY > deltaX) {
+    minimizeZoomedNote();
+  }
+}
+
+function openNoteZoom(noteId) {
+  activeZoomedNoteId.value = noteId;
+  playActionSfx();
+}
+
+function minimizeZoomedNote() {
+  if (activeZoomedNoteId.value) {
+    activeZoomedNoteId.value = null;
+    playActionSfx();
+  }
+}
 
 const transformStyle = computed(() => ({
   transform: `rotate(${currentAngle.value}deg) scaleX(${scaleX.value}) scaleY(${scaleY.value})`,
@@ -134,17 +178,18 @@ function advanceGuidedStep(actionKey) {
   if (currentTargetStep.value === actionKey) {
     currentStepIndex.value++;
     playStepSuccessSfx();
+    // Ao cumprir a ação, se ainda houver próximo passo, amplia a nota correspondente para leitura
+    if (currentStepIndex.value < GUIDED_STEPS.length) {
+      const nextNote = rardiNotes.value[currentStepIndex.value];
+      if (nextNote) {
+        activeZoomedNoteId.value = nextNote.id;
+      }
+    } else {
+      activeZoomedNoteId.value = null;
+    }
   } else {
     playActionSfx();
   }
-}
-
-function rotateCcw() {
-  if (isActionCoolingDown.value) return;
-  startCooldown();
-  currentAngle.value -= 90;
-  lastAction.value = "rotate_ccw";
-  advanceGuidedStep("rotate_ccw");
 }
 
 function rotateCw() {
@@ -153,6 +198,14 @@ function rotateCw() {
   currentAngle.value += 90;
   lastAction.value = "rotate_cw";
   advanceGuidedStep("rotate_cw");
+}
+
+function rotateCcw() {
+  if (isActionCoolingDown.value) return;
+  startCooldown();
+  currentAngle.value -= 90;
+  lastAction.value = "rotate_ccw";
+  advanceGuidedStep("rotate_ccw");
 }
 
 function flipHorizontal() {
@@ -199,17 +252,23 @@ function handleConfirmSkip() {
 
 <template>
   <div class="tutorial-overlay" role="dialog" aria-modal="true">
-    <div class="paper-card retro-paper">
-      <!-- Fita adesiva decorativa de topo (Estilo Post-it Tape do jogo) -->
-      <div class="paper-tape" aria-hidden="true"></div>
-
-      <!-- Cabeçalho estilo memorando corporativo -->
-      <header class="paper-header">
+    <!-- TODO: Arte final da mesa vista de cima será desenhada futuramente pelo usuário -->
+    <div class="desk-surface retro-office-desk">
+      <!-- Cabeçalho da mesa com estética de escritório retrô -->
+      <header class="desk-header">
         <div class="header-stamp">
-          <span class="stamp-icon">📋</span>
+          <span class="stamp-icon">🗄️</span>
           <div>
-            <span class="stamp-badge">{{ $t("tutorials.unified.badge") }}</span>
-            <h3 class="paper-title">{{ $t("tutorials.unified.title") }}</h3>
+            <span class="stamp-badge">{{
+              $t(props.tutorial.subtitleKey || "tutorials.desk.desk_badge")
+            }}</span>
+            <h3 class="desk-title">
+              {{
+                $t(props.tutorial.titleKey || "tutorials.desk.desk_title", {
+                  formerITguyName: "Rardi",
+                })
+              }}
+            </h3>
           </div>
         </div>
         <button
@@ -222,44 +281,72 @@ function handleConfirmSkip() {
         </button>
       </header>
 
-      <!-- Notificação Push da Assistente Malu (Desliza de cima com avatar pixel art) -->
+      <!-- Bandeja de Notas do Rardi (Alinhadas de forma levemente bagunçada no topo) -->
       <div
-        class="assistant-push-notification"
+        class="desk-notes-tray"
+        :title="$t('tutorials.desk.notes_tray_title')"
+      >
+        <div
+          v-for="(note, idx) in rardiNotes"
+          :key="note.id"
+          class="rardi-mini-note"
+          :class="{
+            'is-focus': idx === currentStepIndex && !isAllStepsCompleted,
+            'is-done': idx < currentStepIndex,
+            'is-active-reading': activeZoomedNoteId === note.id,
+          }"
+          :style="{
+            '--note-color': note.color,
+            '--note-tilt': note.tilt,
+          }"
+          @click="openNoteZoom(note.id)"
+        >
+          <!-- Fita adesiva decorativa -->
+          <div class="mini-tape" aria-hidden="true"></div>
+
+          <div class="mini-note-content">
+            <span class="mini-icon">{{ note.icon }}</span>
+            <span class="mini-title">{{ $t(note.shortTagKey) }}</span>
+          </div>
+
+          <div class="mini-status-badge">
+            <span v-if="idx < currentStepIndex" class="status-done">✓</span>
+            <span v-else-if="idx === currentStepIndex" class="status-focus">
+              ● {{ $t("tutorials.desk.note_status_focus") }}
+            </span>
+            <span v-else class="status-pending">⏳</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barra de Instrução Ativa do Rardi / Malu -->
+      <div
+        class="desk-instruction-bar"
         :class="{ 'is-completed': isAllStepsCompleted }"
       >
-        <div class="push-avatar-box">
-          <img
-            :src="assistantAvatar"
-            alt="Malu"
-            class="assistant-push-avatar"
-          />
+        <div class="instruction-avatar">
+          <img :src="assistantAvatar" alt="Malu" class="avatar-img" />
           <span class="online-indicator" aria-hidden="true"></span>
         </div>
-        <div class="push-content">
-          <div class="push-header-row">
-            <span class="push-sender">{{
-              $t("tutorials.notification.sender")
-            }}</span>
-            <span class="push-step-tag" :class="{ done: isAllStepsCompleted }">
+        <div class="instruction-body">
+          <div class="instruction-meta">
+            <span class="sender-name">Malu & Rardi</span>
+            <span class="step-tag" :class="{ done: isAllStepsCompleted }">
               {{
                 isAllStepsCompleted
-                  ? "Concluído ✓"
-                  : $t("tutorials.notification.step_counter", {
+                  ? $t("tutorials.desk.note_status_done")
+                  : $t("tutorials.desk.step_counter", {
                       current: currentStepIndex + 1,
                       total: GUIDED_STEPS.length,
                     })
               }}
             </span>
           </div>
-          <transition name="push-slide" mode="out-in">
-            <p :key="currentStepIndex" class="push-message-text">
-              {{ notificationMessage }}
-            </p>
-          </transition>
+          <p class="instruction-text">{{ currentStepPrompt }}</p>
         </div>
       </div>
 
-      <!-- Prancheta Ampliada de Testes com o Sprite -->
+      <!-- Prancheta Central de Calibração com o Sprite -->
       <div class="drafting-board">
         <!-- Display de Selo de Orientação -->
         <div class="orientation-badge">
@@ -273,7 +360,7 @@ function handleConfirmSkip() {
         <!-- Eixo de reflexão vertical sutil (Flip H) -->
         <div v-if="scaleX === -1" class="mirror-line vertical"></div>
 
-        <!-- O sprite do personagem na prancheta ampliada -->
+        <!-- O sprite do personagem na prancheta -->
         <div class="sprite-wrapper" :style="transformStyle">
           <img :src="spritepaintImg" alt="Sprite em teste" class="sprite-img" />
         </div>
@@ -285,8 +372,8 @@ function handleConfirmSkip() {
         <span class="memo-text">{{ dynamicExplanation }}</span>
       </div>
 
-      <!-- Caixa de Ferramentas / Carimbos de Transformação
-           Ordem Intuitiva: 1. Anti-horário (Esquerda) | 2. Horário (Direita) | 3. Espelho H | 4. Espelho V | 5. Reset -->
+      <!-- Grade de Ferramentas / Carimbos de Transformação
+           Ordem Espacial: 1. Anti-horário (Esquerda ↶) | 2. Horário (Direita ↷) | 3. Espelho H (⇄) | 4. Espelho V (⇅) | 5. Reset (↺) -->
       <div class="paper-tools-grid">
         <!-- 1. Girar 90° Anti-horário (À Esquerda) -->
         <button
@@ -303,7 +390,7 @@ function handleConfirmSkip() {
           <span class="stamp-label">90° Anti-horário</span>
         </button>
 
-        <!-- 2. Girar 90° Horário (À Direita de ↶) -->
+        <!-- 2. Girar 90° Horário (À Direita de ↶ - 1º Passo Guiado) -->
         <button
           type="button"
           class="tool-stamp-btn"
@@ -365,8 +452,8 @@ function handleConfirmSkip() {
         </button>
       </div>
 
-      <!-- Rodapé Compacto -->
-      <footer class="paper-footer">
+      <!-- Rodapé da Mesa -->
+      <footer class="desk-footer">
         <button
           type="button"
           class="btn-text-skip"
@@ -375,7 +462,7 @@ function handleConfirmSkip() {
           {{ $t("tutorials.unified.btn_skip") }}
         </button>
 
-        <!-- O botão de iniciar SÓ fica visível quando o jogador completa todos os 4 passos obrigatórios -->
+        <!-- O botão de iniciar SÓ fica visível quando todos os 4 passos obrigatórios são concluídos -->
         <transition name="fade">
           <button
             v-if="isAllStepsCompleted"
@@ -389,6 +476,47 @@ function handleConfirmSkip() {
           </button>
         </transition>
       </footer>
+
+      <!-- Overlay de Zoom do Post-it do Rardi (Com suporte a Swipe Up e Botão Minimizar) -->
+      <transition name="note-zoom">
+        <div
+          v-if="activeZoomedNote"
+          class="zoomed-note-backdrop"
+          @click.self="minimizeZoomedNote"
+        >
+          <div
+            class="zoomed-note-card"
+            :style="{ '--note-color': activeZoomedNote.color }"
+            @touchstart.passive="handleTouchStart"
+            @touchend.passive="handleTouchEnd"
+          >
+            <!-- Fita decorativa grande -->
+            <div class="zoomed-tape" aria-hidden="true"></div>
+
+            <header class="zoomed-header">
+              <span class="zoomed-icon">{{ activeZoomedNote.icon }}</span>
+              <h4 class="zoomed-title">{{ $t(activeZoomedNote.titleKey) }}</h4>
+            </header>
+
+            <div class="zoomed-body">
+              <p class="zoomed-text">{{ $t(activeZoomedNote.textKey) }}</p>
+            </div>
+
+            <div class="zoomed-swipe-hint">
+              <span class="swipe-arrow">⬆</span>
+              <span>{{ $t("tutorials.desk.swipe_tip") }}</span>
+            </div>
+
+            <button
+              type="button"
+              class="btn-minimize-note"
+              @click="minimizeZoomedNote"
+            >
+              {{ $t("tutorials.desk.btn_minimize") }}
+            </button>
+          </div>
+        </div>
+      </transition>
 
       <!-- Modal Interno de Confirmação para Pular -->
       <transition name="fade">
@@ -429,60 +557,45 @@ function handleConfirmSkip() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(16, 24, 32, 0.78);
+  background: rgba(16, 24, 32, 0.82);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  padding: 12px;
+  padding: 10px;
   animation: overlayFade 0.2s ease-out;
 }
 
-/* Cartão com estética de papel corporativo / memorando ampliado */
-.paper-card {
+/* Superfície da Mesa de Escritório (Top-Down Desk View) */
+.desk-surface {
   position: relative;
   width: 100%;
   max-width: 540px;
-  background-color: #fdfcf7;
-  /* Grade sutil de papel milimetrado de escritório */
+  background-color: #fcfbf7;
+  /* Textura de mesa de trabalho de escritório com grade sutil de prancheta */
   background-image:
     linear-gradient(rgba(148, 163, 184, 0.12) 1px, transparent 1px),
     linear-gradient(90deg, rgba(148, 163, 184, 0.12) 1px, transparent 1px);
   background-size: 16px 16px;
-  border-radius: 14px;
+  border-radius: 16px;
   border: 2px solid #e2e8f0;
   border-left: 6px solid var(--accent-color, #0ea5e9);
   box-shadow:
-    0 20px 48px -10px rgba(0, 0, 0, 0.55),
-    0 2px 6px rgba(0, 0, 0, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
-  padding: 18px 20px 14px;
+    0 16px 40px -8px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.7) inset;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  font-family: var(--font-main, sans-serif);
-  animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  overflow: visible;
+  animation: cardSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
 }
 
-/* Fita adesiva branca no topo da folha */
-.paper-tape {
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100px;
-  height: 20px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
-  border-left: 1px dashed rgba(0, 0, 0, 0.15);
-  border-right: 1px dashed rgba(0, 0, 0, 0.15);
-  pointer-events: none;
-}
-
-/* Cabeçalho */
-.paper-header {
+/* Cabeçalho de Escritório Retrô */
+.desk-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
+  border-bottom: 2px dashed #cbd5e1;
+  padding-bottom: 8px;
 }
 
 .header-stamp {
@@ -492,150 +605,272 @@ function handleConfirmSkip() {
 }
 
 .stamp-icon {
-  font-size: 22px;
+  font-size: 1.6rem;
+  line-height: 1;
 }
 
 .stamp-badge {
   display: inline-block;
-  font-size: 9.5px;
+  font-size: 0.65rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.08em;
   color: #0284c7;
-  background: rgba(14, 165, 233, 0.12);
-  padding: 1px 7px;
+  background: #e0f2fe;
+  padding: 2px 7px;
   border-radius: 4px;
+  margin-bottom: 2px;
 }
 
-.paper-title {
-  margin: 1px 0 0 0;
-  font-size: 16px;
-  font-weight: 700;
+.desk-title {
+  font-size: 1.05rem;
+  font-weight: 800;
   color: #1e293b;
+  margin: 0;
   line-height: 1.2;
 }
 
 .btn-close-paper {
   background: transparent;
-  border: none;
-  font-size: 16px;
-  color: #94a3b8;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #64748b;
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
 }
+
 .btn-close-paper:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: #fee2e2;
+  color: #ef4444;
+  border-color: #fca5a5;
+}
+
+/* Bandeja de Notas do Rardi (Top Notes Tray) */
+.desk-notes-tray {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  padding: 6px 4px 10px 4px;
+  border-bottom: 1px dashed rgba(148, 163, 184, 0.4);
+}
+
+.rardi-mini-note {
+  flex: 1;
+  min-width: 0;
+  background-color: var(--note-color, #fef08a);
+  transform: rotate(var(--note-tilt, 0deg));
+  border-radius: 6px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+  padding: 6px 4px 4px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.rardi-mini-note:hover {
+  transform: scale(1.06) rotate(0deg);
+  z-index: 5;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+}
+
+.rardi-mini-note.is-active-reading {
+  box-shadow:
+    0 0 0 2px #0284c7,
+    0 6px 14px rgba(0, 0, 0, 0.2);
+}
+
+.rardi-mini-note.is-focus {
+  outline: 2px solid #0284c7;
+  animation: pulseFocusNote 2s infinite ease-in-out;
+}
+
+.rardi-mini-note.is-done {
+  opacity: 0.88;
+}
+
+/* Fitinha adesiva no topo do mini post-it */
+.mini-tape {
+  position: absolute;
+  top: -5px;
+  width: 26px;
+  height: 9px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px dashed rgba(0, 0, 0, 0.15);
+  border-radius: 2px;
+}
+
+.mini-note-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 2px;
+}
+
+.mini-icon {
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1;
   color: #1e293b;
 }
 
-/* Notificação Push da Assistente Malu (Deslizando do Topo) */
-.assistant-push-notification {
+.mini-title {
+  font-size: 0.62rem;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  text-align: center;
+  color: #334155;
+  margin-top: 1px;
+}
+
+.mini-status-badge {
+  font-size: 0.58rem;
+  font-weight: 800;
+  margin-top: 3px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.status-done {
+  color: #15803d;
+  font-weight: 900;
+}
+
+.status-focus {
+  color: #0369a1;
+  font-weight: 800;
+}
+
+.status-pending {
+  color: #64748b;
+}
+
+/* Barra de Instrução Ativa do Rardi / Malu */
+.desk-instruction-bar {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: linear-gradient(
-    135deg,
-    rgba(240, 249, 255, 0.95) 0%,
-    rgba(224, 242, 254, 0.9) 100%
-  );
-  border: 1px solid #bae6fd;
-  border-left: 4px solid #0284c7;
-  border-radius: 8px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
   padding: 8px 12px;
-  box-shadow: 0 2px 6px rgba(14, 165, 233, 0.08);
-  animation: pushSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s ease;
 }
 
-.assistant-push-notification.is-completed {
-  background: linear-gradient(
-    135deg,
-    rgba(240, 253, 244, 0.95) 0%,
-    rgba(220, 252, 231, 0.9) 100%
-  );
-  border-color: #bbf7d0;
-  border-left-color: #16a34a;
+.desk-instruction-bar.is-completed {
+  background: #f0fdf4;
+  border-color: #86efac;
 }
 
-.push-avatar-box {
+.instruction-avatar {
   position: relative;
+  flex-shrink: 0;
   width: 38px;
   height: 38px;
-  flex-shrink: 0;
+  border-radius: 8px;
+  background: #e2e8f0;
+  border: 1.5px solid #cbd5e1;
+  overflow: visible;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.assistant-push-avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 1.5px solid #0ea5e9;
+.avatar-img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
   image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  background: #e2e8f0;
 }
 
 .online-indicator {
   position: absolute;
-  bottom: 0;
-  right: 0;
+  bottom: -2px;
+  right: -2px;
   width: 10px;
   height: 10px;
-  border-radius: 50%;
   background: #22c55e;
   border: 2px solid #ffffff;
+  border-radius: 50%;
 }
 
-.push-content {
+.instruction-body {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  overflow: hidden;
+  min-width: 0;
 }
 
-.push-header-row {
+.instruction-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 2px;
 }
 
-.push-sender {
-  font-size: 11px;
-  font-weight: 700;
+.sender-name {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.step-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
   color: #0369a1;
-}
-
-.push-step-tag {
-  font-size: 9.5px;
-  font-weight: 700;
-  color: #0284c7;
   background: #e0f2fe;
   padding: 1px 6px;
-  border-radius: 4px;
+  border-radius: 10px;
 }
-.push-step-tag.done {
-  background: #dcfce7;
+
+.step-tag.done {
   color: #15803d;
+  background: #dcfce7;
 }
 
-.push-message-text {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 600;
+.instruction-text {
+  font-size: 0.8rem;
+  font-weight: 700;
   color: #1e293b;
-  line-height: 1.35;
+  margin: 0;
+  line-height: 1.25;
 }
 
-/* Prancheta Ampliada de desenho do sprite (height 220px) */
+/* Prancheta Central de Testes Ampliada */
 .drafting-board {
   position: relative;
   width: 100%;
-  height: 220px;
-  background: #ffffff;
-  border: 1.5px solid #cbd5e1;
+  height: 200px;
+  background-color: #ffffff;
+  /* Linhas técnicas de prancheta milimetrada */
+  background-image:
+    linear-gradient(rgba(14, 165, 233, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14, 165, 233, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba(14, 165, 233, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14, 165, 233, 0.16) 1px, transparent 1px);
+  background-size:
+    8px 8px,
+    8px 8px,
+    40px 40px,
+    40px 40px;
   border-radius: 10px;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.05);
+  border: 2px solid #cbd5e1;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.06);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -645,85 +880,106 @@ function handleConfirmSkip() {
 .orientation-badge {
   position: absolute;
   top: 8px;
-  left: 10px;
-  z-index: 5;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-  padding: 2px 7px;
-  font-family: var(--font-mono, monospace);
-  font-size: 10.5px;
+  left: 8px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(4px);
+  color: #f8fafc;
+  font-size: 0.72rem;
   font-weight: 700;
-  color: #334155;
+  padding: 3px 8px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   gap: 5px;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .badge-dot {
-  color: #0ea5e9;
-  font-size: 8px;
+  color: #38bdf8;
+  font-size: 0.55rem;
 }
 
 .mirror-line {
   position: absolute;
   pointer-events: none;
+  z-index: 5;
 }
-.mirror-line.vertical {
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 2px;
-  border-left: 2px dashed #10b981;
-}
+
 .mirror-line.horizontal {
   left: 0;
   right: 0;
   top: 50%;
   height: 2px;
-  border-top: 2px dashed #10b981;
+  background: repeating-linear-gradient(
+    90deg,
+    #0284c7,
+    #0284c7 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  animation: pulseAxis 1.5s infinite;
+}
+
+.mirror-line.vertical {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: repeating-linear-gradient(
+    0deg,
+    #0284c7,
+    #0284c7 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  animation: pulseAxis 1.5s infinite;
 }
 
 .sprite-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  transform-origin: center center;
+  width: 120px;
+  height: 120px;
+  will-change: transform;
 }
 
 .sprite-img {
-  width: 120px;
-  height: 120px;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
   image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.22));
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.18));
 }
 
-/* Banner explicativo estilo Post-it Amarelo compacto */
+/* Post-it Dinâmico com Graus (1 linha) */
 .memo-dynamic-tip {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 12px;
-  background: #fefce8;
-  border: 1px solid #fef08a;
-  border-radius: 6px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  background: #fef9c3;
+  border: 1px solid #fde047;
+  border-radius: 8px;
+  padding: 6px 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .memo-pin {
-  font-size: 13px;
-  flex-shrink: 0;
+  font-size: 1rem;
 }
 
 .memo-text {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: #854d0e;
-  line-height: 1.35;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #713f12;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Grid de Botões / Ferramentas em estilo carimbo de escritório */
+/* Ferramentas e Carimbos de Transformação */
 .paper-tools-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -735,203 +991,308 @@ function handleConfirmSkip() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
+  padding: 6px 2px;
   background: #ffffff;
-  border: 1.5px solid #cbd5e1;
+  border: 2px solid #cbd5e1;
   border-radius: 8px;
-  padding: 8px 3px;
   cursor: pointer;
-  min-height: 52px;
-  color: #1e293b;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  transition: all 0.15s ease;
+  box-shadow: 0 2px 0 #94a3b8;
+  transition: all 0.12s ease;
   user-select: none;
-  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
 }
 
-.tool-stamp-btn:hover {
-  background: #f8fafc;
-  border-color: #0ea5e9;
-  transform: translateY(-1px);
+.tool-stamp-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #94a3b8;
 }
 
-.tool-stamp-btn:active {
-  transform: scale(0.96);
+.tool-stamp-btn:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 0 0 #94a3b8;
 }
 
 .tool-stamp-btn.active {
   background: #e0f2fe;
-  border-color: #0ea5e9;
-  color: #0369a1;
+  border-color: #0284c7;
+  box-shadow: 0 2px 0 #0369a1;
+}
+
+.tool-stamp-btn.is-guided-target {
+  outline: 3px solid #22c55e;
+  border-color: #16a34a;
+  animation: pulseGuided 1.4s infinite ease-in-out;
 }
 
 .tool-stamp-btn.is-busy {
-  opacity: 0.6;
   pointer-events: none;
-}
-
-/* Foco Ativo e Chamativo no Botão da Vez do Onboarding Guiado */
-.tool-stamp-btn.is-guided-target {
-  border-color: #f59e0b;
-  background: #fffbeb;
-  box-shadow: 0 0 14px rgba(245, 158, 11, 0.6);
-  animation: pulseTargetGlow 1.4s infinite;
-}
-
-@keyframes pulseTargetGlow {
-  0%,
-  100% {
-    border-color: #f59e0b;
-    box-shadow: 0 0 8px rgba(245, 158, 11, 0.45);
-    transform: translateY(0);
-  }
-  50% {
-    border-color: #fbbf24;
-    box-shadow: 0 0 18px rgba(245, 158, 11, 0.85);
-    transform: translateY(-2px);
-  }
-}
-
-.stamp-icon-sym {
-  font-size: 16px;
-  line-height: 1;
-}
-
-.stamp-label {
-  font-size: 9.5px;
-  font-weight: 700;
-  text-align: center;
-  line-height: 1.1;
-  color: #334155;
+  opacity: 0.75;
 }
 
 .btn-reset-stamp {
-  background: #f1f5f9;
-  color: #64748b;
+  background: #f8fafc;
+  border-color: #cbd5e1;
 }
 
-/* Rodapé Compacto */
-.paper-footer {
+.stamp-icon-sym {
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #1e293b;
+}
+
+.stamp-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #475569;
+  white-space: nowrap;
+}
+
+/* Rodapé */
+.desk-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding-top: 4px;
-  min-height: 42px;
 }
 
 .btn-text-skip {
-  background: transparent;
+  background: none;
   border: none;
-  color: #64748b;
-  font-size: 12px;
+  font-size: 0.78rem;
   font-weight: 600;
+  color: #94a3b8;
+  text-decoration: underline;
   cursor: pointer;
-  padding: 5px 8px;
-  border-radius: 4px;
+  padding: 4px 6px;
 }
+
 .btn-text-skip:hover {
-  color: #0f172a;
+  color: #64748b;
 }
 
 .btn-start-challenge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #16a34a;
-  border: none;
-  border-radius: 7px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #ffffff;
-  font-size: 13px;
-  font-weight: 700;
-  padding: 9px 16px;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  box-shadow:
+    0 3px 0 #047857,
+    0 4px 10px rgba(16, 185, 129, 0.4);
   cursor: pointer;
-  box-shadow: 0 3px 8px rgba(22, 163, 74, 0.45);
-  animation: pulseGreenReady 1.8s infinite;
   transition: all 0.15s ease;
+  animation: pulseGreen 1.8s infinite;
 }
-.btn-start-challenge:hover {
-  background: #15803d;
+
+.btn-start-challenge:hover:not(:disabled) {
+  filter: brightness(1.08);
   transform: translateY(-1px);
 }
 
-@keyframes pulseGreenReady {
-  0%,
-  100% {
-    box-shadow: 0 0 8px rgba(22, 163, 74, 0.45);
-  }
-  50% {
-    box-shadow: 0 0 18px rgba(22, 163, 74, 0.85);
-  }
+.btn-start-challenge:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #047857;
 }
 
 .arrow-sym {
-  font-size: 14px;
+  font-size: 1.05rem;
+  line-height: 1;
 }
 
-/* Modal Interno de Confirmação */
-.confirm-skip-modal {
+/* Overlay de Zoom da Nota do Rardi */
+.zoomed-note-backdrop {
   position: absolute;
   inset: 0;
-  z-index: 20;
   background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 50;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
-  border-radius: 14px;
+  animation: overlayFade 0.2s ease-out;
+}
+
+.zoomed-note-card {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  background-color: var(--note-color, #fef08a);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 16px 35px rgba(0, 0, 0, 0.4),
+    0 2px 4px rgba(0, 0, 0, 0.15);
+  padding: 22px 18px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: zoomCardIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  touch-action: pan-y;
+}
+
+.zoomed-tape {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px dashed rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.zoomed-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1.5px dashed rgba(0, 0, 0, 0.15);
+  padding-bottom: 8px;
+}
+
+.zoomed-icon {
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #0f172a;
+}
+
+.zoomed-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.zoomed-body {
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.zoomed-text {
+  margin: 0;
+}
+
+.zoomed-swipe-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+.swipe-arrow {
+  animation: bounceUp 1.2s infinite ease-in-out;
+}
+
+.btn-minimize-note {
+  width: 100%;
+  padding: 10px 16px;
+  background: #0f172a;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.86rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.15s ease;
+}
+
+.btn-minimize-note:hover {
+  background: #1e293b;
+  transform: translateY(-1px);
+}
+
+.btn-minimize-note:active {
+  transform: translateY(1px);
+}
+
+/* Modal de Confirmação para Pular */
+.confirm-skip-modal {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 100;
 }
 
 .confirm-box {
-  width: 100%;
-  max-width: 300px;
   background: #ffffff;
-  border: 1.5px solid #cbd5e1;
-  border-radius: 10px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-  padding: 16px;
+  border: 2px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 18px 20px;
+  max-width: 340px;
+  width: 100%;
   text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .confirm-h {
-  margin: 0 0 4px 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: #1e293b;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px 0;
 }
 
 .confirm-p {
-  margin: 0 0 12px 0;
-  font-size: 11.5px;
-  color: #64748b;
+  font-size: 0.82rem;
+  color: #475569;
+  margin: 0 0 16px 0;
   line-height: 1.35;
 }
 
 .confirm-btns {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   justify-content: center;
 }
 
 .btn-back-tut {
+  flex: 1;
+  padding: 8px 12px;
   background: #f1f5f9;
   border: 1px solid #cbd5e1;
-  color: #334155;
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 7px 12px;
   border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #334155;
   cursor: pointer;
 }
 
 .btn-confirm-skip {
-  background: #ea580c;
-  border: none;
-  color: #ffffff;
-  font-size: 11.5px;
-  font-weight: 700;
-  padding: 7px 14px;
+  flex: 1;
+  padding: 8px 12px;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
   border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #dc2626;
   cursor: pointer;
 }
 
@@ -945,47 +1306,115 @@ function handleConfirmSkip() {
   }
 }
 
-@keyframes modalPop {
+@keyframes cardSlideUp {
   from {
-    transform: scale(0.94) translateY(6px);
     opacity: 0;
+    transform: translateY(16px) scale(0.98);
   }
   to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes zoomCardIn {
+  from {
+    opacity: 0;
+    transform: scale(0.85) translateY(20px);
+  }
+  to {
+    opacity: 1;
     transform: scale(1) translateY(0);
-    opacity: 1;
   }
 }
 
-@keyframes pushSlideDown {
+@keyframes popIn {
   from {
-    transform: translateY(-8px);
+    transform: scale(0.9);
     opacity: 0;
   }
   to {
-    transform: translateY(0);
+    transform: scale(1);
     opacity: 1;
   }
 }
 
-.push-slide-enter-active,
-.push-slide-leave-active {
-  transition: all 0.25s ease;
+@keyframes pulseGuided {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+  }
 }
-.push-slide-enter-from {
-  opacity: 0;
-  transform: translateY(-4px);
+
+@keyframes pulseFocusNote {
+  0%,
+  100% {
+    outline-color: #0284c7;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+  }
+  50% {
+    outline-color: #38bdf8;
+    box-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+  }
 }
-.push-slide-leave-to {
-  opacity: 0;
-  transform: translateY(4px);
+
+@keyframes pulseAxis {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes pulseGreen {
+  0%,
+  100% {
+    box-shadow:
+      0 3px 0 #047857,
+      0 0 0 0 rgba(16, 185, 129, 0.6);
+  }
+  50% {
+    box-shadow:
+      0 3px 0 #047857,
+      0 0 0 8px rgba(16, 185, 129, 0);
+  }
+}
+
+@keyframes bounceUp {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;
 }
+
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.note-zoom-enter-active,
+.note-zoom-leave-active {
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+}
+
+.note-zoom-enter-from,
+.note-zoom-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
 }
 </style>

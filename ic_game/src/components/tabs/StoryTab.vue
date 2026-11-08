@@ -266,30 +266,9 @@ function handleJump(presetId) {
           <button
             type="button"
             class="btn-debug btn-debug-tutorial"
-            @click="handleJump('tutorial-rotation-cw')"
+            @click="handleJump('tutorial-spatial-orientation')"
           >
-            ↷ {{ $t("hub.debug.btn_tut_rot_cw") }}
-          </button>
-          <button
-            type="button"
-            class="btn-debug btn-debug-tutorial"
-            @click="handleJump('tutorial-rotation-ccw')"
-          >
-            ↶ {{ $t("hub.debug.btn_tut_rot_ccw") }}
-          </button>
-          <button
-            type="button"
-            class="btn-debug btn-debug-tutorial"
-            @click="handleJump('tutorial-flip-h')"
-          >
-            ⇄ {{ $t("hub.debug.btn_tut_flip_h") }}
-          </button>
-          <button
-            type="button"
-            class="btn-debug btn-debug-tutorial"
-            @click="handleJump('tutorial-flip-v')"
-          >
-            ⇅ {{ $t("hub.debug.btn_tut_flip_v") }}
+            🗄️ {{ $t("hub.debug.btn_tut_spatial_orientation") }}
           </button>
           <button
             type="button"
