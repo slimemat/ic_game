@@ -503,6 +503,9 @@
       "close_note": "Fechar anotação",
       "swipe_tip": "Deslize para cima ⬆ para praticar na mesa",
       "tap_next_note": "Muito bem! Toque na próxima anotação no topo para continuar.",
+      "step_prompt_initial": "Toque na primeira anotação no topo para entender o conceito!",
+      "note_locked_tip": "Bloqueada: conclua a anotação anterior primeiro!",
+      "note_locked_badge": "Bloqueada",
       "step_counter": "Passo {current} de {total}",
       "step_prompt_cw": "Gire a imagem 90° no sentido horário (↷) usando o botão destacado.",
       "step_prompt_ccw": "Gire a imagem 90° no sentido anti-horário (↶) usando o botão destacado.",
@@ -514,17 +517,21 @@
       "note_status_done": "Concluído ✓"
     },
     "rardi_notes": {
-      "note_1_title": "Nota 1: Giro Horário (↷)",
+      "note_1_title": "Nota 1: Giro Horário",
       "note_1_tag": "Giro Horário ↷",
+      "note_1_tag_clean": "Nota 1: Rotação",
       "note_1_text": "Sentido dos ponteiros do relógio! A cada toque giramos 90° para a direita. 90° + 90° dá 180° (meia volta), mais 90° vai a 270°, e com 360° você dá uma volta inteira de volta ao começo!",
-      "note_2_title": "Nota 2: Giro Anti-Horário (↶)",
+      "note_2_title": "Nota 2: Giro Anti-Horário",
       "note_2_tag": "Anti-Horário ↶",
+      "note_2_tag_clean": "Nota 2: Rotação",
       "note_2_text": "Sentido contrário aos ponteiros! Gira para a esquerda. Girar 90° anti-horário deixa a imagem na mesma orientação de um giro de 270° no sentido horário!",
-      "note_3_title": "Nota 3: Espelho Horizontal (⇄)",
+      "note_3_title": "Nota 3: Espelho Horizontal",
       "note_3_tag": "Espelho H ⇄",
+      "note_3_tag_clean": "Nota 3: Espelho",
       "note_3_text": "Reflexão no eixo vertical: inverte o lado esquerdo com o lado direito, como no espelho. Mas atenção: o topo continua no topo!",
-      "note_4_title": "Nota 4: Espelho Vertical (⇅)",
+      "note_4_title": "Nota 4: Espelho Vertical",
       "note_4_tag": "Espelho V ⇅",
+      "note_4_tag_clean": "Nota 4: Espelho",
       "note_4_text": "Reflexão no eixo horizontal: vira o objeto de ponta-cabeça! A base vai para o topo, mas a esquerda e a direita continuam onde estavam."
     }
   }

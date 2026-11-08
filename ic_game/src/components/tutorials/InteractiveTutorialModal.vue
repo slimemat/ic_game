@@ -34,12 +34,21 @@ const currentStepIndex = ref(0);
 
 const rardiNotes = computed(() => props.tutorial?.rardiNotes || []);
 
-// Nota atualmente ampliada em tela inteira (inicia com a Nota 1 em zoom)
-const activeZoomedNoteId = ref("note_1");
+// Nota atualmente ampliada em tela inteira (inicia fechada, orientando o jogador a clicar)
+const activeZoomedNoteId = ref(null);
 
-// Estado de feedback e indução da próxima nota
+// Estado de feedback e indução da próxima nota (inicia convidando a ler a Nota 1)
 const lastCompletedNoteIndex = ref(-1);
-const isNextNoteInvited = ref(false);
+const isNextNoteInvited = ref(true);
+
+// Estado de bloqueio com shake e morfologia FLIP da nota
+const shakingNoteIndex = ref(-1);
+const zoomedOriginIndex = ref(-1);
+const zoomOriginStyle = ref({});
+
+function isNoteUnlocked(idx) {
+  return idx <= currentStepIndex.value;
+}
 
 const activeZoomedNote = computed(() => {
   if (!activeZoomedNoteId.value) return null;
@@ -62,6 +71,9 @@ const currentNotificationMessage = computed(() => {
     return t("tutorials.desk.step_prompt_done");
   }
   if (isNextNoteInvited.value) {
+    if (currentStepIndex.value === 0) {
+      return t("tutorials.desk.step_prompt_initial");
+    }
     return t("tutorials.desk.tap_next_note");
   }
   const currentNote = rardiNotes.value[currentStepIndex.value];
@@ -88,13 +100,45 @@ function handleTouchEnd(e) {
   }
 }
 
-function openNoteZoom(noteId) {
-  activeZoomedNoteId.value = noteId;
-  const currentNote = rardiNotes.value[currentStepIndex.value];
-  if (currentNote && currentNote.id === noteId) {
+function handleNoteClick(note, idx, event) {
+  if (!isNoteUnlocked(idx)) {
+    shakingNoteIndex.value = idx;
+    try {
+      AudioManager.play("error", { volume: 0.35 });
+    } catch (e) {}
+    setTimeout(() => {
+      if (shakingNoteIndex.value === idx) {
+        shakingNoteIndex.value = -1;
+      }
+    }, 450);
+    return;
+  }
+
+  // Captura as coordenadas da miniatura para expansão morfológica a partir da origem
+  if (event && event.currentTarget) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const dx = rect.left + rect.width / 2 - window.innerWidth / 2;
+    const dy = rect.top + rect.height / 2 - window.innerHeight / 2;
+    zoomOriginStyle.value = {
+      "--dx": `${dx.toFixed(1)}px`,
+      "--dy": `${dy.toFixed(1)}px`,
+    };
+  }
+
+  zoomedOriginIndex.value = idx;
+  activeZoomedNoteId.value = note.id;
+
+  if (idx === currentStepIndex.value) {
     isNextNoteInvited.value = false;
   }
   playActionSfx();
+}
+
+function openNoteZoom(noteId) {
+  const idx = rardiNotes.value.findIndex((n) => n.id === noteId);
+  if (idx !== -1) {
+    handleNoteClick(rardiNotes.value[idx], idx, null);
+  }
 }
 
 function minimizeZoomedNote() {
@@ -126,44 +170,6 @@ const currentOrientationLabel = computed(() => {
     parts.push("Espelho ⇅");
   }
   return parts.length > 0 ? parts.join(" + ") : "Original (0°)";
-});
-
-const dynamicExplanation = computed(() => {
-  if (lastAction.value === "init") {
-    return t("tutorials.degree_steps.deg_0");
-  }
-
-  if (lastAction.value === "rotate_cw") {
-    const angle = normalizedAngle.value;
-    if (angle === 90) return t("tutorials.degree_steps.deg_90");
-    if (angle === 180) return t("tutorials.degree_steps.deg_180");
-    if (angle === 270) return t("tutorials.degree_steps.deg_270");
-    if (angle === 0) return t("tutorials.degree_steps.deg_360");
-    return t("tutorials.degree_steps.deg_cycle");
-  }
-
-  if (lastAction.value === "rotate_ccw") {
-    const angle = normalizedAngle.value;
-    if (angle === 270) return t("tutorials.degree_steps.deg_ccw_90");
-    if (angle === 180) return t("tutorials.degree_steps.deg_180");
-    if (angle === 90) return t("tutorials.degree_steps.deg_270");
-    if (angle === 0) return t("tutorials.degree_steps.deg_360");
-    return t("tutorials.degree_steps.deg_cycle");
-  }
-
-  if (lastAction.value === "flip_h") {
-    return scaleX.value === -1
-      ? t("tutorials.degree_steps.flip_h_done")
-      : t("tutorials.degree_steps.flip_h_normal");
-  }
-
-  if (lastAction.value === "flip_v") {
-    return scaleY.value === -1
-      ? t("tutorials.degree_steps.flip_v_done")
-      : t("tutorials.degree_steps.flip_v_normal");
-  }
-
-  return t("tutorials.degree_steps.deg_0");
 });
 
 function playActionSfx() {
@@ -324,6 +330,9 @@ function handleConfirmSkip() {
           :key="note.id"
           class="rardi-mini-note"
           :class="{
+            'is-locked': !isNoteUnlocked(idx),
+            'is-shaking': shakingNoteIndex === idx,
+            'is-zoomed-hidden': zoomedOriginIndex === idx && activeZoomedNoteId,
             'is-focus':
               idx === currentStepIndex &&
               !isAllStepsCompleted &&
@@ -337,7 +346,10 @@ function handleConfirmSkip() {
             '--note-color': note.color,
             '--note-tilt': note.tilt,
           }"
-          @click="openNoteZoom(note.id)"
+          :title="
+            !isNoteUnlocked(idx) ? $t('tutorials.desk.note_locked_tip') : ''
+          "
+          @click="handleNoteClick(note, idx, $event)"
         >
           <!-- TODO: Substituir emoji 👇 por sprite/ícone SVG definitivo -->
           <div
@@ -352,7 +364,7 @@ function handleConfirmSkip() {
           <div class="mini-tape" aria-hidden="true"></div>
 
           <div class="mini-note-content">
-            <span class="mini-icon">{{ note.icon }}</span>
+            <!-- Sem ícones nas notas para evitar confusão de affordance com os botões de ação -->
             <span class="mini-title">{{ $t(note.shortTagKey) }}</span>
           </div>
 
@@ -367,7 +379,9 @@ function handleConfirmSkip() {
             <span v-else-if="idx === currentStepIndex" class="status-focus">
               ● {{ $t("tutorials.desk.note_status_focus") }}
             </span>
-            <span v-else class="status-pending">⏳</span>
+            <span v-else class="status-locked">
+              🔒 {{ $t("tutorials.desk.note_locked_badge") }}
+            </span>
           </div>
         </div>
       </div>
@@ -406,16 +420,9 @@ function handleConfirmSkip() {
         </div>
       </div>
 
-      <!-- 5. BANNER DINÂMICO DE GRAUS (1 linha) -->
-      <!-- TODO: Substituir emoji 💡 por sprite/ícone SVG definitivo -->
-      <div class="memo-dynamic-tip">
-        <span class="memo-pin">💡</span>
-        <span class="memo-text">{{ dynamicExplanation }}</span>
-      </div>
-
-      <!-- 6. GRADE 2x2 DE BOTÕES DE TRANSFORMAÇÃO (Maiores, gordinhos e espaçosos) -->
+      <!-- 5. GRADE 2x2 DE BOTÕES DE TRANSFORMAÇÃO (Formato Quadrado 1:1) -->
       <div class="paper-tools-grid-2x2">
-        <!-- 1. Girar 90° Anti-horário (Linha 1, Coluna 1) -->
+        <!-- Linha 1, Coluna 1: Girar 90° Anti-horário -->
         <button
           type="button"
           class="tool-stamp-btn-chunky"
@@ -431,7 +438,7 @@ function handleConfirmSkip() {
           <span class="stamp-label">90° Anti-horário</span>
         </button>
 
-        <!-- 2. Girar 90° Horário (Linha 1, Coluna 2) -->
+        <!-- Linha 1, Coluna 2: Girar 90° Horário -->
         <button
           type="button"
           class="tool-stamp-btn-chunky"
@@ -447,7 +454,7 @@ function handleConfirmSkip() {
           <span class="stamp-label">90° Horário</span>
         </button>
 
-        <!-- 3. Espelhar Horizontal (Linha 2, Coluna 1) -->
+        <!-- Linha 2, Coluna 1: Espelhar Horizontal -->
         <button
           type="button"
           class="tool-stamp-btn-chunky"
@@ -464,7 +471,7 @@ function handleConfirmSkip() {
           <span class="stamp-label">Espelho Horizontal</span>
         </button>
 
-        <!-- 4. Espelhar Vertical (Linha 2, Coluna 2) -->
+        <!-- Linha 2, Coluna 2: Espelhar Vertical -->
         <button
           type="button"
           class="tool-stamp-btn-chunky"
@@ -516,7 +523,7 @@ function handleConfirmSkip() {
       >
         <div
           class="zoomed-note-card"
-          :style="{ '--note-color': activeZoomedNote.color }"
+          :style="[{ '--note-color': activeZoomedNote.color }, zoomOriginStyle]"
           @touchstart.passive="handleTouchStart"
           @touchend.passive="handleTouchEnd"
         >
@@ -534,7 +541,7 @@ function handleConfirmSkip() {
           <div class="zoomed-tape" aria-hidden="true"></div>
 
           <header class="zoomed-header">
-            <span class="zoomed-icon">{{ activeZoomedNote.icon }}</span>
+            <!-- Ícone da ferramenta removido para manter affordance puramente informativa -->
             <h4 class="zoomed-title">{{ $t(activeZoomedNote.titleKey) }}</h4>
           </header>
 
@@ -762,25 +769,47 @@ function handleConfirmSkip() {
 .rardi-mini-note {
   flex: 1;
   min-width: 0;
+  aspect-ratio: 1 / 1;
   background-color: var(--note-color, #fef08a);
   transform: rotate(var(--note-tilt, 0deg));
   border-radius: 6px;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
   cursor: pointer;
-  padding: 5px 3px 3px 3px;
+  padding: 6px 3px 4px 3px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: space-between;
   position: relative;
   transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
   user-select: none;
   -webkit-user-select: none;
 }
 
-.rardi-mini-note:hover {
+.rardi-mini-note:hover:not(.is-locked) {
   transform: scale(1.08) rotate(0deg);
   z-index: 5;
   box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+}
+
+.rardi-mini-note.is-locked {
+  opacity: 0.42;
+  cursor: not-allowed;
+  filter: grayscale(0.25);
+}
+
+.rardi-mini-note.is-locked:hover {
+  transform: rotate(var(--note-tilt, 0deg));
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.12);
+}
+
+.rardi-mini-note.is-shaking {
+  animation: lockShake 0.45s ease-in-out !important;
+}
+
+.rardi-mini-note.is-zoomed-hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .rardi-mini-note.is-active-reading {
@@ -833,15 +862,8 @@ function handleConfirmSkip() {
   margin-top: 2px;
 }
 
-.mini-icon {
-  font-size: 1.1rem;
-  font-weight: 800;
-  line-height: 1;
-  color: #1e293b;
-}
-
 .mini-title {
-  font-size: 0.6rem;
+  font-size: 0.62rem;
   font-weight: 800;
   white-space: nowrap;
   overflow: hidden;
@@ -849,7 +871,7 @@ function handleConfirmSkip() {
   max-width: 100%;
   text-align: center;
   color: #334155;
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 .mini-status-badge {
@@ -882,15 +904,23 @@ function handleConfirmSkip() {
   background: #e0f2fe;
 }
 
+.status-locked {
+  color: #64748b;
+  font-size: 0.52rem;
+  font-weight: 800;
+}
+
 .status-pending {
   color: #64748b;
 }
 
-/* 4. PALCO TÉCNICO DE CALIBRAÇÃO (Grid milimetrado RESTRIÇÃO EXCLUSIVA AQUI) */
+/* 4. PALCO TÉCNICO DE CALIBRAÇÃO (Grid milimetrado RESTRIÇÃO EXCLUSIVA AQUI, Formato Quadrado 1:1) */
 .sprite-canvas-box {
   position: relative;
   width: 100%;
-  height: 180px;
+  max-width: 215px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
   background-color: #ffffff;
   /* Linhas técnicas de prancheta milimetrada - EXCLUSIVAS DESTE PALCO */
   background-image:
@@ -1024,8 +1054,8 @@ function handleConfirmSkip() {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 115px;
-  height: 115px;
+  width: 125px;
+  height: 125px;
   will-change: transform;
 }
 
@@ -1037,51 +1067,28 @@ function handleConfirmSkip() {
   filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.18));
 }
 
-/* 5. BANNER DINÂMICO DE GRAUS */
-.memo-dynamic-tip {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #fef9c3;
-  border: 1px solid #fde047;
-  border-radius: 8px;
-  padding: 5px 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-.memo-pin {
-  font-size: 0.95rem;
-}
-
-.memo-text {
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: #713f12;
-  line-height: 1.25;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* 6. GRADE 2x2 DE BOTÕES DE TRANSFORMAÇÃO (Gordinhos, altos e confortáveis) */
+/* 5. GRADE 2x2 DE BOTÕES DE TRANSFORMAÇÃO (Formato Quadrado 1:1) */
 .paper-tools-grid-2x2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
   gap: 8px;
   width: 100%;
+  max-width: 250px;
+  margin: 0 auto;
 }
 
 .tool-stamp-btn-chunky {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  min-height: 54px;
-  padding: 8px 10px;
+  gap: 4px;
+  aspect-ratio: 1 / 1;
+  padding: 8px 6px;
   background: #ffffff;
   border: 2px solid #cbd5e1;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
   box-shadow: 0 2px 0 #94a3b8;
   transition: all 0.12s ease;
@@ -1117,7 +1124,7 @@ function handleConfirmSkip() {
 }
 
 .stamp-icon-sym {
-  font-size: 1.35rem;
+  font-size: 1.5rem;
   font-weight: 800;
   line-height: 1;
   color: #1e293b;
@@ -1128,6 +1135,7 @@ function handleConfirmSkip() {
   font-weight: 700;
   color: #334155;
   white-space: nowrap;
+  text-align: center;
 }
 
 /* 7. RODAPÉ DA TELA */
@@ -1217,8 +1225,8 @@ function handleConfirmSkip() {
   flex-direction: column;
   gap: 12px;
   touch-action: pan-y;
-  transform-origin: center top;
-  animation: zoomCardIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform, opacity;
+  animation: zoomCardFromOrigin 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 /* Botão "X" Flutuante no Topo da Nota */
@@ -1403,14 +1411,29 @@ function handleConfirmSkip() {
   }
 }
 
-@keyframes zoomCardIn {
-  from {
-    opacity: 0;
-    transform: scale(0.35) translateY(-120px);
+@keyframes lockShake {
+  0%,
+  100% {
+    transform: rotate(var(--note-tilt, 0deg)) translateX(0);
   }
-  to {
+  20%,
+  60% {
+    transform: rotate(var(--note-tilt, 0deg)) translateX(-5px);
+  }
+  40%,
+  80% {
+    transform: rotate(var(--note-tilt, 0deg)) translateX(5px);
+  }
+}
+
+@keyframes zoomCardFromOrigin {
+  0% {
+    opacity: 0;
+    transform: translate(var(--dx, 0px), var(--dy, -120px)) scale(0.25);
+  }
+  100% {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translate(0, 0) scale(1);
   }
 }
 
@@ -1531,13 +1554,20 @@ function handleConfirmSkip() {
 .note-zoom-enter-active,
 .note-zoom-leave-active {
   transition:
-    opacity 0.24s ease,
-    transform 0.26s cubic-bezier(0.34, 1.56, 0.64, 1);
+    opacity 0.22s ease,
+    transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.note-zoom-enter-from,
+.note-zoom-enter-from {
+  opacity: 0;
+}
+
 .note-zoom-leave-to {
   opacity: 0;
-  transform: scale(0.35) translateY(-120px);
+}
+
+.note-zoom-leave-to .zoomed-note-card {
+  transform: translate(var(--dx, 0px), var(--dy, -120px)) scale(0.25);
+  opacity: 0;
 }
 </style>
