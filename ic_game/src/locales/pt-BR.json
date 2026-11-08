@@ -120,7 +120,14 @@
       "reset_done": "✓ Progresso do Pinia & LocalStorage resetado com sucesso!",
       "jump_label": "⚡ Jogar Novos Jogos (Etapa 2 Direto)",
       "jump_title": "Avança direto para a Etapa 2 com os novos jogos de transformação",
-      "jump_done": "⚡ Iniciando Etapa 2 com os novos jogos de transformação!"
+      "jump_done": "⚡ Iniciando Etapa 2 com os novos jogos de transformação!",
+      "tutorials_title": "Tutoriais Interativos (Oficina)",
+      "btn_tut_spatial_orientation": "Mesa do Rardi: Oficina Espacial (Fase 1)",
+      "btn_tut_rot_cw": "Oficina Rotação Horária (Fase 1)",
+      "btn_tut_rot_ccw": "Oficina Rotação Anti-horária (Fase 2)",
+      "btn_tut_flip_h": "Oficina Espelho Horizontal (Fase 12)",
+      "btn_tut_flip_v": "Oficina Espelho Vertical (Fase 14)",
+      "btn_tut_reset": "Resetar Conclusão dos Tutoriais"
     }
   },
   "mainMenu": {
@@ -181,11 +188,27 @@
     }
   },
   "matrix": {
-    "clear_matrix": "Limpar Matriz",
+    "clear_matrix": "Limpar",
     "sync": "Sincronização: {correct} / {total}",
+    "progress": "Fase {num} / {total}",
     "level_title": "Fase {num}: {title}",
     "stats_level": "Fase Concluída: {num}",
-    "stats_blocks": "Blocos Sincronizados: {total}"
+    "stats_blocks": "Blocos Sincronizados: {total}",
+    "err_incomplete": "Ainda há blocos fora do lugar. Compare com o original!",
+    "levels": {
+      "line": {
+        "title": "O Básico (1 Linha)",
+        "description": "Crie o reflexo amarelo da imagem ciano."
+      },
+      "block2": {
+        "title": "Bloco 2x2",
+        "description": "Espelhe a matriz. No final, elas se dobram para a prova real!"
+      },
+      "lock3": {
+        "title": "A Fechadura 3x3",
+        "description": "A matriz completa será dobrada como uma página de livro."
+      }
+    }
   },
   "pattern": {
     "level": "Fase {num}",
@@ -206,7 +229,7 @@
     "hint_button_label": "Dica",
     "hint_button_aria": "Mostrar ou ocultar dica da fase",
     "mechanics": {
-      "drag_to_slot": "Arraste uma peça até o espaço '?'"
+      "drag_to_slot": "Arraste ou toque em uma peça para levá-la até o '?'"
     },
     "prompts": {
       "rotation_sequence": "Observe o giro e complete a sequência:",
@@ -225,7 +248,10 @@
       "step_2_flip_h_result": "Espelhe o RESULTADO 1 na horizontal",
       "step_2_flip_v_result": "Espelhe o RESULTADO 1 na vertical",
       "step_2_rotate_90_cw_result": "Gire o RESULTADO 1 em 90° no sentido horário",
-      "step_2_rotate_90_ccw_result": "Gire o RESULTADO 1 em 90° no sentido anti-horário"
+      "step_2_rotate_90_ccw_result": "Gire o RESULTADO 1 em 90° no sentido anti-horário",
+      "color_palindrome": "Encontre o bloco que completa a simetria da sequência:",
+      "color_pairs": "Observe o agrupamento e complete o par correto:",
+      "color_intercalated": "Identifique a alternância e insira o próximo bloco:"
     },
     "hints": {
       "rotate_cw_90": "A figura gira 90° no sentido horário a cada passo.",
@@ -250,7 +276,17 @@
       "step_2_rotate_90_cw_result": "Olhe para o RESULTADO 1 à esquerda e gire um quarto de volta no sentido horário.",
       "step_2_rotate_90_ccw_result": "Olhe para o RESULTADO 1 à esquerda e gire um quarto de volta no sentido anti-horário.",
       "color_alternate_2": "O padrão se repete alternando entre duas cores.",
-      "color_cycle_3": "A sequência repete um ciclo de três cores na mesma ordem."
+      "color_cycle_3": "A sequência repete um ciclo de três cores na mesma ordem.",
+      "color_palindrome": "A sequência forma um padrão espelhado a partir das extremidades.",
+      "color_pairs": "As cores aparecem em duplas consecutivas.",
+      "color_intercalated": "A cor principal alterna repetidamente com uma nova cor."
+    },
+    "colors": {
+      "red": "Vermelho (▲)",
+      "blue": "Azul (+)",
+      "green": "Verde (■)",
+      "yellow": "Amarelo (▼)",
+      "purple": "Roxo (◆)"
     }
   },
   "charade": {
@@ -289,7 +325,10 @@
       "day_2": "DIA 2",
       "placeholder_title": "Placeholder Fase {stage}",
       "placeholder_desc": "O briefing narrativo desta fase está em desenvolvimento.",
-      "placeholder_btn": "Iniciar Fase"
+      "placeholder_btn": "Iniciar Fase",
+      "day_2_title": "Dia 2",
+      "morning_eyebrow": "EXPEDIENTE",
+      "night_shift_eyebrow": "EXPEDIENTE NOTURNO"
     },
     "characters": {
       "assistant": "{assistantName}",
@@ -322,6 +361,10 @@
       "stage3": {
         "title": "Diagnóstico Avançado de Padrões",
         "description": "Análise crítica de anomalias com sequências profundas."
+      },
+      "stage4": {
+        "title": "Chamado #04 - Espelhamento de Matrizes",
+        "description": "Calibre e espelhe os blocos de dados na matriz para restaurar os setores lógicos corrompidos."
       }
     },
     "dashboard": {
@@ -371,7 +414,7 @@
         "client_call": "Socorro, equipe da {companyName}! Eu estava rodando uma consulta num banco de dados milenar e, sem querer, apaguei algumas tabelas. O sistema está exigindo uma restauração lógica do HD e, pra isso, preciso da ajuda de vocês pra entender o que esses símbolos querem dizer!",
         "analysis": "Analisando o que ela disse... Vamos precisar conversar com a máquina na língua dela pra conseguir restaurar esse banco de dados.",
         "former_it": "Bom, pelo menos é isso que o {formerITguyName} costumava dizer... Ele saiu no último corte de gastos, hahaha! *rindo de nervoso*",
-        "notes_handoff": "Ele deixou umas anotações. Dá uma olhada, tenho certeza que você vai entender! Boa sorte.",
+        "notes_handoff": "Ele deixou as anotações dele e uma prancheta de testes na sua mesa de trabalho. Dá uma olhada e pratica as ferramentas antes de iniciar a restauração! Boa sorte.",
         "notes": {
           "rotation": "Algumas formas precisam ser rotacionadas conforme as anteriores.",
           "repeat": "Certos padrões se repetem!",
@@ -406,6 +449,10 @@
       "pre-pattern-recognition-2": {
         "placeholder_title": "Placeholder Fase {stage}",
         "placeholder_desc": "O briefing narrativo desta fase está em desenvolvimento."
+      },
+      "post-pattern-recognition-3": {
+        "assistant_colors_restored": "Excelente trabalho com os padrões cromáticos! Conseguimos restaurar as sequências de alta prioridade sem qualquer anomalia de contraste.",
+        "assistant_intro_matrix": "Acabamos de receber um chamado crítico nos servidores centrais: anomalias em matrizes bidimensionais. Abra o Chamado #04 para calibrarmos o espelhamento de matrizes!"
       }
     }
   },
@@ -417,6 +464,115 @@
     "charade": {
       "library": "Biblioteca",
       "canvas": "Canvas"
+    }
+  },
+  "tutorials": {
+    "unified": {
+      "title": "Memorando: Orientação Espacial",
+      "badge": "Laboratório Prático",
+      "instruction": "Toque nas ferramentas para observar como a peça se transforma:",
+      "btn_start": "Iniciar Desafio",
+      "btn_skip": "Pular Tutorial",
+      "btn_reset": "Restaurar",
+      "tools_label": "Operadores Espaciais",
+      "tip_mental": "Lembre-se: nos testes reais, você fará essas projeções mentalmente!",
+      "tool_cw": "Girar 90° no sentido horário (↷)",
+      "tool_ccw": "Girar 90° no sentido anti-horário (↶)",
+      "tool_flip_h": "Espelhar horizontalmente no eixo vertical (⇄)",
+      "tool_flip_v": "Espelhar verticalmente no eixo horizontal (⇅)"
+    },
+    "degree_steps": {
+      "deg_0": "Posição inicial (0°). Toque nos botões para transformar:",
+      "deg_90": "90° Horário — Um quarto de volta para a direita (↷)",
+      "deg_180": "180° (90° + 90°) — Meia volta! O sprite fica de cabeça para baixo",
+      "deg_270": "270° — Três quartos de volta (o mesmo que 90° à esquerda)",
+      "deg_360": "360° — Volta completa! O ciclo recomeça da posição original",
+      "deg_cycle": "Ciclo contínuo: mais uma volta de 360° acumulada!",
+      "deg_ccw_90": "90° Anti-horário — Um quarto de volta para a esquerda (↶)",
+      "flip_h_done": "Espelho Horizontal ⇄ : inverte esquerda e direita (mantém topo e base)",
+      "flip_h_normal": "Espelho desfeito: orientação horizontal normal restaurada",
+      "flip_v_done": "Espelho Vertical ⇅ : inverte topo e base (mantém esquerda e direita)",
+      "flip_v_normal": "Espelho desfeito: orientação vertical normal restaurada"
+    },
+    "confirm_skip": {
+      "title": "Pular tutorial?",
+      "message": "Deseja pular esta oficina? Você poderá revê-la a qualquer momento no menu.",
+      "btn_stay": "Continuar Aqui",
+      "btn_confirm": "Sim, Pular"
+    },
+    "notification": {
+      "sender": "{assistantName}",
+      "step_counter": "Passo {current} de {total}",
+      "step_1": "Toque no giro horário (↷) para girar a imagem para a direita.",
+      "step_2": "Toque no giro anti-horário (↶) para girar a imagem para a esquerda.",
+      "step_3": "Toque no Espelho Horizontal (⇄) para inverter esquerda e direita.",
+      "step_4": "Toque no Espelho Vertical (⇅) para inverter de ponta-cabeça.",
+      "completed": "Pode continuar experimentando à vontade, mas lembra que temos que resolver o chamado!"
+    },
+    "desk": {
+      "desk_title": "Tutorial: Rotação",
+      "desk_subtitle": "Orientação Espacial",
+      "desk_badge": "Etapa 1 • Giro Mental",
+      "reflection_title": "Tutorial: Espelho vs. Giro",
+      "reflection_badge": "Etapa 2 • Reflexão",
+      "sender": "{assistantName}",
+      "notes_tray_title": "Cola Visual do Rardi:",
+      "btn_minimize": "Praticar na Prancheta ⬆",
+      "btn_replay_short": "Rever Prática",
+      "btn_next_step": "Próximo Passo",
+      "step_1_solved_prompt": "Isso aí! Observe como a peça encaixou em verde. Quando quiser, toque na Nota 2 ou em 'Próximo Passo'!",
+      "close_note": "Fechar anotação",
+      "swipe_tip": "Deslize para cima ⬆ para praticar na mesa",
+      "tap_next_note": "Muito bem! Agora veja a segunda anotação do Rardi e escolha a peça certa.",
+      "step_prompt_initial": "Observe o rabisco do Rardi e toque na peça que mostra onde a figura vai parar!",
+      "note_locked_tip": "Bloqueada: conclua o passo atual primeiro!",
+      "note_locked_badge": "Bloqueada",
+      "step_counter": "Passo {current} de {total}",
+      "base_label": "ORIGINAL",
+      "target_label": "RESULTADO",
+      "choose_option_label": "Arraste ou toque no post-it correto para levá-lo até o '?':",
+      "step_prompt_cw": "Olhe a cola do Rardi: no giro de 90° horário (↷), o TOPO (▲) tomba para a DIREITA. Arraste ou toque na peça certa!",
+      "step_prompt_ccw": "Agora no sentido anti-horário (↶): o TOPO (▲) tomba para a ESQUERDA. Arraste ou toque na peça correta!",
+      "step_prompt_flip_h": "Cuidado para não confundir com giro! No Espelho Horizontal (⇄), o TOPO (▲) continua em cima e só os lados trocam. Leve a peça certa até o '?'!",
+      "step_prompt_flip_v": "No Espelho Vertical (⇅), a peça vira de ponta-cabeça (Topo ↕ Base), mas esquerda e direita ficam do mesmo lado. Leve a peça certa até o '?'!",
+      "step_prompt_done": "Perfeito! Durante o jogo, se bater dúvida, toque em '? Dica' no topo para ver essa Cola do Rardi!",
+      "wrong_cw_picked_ccw": "Quase! Nessa opção o topo tombou para a esquerda (anti-horário ↶). Procure a que o topo (▲) caiu para a DIREITA!",
+      "wrong_cw_picked_180": "Ops! Essa peça deu meia-volta (180°) e foi parar de cabeça para baixo. Em 90° horário (↷), o topo cai para a direita!",
+      "wrong_ccw_picked_cw": "Quase! Nessa opção o topo caiu para a direita (horário ↷). No anti-horário (↶), o topo (▲) cai para a ESQUERDA!",
+      "wrong_ccw_picked_180": "Essa peça deu meia-volta completa (180°). Em 90° anti-horário (↶), o topo tomba apenas um quarto de volta para a esquerda!",
+      "wrong_fliph_picked_rot90": "Atenção! Nessa peça o topo (▲) tombou pro lado — ela foi GIRADA. No Espelho Horizontal (⇄), o topo fica cravado em cima!",
+      "wrong_fliph_picked_rot180": "Pegadinha clássica! Nessa peça o topo (▲) foi parar no chão (Giro de 180°). No Espelho Horizontal (⇄), o topo permanece em cima!",
+      "wrong_flipv_picked_fliph": "Essa peça trocou esquerda e direita (Espelho Horizontal ⇄). No Espelho Vertical (⇅), é o TOPO que vai para a base!",
+      "wrong_flipv_picked_rot90": "Nessa peça o topo caiu para o lado (Giro 90°). No Espelho Vertical (⇅), ela reflete de ponta-cabeça mantendo os lados!",
+      "note_status_focus": "Em Foco",
+      "note_status_pending": "Pendente",
+      "note_status_done": "Concluído ✓"
+    },
+    "rardi_notes": {
+      "note_1_title": "Cola do Rardi: Giro Horário (↷)",
+      "note_1_tag": "Giro Horário ↷",
+      "note_1_tag_clean": "1. Horário (↷)",
+      "note_1_golden_rule": "Regra do Relógio (12h ↷ 3h): O TOPO (▲) da figura tomba para a DIREITA!",
+      "note_1_text": "Imagine os ponteiros do relógio: em 90° horário, o que estava no topo cai para o lado direito. Em 180° (90° + 90°), dá meia-volta e fica de ponta-cabeça!",
+      "note_2_title": "Cola do Rardi: Giro Anti-Horário (↶)",
+      "note_2_tag": "Anti-Horário ↶",
+      "note_2_tag_clean": "2. Anti-Horário (↶)",
+      "note_2_golden_rule": "Contra o Relógio (12h ↶ 9h): O TOPO (▲) da figura tomba para a ESQUERDA!",
+      "note_2_text": "Gira para o lado esquerdo! Tombando 90° anti-horário, o topo aponta para a esquerda (a mesma posição de girar 270° no sentido horário).",
+      "note_3_title": "Cola do Rardi: Espelho Horizontal (⇄)",
+      "note_3_tag": "Espelho H ⇄",
+      "note_3_tag_clean": "1. Espelho H (⇄)",
+      "note_3_golden_rule": "Página de Livro (⇄): O TOPO (▲) fica FIXO em cima! Só troque Esquerda ↔ Direita.",
+      "note_3_text": "Não confunda com giro! No espelho horizontal, o topo NUNCA sai de cima: apenas o lado esquerdo e o direito trocam de lugar.",
+      "note_4_title": "Cola do Rardi: Espelho Vertical (⇅)",
+      "note_4_tag": "Espelho V ⇅",
+      "note_4_tag_clean": "2. Espelho V (⇅)",
+      "note_4_golden_rule": "Reflexo na Água (⇅): Vira de ponta-cabeça (Topo ↕ Base), mantendo Esquerda e Direita!",
+      "note_4_text": "O topo vai para a base e a base vai para o topo, mas o que estava na esquerda continua na esquerda!",
+      "note_180_title": "Cola do Rardi: Meia-Volta (180°)",
+      "note_180_golden_rule": "Meia-Volta (12h ↻ 6h): Vira de cabeça para baixo (Topo vai p/ a base E lados trocam)!",
+      "note_45_title": "Cola do Rardi: Passo Diagonal (45°)",
+      "note_45_golden_rule": "Passo Curto (45°): A figura inclina na diagonal (metade de 90°) a cada etapa!"
     }
   }
 }

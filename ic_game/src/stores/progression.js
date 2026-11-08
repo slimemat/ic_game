@@ -7,7 +7,7 @@ import {
 } from "../game/data/progressionConfig";
 
 const PROGRESSION_STORAGE_KEY = "ic_game:progression-state";
-const PROGRESSION_SAVE_VERSION = 1;
+const PROGRESSION_SAVE_VERSION = 2;
 
 /**
  * Progression and Career Store.
@@ -23,6 +23,7 @@ export const useProgressionStore = defineStore("progression", () => {
   // ── State (persisted) ───────────────────────────────────────────────────
   const totalXp = ref(0);
   const completedStageIds = ref([]);
+  const completedTutorialIds = ref([]);
 
   // ── State (session / transient) ─────────────────────────────────────────
   /** Holds promotion celebration details when rank advances: { fromRank, toRank } | null */
@@ -65,6 +66,7 @@ export const useProgressionStore = defineStore("progression", () => {
           version: PROGRESSION_SAVE_VERSION,
           totalXp: totalXp.value,
           completedStageIds: completedStageIds.value,
+          completedTutorialIds: completedTutorialIds.value,
         }),
       );
     } catch (error) {
@@ -83,6 +85,9 @@ export const useProgressionStore = defineStore("progression", () => {
       totalXp.value = Math.max(0, Number(data.totalXp) || 0);
       completedStageIds.value = Array.isArray(data.completedStageIds)
         ? data.completedStageIds
+        : [];
+      completedTutorialIds.value = Array.isArray(data.completedTutorialIds)
+        ? data.completedTutorialIds
         : [];
       return true;
     } catch (error) {
@@ -155,11 +160,41 @@ export const useProgressionStore = defineStore("progression", () => {
   }
 
   /**
+   * Checks whether a tutorial has already been completed by the player.
+   * @param {string} tutorialId
+   * @returns {boolean}
+   */
+  function isTutorialCompleted(tutorialId) {
+    if (!tutorialId) return false;
+    return completedTutorialIds.value.includes(tutorialId);
+  }
+
+  /**
+   * Records a tutorial as completed and persists state.
+   * @param {string} tutorialId
+   */
+  function markTutorialCompleted(tutorialId) {
+    if (tutorialId && !completedTutorialIds.value.includes(tutorialId)) {
+      completedTutorialIds.value.push(tutorialId);
+      save();
+    }
+  }
+
+  /**
+   * Resets tutorial flags (useful for replay / testing).
+   */
+  function resetTutorials() {
+    completedTutorialIds.value = [];
+    save();
+  }
+
+  /**
    * Resets career progression back to intern with 0 XP.
    */
   function resetProgression() {
     totalXp.value = 0;
     completedStageIds.value = [];
+    completedTutorialIds.value = [];
     pendingPromotion.value = null;
     recentXpGain.value = null;
     try {
@@ -176,6 +211,7 @@ export const useProgressionStore = defineStore("progression", () => {
     // state
     totalXp,
     completedStageIds,
+    completedTutorialIds,
     pendingPromotion,
     recentXpGain,
     // getters
@@ -188,6 +224,9 @@ export const useProgressionStore = defineStore("progression", () => {
     addXp,
     consumePendingPromotion,
     markStageCompleted,
+    isTutorialCompleted,
+    markTutorialCompleted,
+    resetTutorials,
     save,
     load,
     resetProgression,

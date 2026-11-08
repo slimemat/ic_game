@@ -1,15 +1,35 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref, shallowRef, computed } from "vue";
+import {
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  shallowRef,
+  computed,
+  watch,
+} from "vue";
+import { storeToRefs } from "pinia";
 import Phaser from "phaser";
 import MatrixMirrorScene from "../game/scenes/MatrixMirrorScene";
 import { LEVELS } from "../game/data/MatrixMirrorLevels";
+import { useStoryStore } from "../stores/story";
 import { useStagePerformance } from "../composables/useStagePerformance";
 import PauseModal from "./ui/PauseModal.vue";
 import PauseButton from "./ui/PauseButton.vue";
 import VictoryModal from "./ui/VictoryModal.vue";
 import WarningCard from "./ui/WarningCard.vue";
 
-const emit = defineEmits(["back"]);
+const props = defineProps({
+  storyMode: { type: Boolean, default: false },
+});
+
+const emit = defineEmits(["back", "quit"]);
+
+const story = useStoryStore();
+const {
+  isPaused: isStoryPaused,
+  currentPatternCount,
+  targetPatternCount,
+} = storeToRefs(story);
 
 // --- VUE STATE ---
 const gameRoot = ref(null);
@@ -17,42 +37,75 @@ const game = shallowRef(null);
 const gameScene = shallowRef(null);
 
 const hasWon = ref(false);
-const isPaused = ref(false);
+const localPaused = ref(false);
 const showWarning = ref(false);
 const warningMessage = ref("");
 const warningType = ref("info");
+let warningTimer = null;
+
+const isPaused = computed(() =>
+  props.storyMode ? isStoryPaused.value : localPaused.value,
+);
 
 const currentLevel = ref(1);
 const correctBlocks = ref(0);
 const totalBlocks = ref(0);
+
 const performance = useStagePerformance({
-  storyMode: false,
-  totalChallenges: 1,
+  storyMode: () => props.storyMode,
+  totalChallenges: () =>
+    props.storyMode ? targetPatternCount.value : LEVELS.length,
 });
 
 const currentLevelData = computed(() => {
-  const idx = (currentLevel.value - 1) % LEVELS.length;
+  const idx = Math.min(currentLevel.value - 1, LEVELS.length - 1);
   return LEVELS[idx];
+});
+
+// Sincroniza pause do Vue/StoryStore com a cena Phaser
+watch(isPaused, (paused) => {
+  if (paused) {
+    gameScene.value?.scene.pause();
+  } else {
+    gameScene.value?.scene.resume();
+  }
 });
 
 // --- PHASER INITIALIZATION ---
 onMounted(() => {
+  if (props.storyMode) {
+    story.setPaused(false);
+    currentLevel.value = Math.min(currentPatternCount.value + 1, LEVELS.length);
+  }
+
   const handleMatchUpdate = (correct, total) => {
     correctBlocks.value = correct;
     totalBlocks.value = total;
   };
 
   const handleWin = () => {
+    if (props.storyMode) {
+      story.registerCorrectPattern();
+    }
     hasWon.value = true;
   };
 
-  const scene = new MatrixMirrorScene(handleMatchUpdate, handleWin);
+  const handleError = (msg, { isMistake = true } = {}) => {
+    if (isMistake) performance.recordMistake();
+    triggerWarning(msg, "error");
+  };
+
+  const scene = new MatrixMirrorScene(
+    handleMatchUpdate,
+    handleWin,
+    handleError,
+  );
   gameScene.value = scene;
 
   game.value = new Phaser.Game({
     type: Phaser.AUTO,
     parent: gameRoot.value,
-    backgroundColor: "#1a202c",
+    backgroundColor: "#87ceeb", // a Scene sobrescreve ao carregar a fase
     scale: {
       mode: Phaser.Scale.RESIZE,
       width: "100%",
@@ -61,10 +114,11 @@ onMounted(() => {
     scene,
   });
 
-  game.value.registry.set("level", currentLevel.value);
+  syncRegistry();
 });
 
 onBeforeUnmount(() => {
+  clearTimeout(warningTimer);
   game.value?.destroy(true);
   game.value = null;
   gameScene.value = null;
@@ -75,33 +129,55 @@ const resetLevel = () => {
   performance.resetPerformance();
   gameScene.value?.resetLevel();
   hasWon.value = false;
-  isPaused.value = false;
   resumeGame();
 };
 
 const nextLevel = () => {
   hasWon.value = false;
+
+  // Se atingiu a meta no Modo História, conclui a tarefa e retorna ao fluxo de cutscene/dashboard
+  if (props.storyMode && story.isGoalReached) {
+    story.completeTask();
+    return;
+  }
+
   performance.resetPerformance();
-  currentLevel.value++;
-  game.value.registry.set("level", currentLevel.value);
+  if (props.storyMode) {
+    currentLevel.value = Math.min(currentPatternCount.value + 1, LEVELS.length);
+  } else {
+    if (currentLevel.value >= LEVELS.length) {
+      emit("back");
+      return;
+    }
+    currentLevel.value++;
+  }
+
+  game.value?.registry.set("level", currentLevel.value);
   gameScene.value?.resetLevel();
 };
 
 const pauseGame = () => {
-  isPaused.value = true;
-  gameScene.value?.scene.pause();
+  if (props.storyMode) {
+    story.setPaused(true);
+  } else {
+    localPaused.value = true;
+  }
 };
 
 const resumeGame = () => {
-  isPaused.value = false;
-  gameScene.value?.scene.resume();
+  if (props.storyMode) {
+    story.setPaused(false);
+  } else {
+    localPaused.value = false;
+  }
 };
 
 const triggerWarning = (msg, type = "info") => {
   warningMessage.value = msg;
   warningType.value = type;
   showWarning.value = true;
-  setTimeout(() => (showWarning.value = false), 3000);
+  clearTimeout(warningTimer);
+  warningTimer = setTimeout(() => (showWarning.value = false), 3000);
 };
 </script>
 
@@ -128,10 +204,12 @@ const triggerWarning = (msg, type = "info") => {
     <!-- Modals Compartilhados -->
     <PauseModal
       :isOpen="isPaused"
-      :description="`${$t('matrix.level_title').replace('{num}', currentLevel).replace('{title}', currentLevelData.title)}`"
+      :description="`${$t('matrix.level_title')
+        .replace('{num}', currentLevel)
+        .replace('{title}', currentLevelData?.title || '')}`"
       @resume="resumeGame"
       @restart="resetLevel"
-      @quit="$emit('back')"
+      @quit="$emit('quit')"
     />
 
     <VictoryModal
@@ -143,8 +221,15 @@ const triggerWarning = (msg, type = "info") => {
     >
       <template #stats>
         <div>
-          <p>{{ $t("matrix.stats_level").replace("{num}", currentLevel) }}</p>
-          <p>{{ $t("matrix.stats_blocks").replace("{total}", totalBlocks) }}</p>
+          <p>{{ $t("matrix.stats_level", { num: currentLevel }) }}</p>
+          <p>{{ $t("matrix.stats_blocks", { total: totalBlocks }) }}</p>
+          <p>
+            {{
+              $t("global.modals.stats_mistakes", {
+                count: performance.mistakes.value,
+              })
+            }}
+          </p>
         </div>
       </template>
     </VictoryModal>

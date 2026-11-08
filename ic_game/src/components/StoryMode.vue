@@ -106,8 +106,41 @@ const currentStageNumber = computed(() => {
   return stage?.stageNumber || 2;
 });
 
+/** Permite que nós específicos de diálogo sobrescrevam o header dinamicamente. */
+const activeHeaderOverride = ref(null);
+
 // ── Header de grupo (chamado atual + participantes derivados da cena) ─────
 const headerInfo = computed(() => {
+  const override = activeHeaderOverride.value;
+  if (override === false) return null;
+
+  if (override && typeof override === "object") {
+    const participantsList = Array.isArray(override.participants)
+      ? override.participants
+          .map(charName)
+          .concat(t("story.chat.participants_you"))
+      : [];
+
+    return {
+      avatarImg: override.avatarImg || null,
+      variant: override.variant || "default",
+      eyebrow: override.eyebrowKey
+        ? t(override.eyebrowKey, storyVariables.value)
+        : override.eyebrow || "",
+      title: override.titleKey
+        ? t(override.titleKey, storyVariables.value)
+        : override.title || "",
+      participants:
+        override.participantsText ||
+        (participantsList.length
+          ? new Intl.ListFormat(locale.value, {
+              style: "long",
+              type: "conjunction",
+            }).format(participantsList)
+          : ""),
+    };
+  }
+
   if (!scene.value?.header) return null;
 
   const stage =
@@ -126,6 +159,8 @@ const headerInfo = computed(() => {
   ];
 
   return {
+    avatarImg: null,
+    variant: "default",
     eyebrow: t("story.dashboard.ticket_eyebrow", {
       num: stage?.stageNumber || 1,
     }),
@@ -273,6 +308,9 @@ function processNode(nodeId) {
 
   currentNodeId.value = nodeId;
   const node = scene.value.nodes[nodeId];
+  if (node && node.header !== undefined) {
+    activeHeaderOverride.value = node.header;
+  }
   const handler = nodeHandlers[node.type ?? "message"];
 
   if (!handler) {
@@ -445,6 +483,8 @@ onUnmounted(() => {
       :eyebrow="headerInfo.eyebrow"
       :title="headerInfo.title"
       :participants="headerInfo.participants"
+      :avatarImg="headerInfo.avatarImg"
+      :variant="headerInfo.variant"
     />
 
     <div
