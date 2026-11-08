@@ -45,6 +45,14 @@
   --folder-border: #ca8a04;
   --folder-shadow: #a16207;
   --folder-text: #422006;
+
+  /* Feedback de Validação (Correto / Incorreto) */
+  --color-valid-border: #16a34a;
+  --color-valid-bg: #dcfce7;
+  --color-valid-shadow: #15803d;
+  --color-invalid-border: #ef4444;
+  --color-invalid-bg: #fee2e2;
+  --color-invalid-shadow: #b91c1c;
 }
 
 * {
@@ -339,4 +347,110 @@ h1 {
   width: 18px;
   height: 18px;
   fill: currentColor;
+}
+
+/* ── Utilitários Compartilhados de Post-it, Prancheta e Modais (DRY) ── */
+.modal-backdrop-blur {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: overlayFade 0.2s ease-out;
+}
+
+.blueprint-grid-surface {
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(rgba(14, 165, 233, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14, 165, 233, 0.08) 1px, transparent 1px),
+    linear-gradient(rgba(14, 165, 233, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14, 165, 233, 0.16) 1px, transparent 1px);
+  background-size:
+    8px 8px,
+    8px 8px,
+    32px 32px,
+    32px 32px;
+}
+
+.spatial-top-anchor {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.68rem;
+  line-height: 1;
+  color: #dc2626;
+  filter: drop-shadow(0 1px 1px rgba(255, 255, 255, 0.95));
+  z-index: 3;
+  pointer-events: none;
+}
+
+.postit-tape-strip {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 52px;
+  height: 11px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px dashed rgba(15, 23, 42, 0.2);
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+@keyframes overlayFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes lockShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-5px);
+  }
+  40%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes stampPop {
+  0% {
+    transform: scale(0) rotate(-35deg);
+    opacity: 0;
+  }
+  65% {
+    transform: scale(1.35) rotate(10deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes pulseGreen {
+  0%,
+  100% {
+    box-shadow:
+      0 3px 0 #047857,
+      0 0 0 0 rgba(16, 185, 129, 0.6);
+  }
+  50% {
+    box-shadow:
+      0 3px 0 #047857,
+      0 0 0 8px rgba(16, 185, 129, 0);
+  }
 }

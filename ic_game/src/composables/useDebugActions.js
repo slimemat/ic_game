@@ -270,9 +270,7 @@ export function useDebugActions() {
             (id) =>
               id !== "spatial_orientation" &&
               id !== "rotation_cw" &&
-              id !== "rotation_ccw" &&
-              id !== "flip_h" &&
-              id !== "flip_v",
+              id !== "rotation_ccw",
           );
         progression.save();
         story.currentStageId = STAGE_1.id;
@@ -283,53 +281,19 @@ export function useDebugActions() {
         break;
       }
 
-      case "tutorial-rotation-cw": {
-        progression.completedTutorialIds =
-          progression.completedTutorialIds.filter((id) => id !== "rotation_cw");
-        progression.save();
-        story.currentStageId = STAGE_1.id;
-        story.currentDay = 1;
-        story.setPatternProgress(0);
-        story.startTask(STAGE_1.gameId, { withBriefing: false });
-        flash(t("hub.debug.btn_tut_rot_cw"));
-        break;
-      }
-
-      case "tutorial-rotation-ccw": {
-        progression.completedTutorialIds =
-          progression.completedTutorialIds.filter(
-            (id) => id !== "rotation_ccw",
-          );
-        progression.save();
-        story.currentStageId = STAGE_1.id;
-        story.currentDay = 1;
-        story.setPatternProgress(1); // Fase 2
-        story.startTask(STAGE_1.gameId, { withBriefing: false });
-        flash(t("hub.debug.btn_tut_rot_ccw"));
-        break;
-      }
-
-      case "tutorial-flip-h": {
-        progression.completedTutorialIds =
-          progression.completedTutorialIds.filter((id) => id !== "flip_h");
-        progression.save();
-        ensureStage2State();
-        story.recordDecision("stage2TimeOfDay", "day"); // Garante início na Fase 11
-        story.setPatternProgress(1); // 11 + 1 = Fase 12
-        story.startTask(STAGE_2.gameId, { withBriefing: false });
-        flash(t("hub.debug.btn_tut_flip_h"));
-        break;
-      }
-
+      case "tutorial-spatial-reflection":
+      case "tutorial-flip-h":
       case "tutorial-flip-v": {
         progression.completedTutorialIds =
-          progression.completedTutorialIds.filter((id) => id !== "flip_v");
+          progression.completedTutorialIds.filter(
+            (id) =>
+              id !== "spatial_reflection" && id !== "flip_h" && id !== "flip_v",
+          );
         progression.save();
         ensureStage2State();
-        story.recordDecision("stage2TimeOfDay", "day"); // Garante início na Fase 11
-        story.setPatternProgress(3); // 11 + 3 = Fase 14
+        story.setPatternProgress(0); // Início da Etapa 2 (Fase 11 ou Fase 16)
         story.startTask(STAGE_2.gameId, { withBriefing: false });
-        flash(t("hub.debug.btn_tut_flip_v"));
+        flash(t("hub.debug.btn_tut_flip_h"));
         break;
       }
 

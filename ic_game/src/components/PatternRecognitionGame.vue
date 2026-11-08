@@ -22,6 +22,8 @@ import VictoryModal from "./ui/VictoryModal.vue";
 import WarningCard from "./ui/WarningCard.vue";
 import { useTutorialTrigger } from "../composables/useTutorialTrigger";
 import InteractiveTutorialModal from "./tutorials/InteractiveTutorialModal.vue";
+import RardiHintPostIt from "./tutorials/RardiHintPostIt.vue";
+import { resolveVisualHintForLevel } from "../game/data/tutorialsConfig";
 
 const INACTIVITY_HINT_DELAY_MS = 8000;
 
@@ -89,11 +91,15 @@ const { t } = useI18n();
 
 const currentLevel = ref(getStartLevel());
 
-const { activeTutorial, completeActiveTutorial, skipActiveTutorial } =
-  useTutorialTrigger({
-    gameId: "pattern-recognition",
-    currentLevel,
-  });
+const {
+  activeTutorial,
+  completeActiveTutorial,
+  skipActiveTutorial,
+  replayTutorial,
+} = useTutorialTrigger({
+  gameId: "pattern-recognition",
+  currentLevel,
+});
 
 const totalLevels = computed(() =>
   props.storyMode ? targetPatternCount.value : LEVEL_CONFIGS.length,
@@ -136,6 +142,19 @@ const currentHintText = computed(() => {
   const key = currentLevelConfig.value?.hintKey;
   return key ? t(key) : "";
 });
+
+const currentVisualHint = computed(() =>
+  resolveVisualHintForLevel(currentLevelConfig.value, currentStepIndex.value),
+);
+
+function handleReplayTutorial() {
+  isHintOpen.value = false;
+  const targetTutorialId =
+    currentLevelConfig.value?.type === "transformation"
+      ? "spatial_reflection"
+      : "spatial_orientation";
+  replayTutorial(targetTutorialId);
+}
 
 const currentTypeName = computed(() => {
   const type = currentLevelConfig.value?.type;
@@ -447,10 +466,12 @@ const triggerWarning = (msg, type = "info") => {
         </h1>
 
         <transition name="hint-fade">
-          <p v-if="isHintOpen && currentHintText" class="pattern-hint-text">
-            <span class="hint-bulb" aria-hidden="true">💡</span>
-            <span>{{ currentHintText }}</span>
-          </p>
+          <RardiHintPostIt
+            v-if="isHintOpen && currentHintText"
+            :hintText="currentHintText"
+            :visualHint="currentVisualHint"
+            @replay-tutorial="handleReplayTutorial"
+          />
         </transition>
       </div>
     </header>

@@ -148,6 +148,9 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     this.isShutdown = false;
     AudioManager.init(this);
 
+    // Permite distinguir um toque rápido (auto-drag) de um arraste manual
+    this.input.dragDistanceThreshold = 10;
+
     this.input.on("dragstart", this.onDragStart, this);
     this.input.on("drag", this.onDrag, this);
     this.input.on("dragend", this.onDragEnd, this);
@@ -868,7 +871,36 @@ export default class PatternRecognitionScene extends Phaser.Scene {
       draggable: true,
       useHandCursor: true,
     });
-    piece.setData({ optionIndex: index, home, tileShadow, tileBg, tileTape });
+    piece.setData({
+      optionIndex: index,
+      home,
+      tileShadow,
+      tileBg,
+      tileTape,
+      downX: 0,
+      downY: 0,
+      didDrag: false,
+    });
+
+    piece.on("pointerdown", (pointer) => {
+      if (this.isTransitioning || this.isSolved) return;
+      piece.setData("downX", pointer.x);
+      piece.setData("downY", pointer.y);
+      piece.setData("didDrag", false);
+    });
+
+    piece.on("pointerup", (pointer) => {
+      if (this.isTransitioning || this.isSolved || this.isDragging) return;
+      const dist = Phaser.Math.Distance.Between(
+        piece.getData("downX") ?? pointer.x,
+        piece.getData("downY") ?? pointer.y,
+        pointer.x,
+        pointer.y,
+      );
+      if (!piece.getData("didDrag") && dist < 12) {
+        this.handlePieceTap(piece);
+      }
+    });
 
     return this.trackTask(piece);
   }
@@ -1121,6 +1153,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   onDragStart(pointer, piece) {
     if (this.isTransitioning || !this.isOption(piece)) return;
 
+    piece.setData("didDrag", true);
     this.isDragging = true;
     this.tweens.killTweensOf(piece);
     this.slot.release(piece.getData("optionIndex"));
@@ -1139,6 +1172,36 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     if (shadow) shadow.setPosition(4, 6);
 
     AudioManager.play("connect", { volume: 0.5 });
+  }
+
+  /**
+   * Ao dar um toque/clique sem arrastar, realiza o "auto-arrastamento" da peça até o slot '?'
+   * (ou devolve para a origem se ela já estiver no slot). O jogador ainda confirma no botão.
+   * @param {Phaser.GameObjects.Container} piece
+   */
+  handlePieceTap(piece) {
+    if (this.isTransitioning || this.isSolved || !this.isOption(piece)) return;
+
+    const optionIndex = piece.getData("optionIndex");
+    if (this.slot.occupant === optionIndex) {
+      // Já estava no slot: devolve suavemente para a bandeja
+      this.slot.release(optionIndex);
+      this.sendHome(piece, 220);
+      this.updateSlotVisuals();
+      AudioManager.play("swipe", { volume: 0.45 });
+      this.onSlotChangeCallback?.({
+        isSlotFilled: !this.slot.isEmpty,
+        isInteracting: false,
+      });
+      return;
+    }
+
+    // Estava na bandeja: voa automaticamente até o slot '?'
+    this.dropIntoSlot(piece, { duration: 240 });
+    this.onSlotChangeCallback?.({
+      isSlotFilled: !this.slot.isEmpty,
+      isInteracting: false,
+    });
   }
 
   onDrag(pointer, piece, dragX, dragY) {
@@ -1170,38 +1233,44 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     });
   }
 
-  dropIntoSlot(piece) {
+  dropIntoSlot(piece, { duration = MOVE_MS } = {}) {
     const displacedIndex = this.slot.place(piece.getData("optionIndex"));
 
     if (displacedIndex !== NO_ANSWER) {
       const displacedPiece = this.options[displacedIndex];
       if (displacedPiece) {
         this.setPiecePostItStyle(displacedPiece, false);
-        this.sendHome(displacedPiece);
+        this.sendHome(displacedPiece, duration);
       }
     }
 
     this.setPiecePostItStyle(piece, true);
-    this.moveTo(piece, this.slotInfo.x, this.slotInfo.y);
+    this.moveTo(piece, this.slotInfo.x, this.slotInfo.y, duration);
     this.updateSlotVisuals();
     AudioManager.play("connect");
   }
 
-  sendHome(piece) {
+  sendHome(piece, duration = MOVE_MS) {
     this.setPiecePostItStyle(piece, false);
     const { x, y } = piece.getData("home");
-    this.moveTo(piece, x, y);
+    this.moveTo(piece, x, y, duration);
   }
 
-  moveTo(piece, x, y) {
+  moveTo(piece, x, y, duration = MOVE_MS) {
     this.tweens.killTweensOf(piece);
+    piece.setDepth(DEPTH_DRAGGING);
     this.tweens.add({
       targets: piece,
       x,
       y,
       scale: 1,
-      duration: MOVE_MS,
+      duration,
       ease: "Cubic.easeOut",
+      onComplete: () => {
+        if (!this.isDragging) {
+          piece.setDepth(0);
+        }
+      },
     });
   }
 
