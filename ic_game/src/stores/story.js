@@ -109,7 +109,7 @@ export const useStoryStore = defineStore("story", () => {
   /** Bonus XP awarded when completing the current stage with 3 stars (0 mistakes). */
   const currentStagePerfectBonusXp = computed(() => {
     if (!currentStageRating.value.isPerfect) return 0;
-    return currentStage.value.perfectBonusXp || 50;
+    return currentStage.value.perfectBonusXp || 0;
   });
 
   // ── Persistence ────────────────────────────────────────────────────────
@@ -256,7 +256,7 @@ export const useStoryStore = defineStore("story", () => {
 
     // Award XP per challenge
     progression.addXp(
-      currentStage.value.xpRewardPerChallenge || 35,
+      currentStage.value.xpRewardPerChallenge || 0,
       "challenge_solved",
     );
 
@@ -296,7 +296,7 @@ export const useStoryStore = defineStore("story", () => {
 
     // Award stage completion bonus XP
     let promoResult = progression.addXp(
-      currentStage.value.completionBonusXp || 60,
+      currentStage.value.completionBonusXp || 0,
       "stage_completion_bonus",
     );
 

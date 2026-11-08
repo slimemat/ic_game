@@ -22,6 +22,9 @@ const UI_SOUND_KEYS = [
   "morning_cock",
   "rat_steps",
   "rat_squeaks",
+  "swipe",
+  "connect",
+  "stamp",
 ];
 
 /**

@@ -35,6 +35,7 @@ O estado atual do código deve evoluir buscando sempre:
 - **Modularidade de Jogos**: Como o projeto terá múltiplas fases independentes, a estrutura de pastas e a injeção de dependências devem favorecer o reaproveitamento de lógicas, componentes visuais e estilos.
 - **Internacionalização e Strings**: Todos os textos da interface devem ser extraídos do HTML/JS e centralizados utilizando a arquitetura do `vue-i18n`. Leia a [Documentação de Strings (i18n)](./frontend_i18n.md) para detalhes.
 - **Geração Procedural de Efeitos Sonoros 8-Bit**: O projeto conta com um utilitário em Python (`ic_game/scripts/generate-8bit-sfx.py`) para sintetizar efeitos sonoros retrô em `.mp3` localmente. Consulte a [Documentação do Gerador de SFX 8-Bit](./gerador_sfx_8bit.md).
+- **Sistema de Tutoriais Interativos Just-in-Time**: Estrutura modular desacoplada com metáfora de edição de imagem retrô para introduzir conceitos de rotação e espelhamento espacial antes dos lotes de fases. Consulte o [Sistema de Tutoriais Interativos](./sistema_de_tutoriais_interativos.md).
 
 ## Fluxo de Trabalho e Padrões
 

@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { LEVEL_CONFIGS } from "../data/PatternRecognitionLevels";
+import { LEVEL_CONFIGS, COLOR_SYMBOLS } from "../data/PatternRecognitionLevels";
 import {
   AnswerSlot,
   AnswerStatus,
@@ -148,6 +148,9 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     this.isShutdown = false;
     AudioManager.init(this);
 
+    // Permite distinguir um toque rápido (auto-drag) de um arraste manual
+    this.input.dragDistanceThreshold = 10;
+
     this.input.on("dragstart", this.onDragStart, this);
     this.input.on("drag", this.onDrag, this);
     this.input.on("dragend", this.onDragEnd, this);
@@ -212,7 +215,8 @@ export default class PatternRecognitionScene extends Phaser.Scene {
 
   loadLevel({ animateIn = false } = {}) {
     const level = this.registry.get("level") ?? 1;
-    const rawConfig = LEVEL_CONFIGS[(level - 1) % LEVEL_CONFIGS.length];
+    const rawConfig =
+      LEVEL_CONFIGS[Math.min(level - 1, LEVEL_CONFIGS.length - 1)];
     this.levelData = shuffleLevelOptions(rawConfig);
     this.currentStepIndex = 0;
     this.slot.clear();
@@ -867,7 +871,36 @@ export default class PatternRecognitionScene extends Phaser.Scene {
       draggable: true,
       useHandCursor: true,
     });
-    piece.setData({ optionIndex: index, home, tileShadow, tileBg, tileTape });
+    piece.setData({
+      optionIndex: index,
+      home,
+      tileShadow,
+      tileBg,
+      tileTape,
+      downX: 0,
+      downY: 0,
+      didDrag: false,
+    });
+
+    piece.on("pointerdown", (pointer) => {
+      if (this.isTransitioning || this.isSolved) return;
+      piece.setData("downX", pointer.x);
+      piece.setData("downY", pointer.y);
+      piece.setData("didDrag", false);
+    });
+
+    piece.on("pointerup", (pointer) => {
+      if (this.isTransitioning || this.isSolved || this.isDragging) return;
+      const dist = Phaser.Math.Distance.Between(
+        piece.getData("downX") ?? pointer.x,
+        piece.getData("downY") ?? pointer.y,
+        pointer.x,
+        pointer.y,
+      );
+      if (!piece.getData("didDrag") && dist < 12) {
+        this.handlePieceTap(piece);
+      }
+    });
 
     return this.trackTask(piece);
   }
@@ -882,6 +915,73 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     const shape = this.levelData?.shape || "triangle";
     const key = `shape-${shape}`;
     return this.textures.exists(key) ? key : null;
+  }
+
+  /**
+   * Desenha o símbolo geométrico de acessibilidade (Alto Contraste) para daltonismo.
+   * @param {Phaser.GameObjects.Graphics} gfx
+   * @param {number} x
+   * @param {number} y
+   * @param {number} size
+   * @param {string} symId
+   */
+  drawColorSymbolGraphic(gfx, x, y, size, symId, symbolColor = 0x0f172a) {
+    const s = size * 0.44;
+    gfx.lineStyle(2, symbolColor, 0.95);
+    gfx.fillStyle(symbolColor, 1);
+
+    switch (symId) {
+      case "triangle_up": {
+        const points = [
+          { x: x, y: y - s * 1.05 },
+          { x: x + s * 0.95, y: y + s * 0.8 },
+          { x: x - s * 0.95, y: y + s * 0.8 },
+        ];
+        gfx.fillPoints(points, true);
+        gfx.strokePoints(points, true);
+        break;
+      }
+      case "triangle_down": {
+        const points = [
+          { x: x, y: y + s * 1.05 },
+          { x: x + s * 0.95, y: y - s * 0.8 },
+          { x: x - s * 0.95, y: y - s * 0.8 },
+        ];
+        gfx.fillPoints(points, true);
+        gfx.strokePoints(points, true);
+        break;
+      }
+      case "cross": {
+        const w = s * 0.45;
+        // Barras cruzadas com contorno
+        gfx.fillRect(x - w / 2, y - s, w, s * 2);
+        gfx.strokeRect(x - w / 2, y - s, w, s * 2);
+        gfx.fillRect(x - s, y - w / 2, s * 2, w);
+        gfx.strokeRect(x - s, y - w / 2, s * 2, w);
+        // Preenche o centro para limpar linhas internas
+        gfx.fillRect(x - w / 2 + 1, y - w / 2 + 1, w - 2, w - 2);
+        break;
+      }
+      case "square": {
+        const side = s * 1.5;
+        gfx.fillRect(x - side / 2, y - side / 2, side, side);
+        gfx.strokeRect(x - side / 2, y - side / 2, side, side);
+        break;
+      }
+      case "diamond": {
+        const points = [
+          { x: x, y: y - s * 1.05 },
+          { x: x + s * 0.9, y: y },
+          { x: x, y: y + s * 1.05 },
+          { x: x - s * 0.9, y: y },
+        ];
+        gfx.fillPoints(points, true);
+        gfx.strokePoints(points, true);
+        break;
+      }
+      default:
+        break;
+    }
   }
 
   /**
@@ -934,6 +1034,27 @@ export default class PatternRecognitionScene extends Phaser.Scene {
         typeof value === "object" ? (value.angle ?? 0) : Number(value) || 0;
       triangle.setAngle(angle);
       return triangle;
+    }
+
+    if (this.levelData.type === "color") {
+      const symInfo = COLOR_SYMBOLS[value];
+      const circle = this.add.circle(0, 0, r, value);
+      // Borda sutil de alto contraste ao redor do círculo colorido
+      circle.setStrokeStyle(2, 0xffffff, 0.45);
+
+      const gfx = this.add.graphics();
+      if (symInfo?.id) {
+        this.drawColorSymbolGraphic(
+          gfx,
+          0,
+          0,
+          r,
+          symInfo.id,
+          symInfo.symbolColor,
+        );
+      }
+
+      return this.add.container(x, y, [circle, gfx]);
     }
 
     const spriteKey = this.getDragSpriteKey();
@@ -1032,6 +1153,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   onDragStart(pointer, piece) {
     if (this.isTransitioning || !this.isOption(piece)) return;
 
+    piece.setData("didDrag", true);
     this.isDragging = true;
     this.tweens.killTweensOf(piece);
     this.slot.release(piece.getData("optionIndex"));
@@ -1050,6 +1172,36 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     if (shadow) shadow.setPosition(4, 6);
 
     AudioManager.play("connect", { volume: 0.5 });
+  }
+
+  /**
+   * Ao dar um toque/clique sem arrastar, realiza o "auto-arrastamento" da peça até o slot '?'
+   * (ou devolve para a origem se ela já estiver no slot). O jogador ainda confirma no botão.
+   * @param {Phaser.GameObjects.Container} piece
+   */
+  handlePieceTap(piece) {
+    if (this.isTransitioning || this.isSolved || !this.isOption(piece)) return;
+
+    const optionIndex = piece.getData("optionIndex");
+    if (this.slot.occupant === optionIndex) {
+      // Já estava no slot: devolve suavemente para a bandeja
+      this.slot.release(optionIndex);
+      this.sendHome(piece, 220);
+      this.updateSlotVisuals();
+      AudioManager.play("swipe", { volume: 0.45 });
+      this.onSlotChangeCallback?.({
+        isSlotFilled: !this.slot.isEmpty,
+        isInteracting: false,
+      });
+      return;
+    }
+
+    // Estava na bandeja: voa automaticamente até o slot '?'
+    this.dropIntoSlot(piece, { duration: 240 });
+    this.onSlotChangeCallback?.({
+      isSlotFilled: !this.slot.isEmpty,
+      isInteracting: false,
+    });
   }
 
   onDrag(pointer, piece, dragX, dragY) {
@@ -1081,38 +1233,44 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     });
   }
 
-  dropIntoSlot(piece) {
+  dropIntoSlot(piece, { duration = MOVE_MS } = {}) {
     const displacedIndex = this.slot.place(piece.getData("optionIndex"));
 
     if (displacedIndex !== NO_ANSWER) {
       const displacedPiece = this.options[displacedIndex];
       if (displacedPiece) {
         this.setPiecePostItStyle(displacedPiece, false);
-        this.sendHome(displacedPiece);
+        this.sendHome(displacedPiece, duration);
       }
     }
 
     this.setPiecePostItStyle(piece, true);
-    this.moveTo(piece, this.slotInfo.x, this.slotInfo.y);
+    this.moveTo(piece, this.slotInfo.x, this.slotInfo.y, duration);
     this.updateSlotVisuals();
     AudioManager.play("connect");
   }
 
-  sendHome(piece) {
+  sendHome(piece, duration = MOVE_MS) {
     this.setPiecePostItStyle(piece, false);
     const { x, y } = piece.getData("home");
-    this.moveTo(piece, x, y);
+    this.moveTo(piece, x, y, duration);
   }
 
-  moveTo(piece, x, y) {
+  moveTo(piece, x, y, duration = MOVE_MS) {
     this.tweens.killTweensOf(piece);
+    piece.setDepth(DEPTH_DRAGGING);
     this.tweens.add({
       targets: piece,
       x,
       y,
       scale: 1,
-      duration: MOVE_MS,
+      duration,
       ease: "Cubic.easeOut",
+      onComplete: () => {
+        if (!this.isDragging) {
+          piece.setDepth(0);
+        }
+      },
     });
   }
 

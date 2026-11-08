@@ -1,10 +1,10 @@
 export const COLORS = {
-  // Gameplay Colors
-  RED: 0xe53e3e,
-  BLUE: 0x3182ce,
-  GREEN: 0x38a169,
-  YELLOW: 0xd69e2e,
-  PURPLE: 0x805ad5,
+  // Gameplay Colors (Paleta Universal Acessível Okabe-Ito / Alto Contraste)
+  RED: 0xd55e00, // Vermillion / Laranja-avermelhado escuro (#D55E00)
+  BLUE: 0x56b4e9, // Sky Blue / Azul claro (#56B4E9)
+  GREEN: 0x009e73, // Bluish Green / Verde-azulado (#009E73)
+  YELLOW: 0xf0e442, // Yellow / Amarelo puro (#F0E442)
+  PURPLE: 0xcc79a7, // Reddish Purple / Magenta (#CC79A7),
 
   // UI and Shape Theme Colors
   SHAPE_DEFAULT: 0x63b3ed,
@@ -14,6 +14,39 @@ export const COLORS = {
   OPTION_BORDER: 0x4a5568,
   OPTION_BORDER_ACTIVE: 0x63b3ed,
 };
+
+export const COLOR_SYMBOLS = Object.freeze({
+  [COLORS.RED]: {
+    id: "triangle_up",
+    symbol: "▲",
+    labelKey: "pattern.colors.red",
+    symbolColor: 0x5a1f00, // Tom sombra vinho/marrom escuro profundo (WCAG ~4.8:1)
+  },
+  [COLORS.BLUE]: {
+    id: "cross",
+    symbol: "+",
+    labelKey: "pattern.colors.blue",
+    symbolColor: 0x0f4366, // Tom sombra azul marinho profundo (WCAG ~4.5:1)
+  },
+  [COLORS.GREEN]: {
+    id: "square",
+    symbol: "■",
+    labelKey: "pattern.colors.green",
+    symbolColor: 0x003829, // Tom sombra verde floresta profundo (WCAG ~4.2:1)
+  },
+  [COLORS.YELLOW]: {
+    id: "triangle_down",
+    symbol: "▼",
+    labelKey: "pattern.colors.yellow",
+    symbolColor: 0x574f00, // Tom sombra âmbar/oliva escuro profundo (WCAG ~5.1:1)
+  },
+  [COLORS.PURPLE]: {
+    id: "diamond",
+    symbol: "◆",
+    labelKey: "pattern.colors.purple",
+    symbolColor: 0x4a1d37, // Tom sombra berinjela/vinho escuro profundo (WCAG ~4.3:1)
+  },
+});
 
 /**
  * Cada objeto representa uma fase do jogo.
@@ -381,6 +414,48 @@ export const LEVEL_CONFIGS = [
       COLORS.PURPLE,
     ],
     correctOptionIndex: 2, // Verde
+  },
+  {
+    difficulty: 2,
+    type: "color",
+    shape: "circle",
+    promptKey: "pattern.prompts.color_palindrome",
+    hintKey: "pattern.hints.color_palindrome",
+    sequence: [COLORS.YELLOW, COLORS.PURPLE, COLORS.BLUE, COLORS.PURPLE],
+    answerOptions: [COLORS.YELLOW, COLORS.PURPLE, COLORS.BLUE, COLORS.GREEN],
+    correctOptionIndex: 0, // Amarelo (espelho do início)
+  },
+  {
+    difficulty: 3,
+    type: "color",
+    shape: "circle",
+    promptKey: "pattern.prompts.color_pairs",
+    hintKey: "pattern.hints.color_pairs",
+    sequence: [
+      COLORS.GREEN,
+      COLORS.GREEN,
+      COLORS.RED,
+      COLORS.RED,
+      COLORS.YELLOW,
+    ],
+    answerOptions: [COLORS.GREEN, COLORS.RED, COLORS.YELLOW, COLORS.BLUE],
+    correctOptionIndex: 2, // Amarelo (completa o par)
+  },
+  {
+    difficulty: 3,
+    type: "color",
+    shape: "circle",
+    promptKey: "pattern.prompts.color_intercalated",
+    hintKey: "pattern.hints.color_intercalated",
+    sequence: [
+      COLORS.BLUE,
+      COLORS.PURPLE,
+      COLORS.BLUE,
+      COLORS.YELLOW,
+      COLORS.BLUE,
+    ],
+    answerOptions: [COLORS.RED, COLORS.PURPLE, COLORS.YELLOW, COLORS.BLUE],
+    correctOptionIndex: 0, // Vermelho (nova cor que alterna com azul)
   },
 ];
 

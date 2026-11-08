@@ -2,12 +2,17 @@ import { computed, onBeforeUnmount, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useStoryStore, STORY_CHECKPOINTS } from "../stores/story";
 import { useProgressionStore } from "../stores/progression";
-import { RANKS, STORY_STAGES } from "../game/data/progressionConfig";
+import {
+  RANKS,
+  STORY_STAGES,
+  calculateStageTotalPayout,
+} from "../game/data/progressionConfig";
 
 const FEEDBACK_MS = 4000;
 const [STAGE_1, STAGE_2, STAGE_3] = STORY_STAGES;
-const STAGE_2_START_XP = RANKS[1].requiredTotalXp;
-const STAGE_3_START_XP = RANKS[2].requiredTotalXp;
+const STAGE_2_START_XP = calculateStageTotalPayout(STAGE_1);
+const STAGE_3_START_XP =
+  calculateStageTotalPayout(STAGE_1) + calculateStageTotalPayout(STAGE_2);
 
 /**
  * Ações de desenvolvimento (switches de decisões, reset e atalhos para qualquer checkpoint).
@@ -256,6 +261,45 @@ export function useDebugActions() {
             target: t("hub.debug.presets.game_stage_3"),
           }),
         );
+        break;
+      }
+
+      case "tutorial-spatial-orientation": {
+        progression.completedTutorialIds =
+          progression.completedTutorialIds.filter(
+            (id) =>
+              id !== "spatial_orientation" &&
+              id !== "rotation_cw" &&
+              id !== "rotation_ccw",
+          );
+        progression.save();
+        story.currentStageId = STAGE_1.id;
+        story.currentDay = 1;
+        story.setPatternProgress(0);
+        story.startTask(STAGE_1.gameId, { withBriefing: false });
+        flash(t("hub.debug.btn_tut_spatial_orientation"));
+        break;
+      }
+
+      case "tutorial-spatial-reflection":
+      case "tutorial-flip-h":
+      case "tutorial-flip-v": {
+        progression.completedTutorialIds =
+          progression.completedTutorialIds.filter(
+            (id) =>
+              id !== "spatial_reflection" && id !== "flip_h" && id !== "flip_v",
+          );
+        progression.save();
+        ensureStage2State();
+        story.setPatternProgress(0); // Início da Etapa 2 (Fase 11 ou Fase 16)
+        story.startTask(STAGE_2.gameId, { withBriefing: false });
+        flash(t("hub.debug.btn_tut_flip_h"));
+        break;
+      }
+
+      case "tutorial-reset": {
+        progression.resetTutorials();
+        flash(t("hub.debug.btn_tut_reset"));
         break;
       }
 
