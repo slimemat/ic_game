@@ -188,11 +188,27 @@
     }
   },
   "matrix": {
-    "clear_matrix": "Limpar Matriz",
+    "clear_matrix": "Limpar",
     "sync": "Sincronização: {correct} / {total}",
+    "progress": "Fase {num} / {total}",
     "level_title": "Fase {num}: {title}",
     "stats_level": "Fase Concluída: {num}",
-    "stats_blocks": "Blocos Sincronizados: {total}"
+    "stats_blocks": "Blocos Sincronizados: {total}",
+    "err_incomplete": "Ainda há blocos fora do lugar. Compare com o original!",
+    "levels": {
+      "line": {
+        "title": "O Básico (1 Linha)",
+        "description": "Crie o reflexo amarelo da imagem ciano."
+      },
+      "block2": {
+        "title": "Bloco 2x2",
+        "description": "Espelhe a matriz. No final, elas se dobram para a prova real!"
+      },
+      "lock3": {
+        "title": "A Fechadura 3x3",
+        "description": "A matriz completa será dobrada como uma página de livro."
+      }
+    }
   },
   "pattern": {
     "level": "Fase {num}",

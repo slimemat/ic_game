@@ -41,6 +41,7 @@ const localPaused = ref(false);
 const showWarning = ref(false);
 const warningMessage = ref("");
 const warningType = ref("info");
+let warningTimer = null;
 
 const isPaused = computed(() =>
   props.storyMode ? isStoryPaused.value : localPaused.value,
@@ -89,13 +90,22 @@ onMounted(() => {
     hasWon.value = true;
   };
 
-  const scene = new MatrixMirrorScene(handleMatchUpdate, handleWin);
+  const handleError = (msg, { isMistake = true } = {}) => {
+    if (isMistake) performance.recordMistake();
+    triggerWarning(msg, "error");
+  };
+
+  const scene = new MatrixMirrorScene(
+    handleMatchUpdate,
+    handleWin,
+    handleError,
+  );
   gameScene.value = scene;
 
   game.value = new Phaser.Game({
     type: Phaser.AUTO,
     parent: gameRoot.value,
-    backgroundColor: "#1a202c",
+    backgroundColor: "#87ceeb", // a Scene sobrescreve ao carregar a fase
     scale: {
       mode: Phaser.Scale.RESIZE,
       width: "100%",
@@ -104,10 +114,11 @@ onMounted(() => {
     scene,
   });
 
-  game.value.registry.set("level", currentLevel.value);
+  syncRegistry();
 });
 
 onBeforeUnmount(() => {
+  clearTimeout(warningTimer);
   game.value?.destroy(true);
   game.value = null;
   gameScene.value = null;
@@ -165,7 +176,8 @@ const triggerWarning = (msg, type = "info") => {
   warningMessage.value = msg;
   warningType.value = type;
   showWarning.value = true;
-  setTimeout(() => (showWarning.value = false), 3000);
+  clearTimeout(warningTimer);
+  warningTimer = setTimeout(() => (showWarning.value = false), 3000);
 };
 </script>
 
@@ -209,8 +221,15 @@ const triggerWarning = (msg, type = "info") => {
     >
       <template #stats>
         <div>
-          <p>{{ $t("matrix.stats_level").replace("{num}", currentLevel) }}</p>
-          <p>{{ $t("matrix.stats_blocks").replace("{total}", totalBlocks) }}</p>
+          <p>{{ $t("matrix.stats_level", { num: currentLevel }) }}</p>
+          <p>{{ $t("matrix.stats_blocks", { total: totalBlocks }) }}</p>
+          <p>
+            {{
+              $t("global.modals.stats_mistakes", {
+                count: performance.mistakes.value,
+              })
+            }}
+          </p>
         </div>
       </template>
     </VictoryModal>
