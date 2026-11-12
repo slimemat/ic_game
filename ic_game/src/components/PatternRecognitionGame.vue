@@ -319,6 +319,13 @@ onMounted(() => {
     type: Phaser.AUTO,
     parent: gameRoot.value,
     backgroundColor: "#101820", // a Scene sobrescreve com a cor do tema
+    pixelArt: true,
+    roundPixels: true,
+    render: {
+      pixelArt: true,
+      antialias: false,
+      roundPixels: true,
+    },
     scale: {
       mode: Phaser.Scale.RESIZE,
       width: "100%",

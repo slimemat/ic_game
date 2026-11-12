@@ -265,6 +265,12 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const isNight = this.isNightMode();
 
+    if (this.textures.exists("cloud_sprite")) {
+      this.textures
+        .get("cloud_sprite")
+        ?.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    }
+
     for (let i = 0; i < CLOUD_CONFIG.count; i++) {
       const x = Phaser.Math.Between(-50, width);
       const y = Phaser.Math.Between(height * 0.04, height * 0.26);
@@ -559,6 +565,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     } else {
       const key = assetKey(this.theme.id, "bg");
       if (this.theme.backgroundImage && this.textures.exists(key)) {
+        this.textures.get(key)?.setFilter(Phaser.Textures.FilterMode.NEAREST);
         const image = this.track(
           this.add.image(width / 2, height / 2, key).setDepth(DEPTH_BACKGROUND),
         );

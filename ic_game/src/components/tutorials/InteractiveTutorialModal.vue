@@ -633,7 +633,7 @@ function handleConfirmSkip() {
 
 .mini-tab-title {
   font-family: var(--font-handwritten);
-  font-size: 0.92rem;
+  font-size: clamp(1rem, 3.6vw, 1.14rem);
   font-weight: 700;
   letter-spacing: 0.01em;
   color: #1e293b;
@@ -658,9 +658,14 @@ function handleConfirmSkip() {
   color: #0284c7;
 }
 
-/* POST-IT VISUAL DO RARDI */
+/* POST-IT VISUAL DO RARDI (EXPANDIDO MOBILE-FIRST) */
 .rardi-visual-note-card {
   position: relative;
+  flex: 1 1 auto;
+  min-height: clamp(148px, 21vh, 210px);
+  max-height: 235px;
+  display: flex;
+  align-items: center;
   background-color: var(--note-color, var(--folder-bg));
   background-image: linear-gradient(
     180deg,
@@ -672,14 +677,15 @@ function handleConfirmSkip() {
   box-shadow:
     0 5px 14px rgba(0, 0, 0, 0.1),
     0 1px 3px rgba(0, 0, 0, 0.06);
-  padding: 8px 10px;
+  padding: clamp(14px, 2.4vh, 22px) 12px;
   cursor: pointer;
 }
 
 .visual-note-body {
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .visual-note-diagram-col {
@@ -691,13 +697,14 @@ function handleConfirmSkip() {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  justify-content: center;
+  gap: clamp(6px, 1.2vh, 12px);
 }
 
 .note-card-title {
   margin: 0;
   font-family: var(--font-handwritten);
-  font-size: 1.12rem;
+  font-size: clamp(1.32rem, 4.8vw, 1.55rem);
   font-weight: 700;
   line-height: 1.05;
   color: #292524;
@@ -707,17 +714,16 @@ function handleConfirmSkip() {
 .note-sketch-strip {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 4px;
-  padding: 2px 4px;
-  margin: 1px 0;
-  border-bottom: 1.5px dashed rgba(68, 64, 60, 0.18);
+  justify-content: space-between;
+  padding: 4px 2px 6px 2px;
+  margin: 2px 0;
+  border-bottom: 1.5px dashed rgba(68, 64, 60, 0.22);
 }
 
 .note-sketch-strip.is-zoomed {
   justify-content: center;
-  gap: 10px;
-  padding: 6px 12px;
+  gap: 12px;
+  padding: 8px 14px;
   width: 100%;
 }
 
@@ -725,15 +731,15 @@ function handleConfirmSkip() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
+  gap: 2px;
   transform: rotate(var(--sketch-tilt, -1.5deg));
   animation: sketchStepHighlight 3.6s infinite ease-in-out;
   animation-delay: var(--step-delay, 0s);
 }
 
 .sketch-ink-img {
-  width: 36px;
-  height: 36px;
+  width: clamp(42px, 11.5vw, 50px);
+  height: clamp(42px, 11.5vw, 50px);
   object-fit: contain;
   image-rendering: pixelated;
   /* Mescla o cinza da imagem com o fundo amarelo do post-it como tinta de caneta */
@@ -745,13 +751,13 @@ function handleConfirmSkip() {
 }
 
 .note-sketch-strip.is-zoomed .sketch-ink-img {
-  width: 54px;
-  height: 54px;
+  width: 64px;
+  height: 64px;
 }
 
 .sketch-step-label {
   font-family: var(--font-handwritten);
-  font-size: 0.78rem;
+  font-size: clamp(0.88rem, 2.9vw, 1.02rem);
   font-weight: 700;
   line-height: 1;
   color: #44403c;
@@ -759,22 +765,22 @@ function handleConfirmSkip() {
 }
 
 .note-sketch-strip.is-zoomed .sketch-step-label {
-  font-size: 0.96rem;
+  font-size: 1.12rem;
 }
 
 .sketch-drawn-arrow {
   font-family: var(--font-handwritten);
-  font-size: 0.95rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: #b91c1c;
-  opacity: 0.78;
-  margin-bottom: 10px;
+  opacity: 0.82;
+  margin-bottom: 12px;
   user-select: none;
 }
 
 .note-sketch-strip.is-zoomed .sketch-drawn-arrow {
-  font-size: 1.25rem;
-  margin-bottom: 14px;
+  font-size: 1.4rem;
+  margin-bottom: 16px;
 }
 
 @keyframes sketchStepHighlight {
@@ -792,23 +798,23 @@ function handleConfirmSkip() {
 
 .note-golden-rule-pill {
   margin: 0;
-  padding: 3px 7px;
+  padding: 5px 9px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.72);
   border-left: 3px solid #dc2626;
   font-family: var(--font-handwritten);
-  font-size: 0.9rem;
+  font-size: clamp(1.04rem, 3.7vw, 1.18rem);
   font-weight: 700;
-  line-height: 1.15;
+  line-height: 1.2;
   color: #0f172a;
 }
 
 .note-short-explanation {
   margin: 0;
   font-family: var(--font-handwritten);
-  font-size: 0.92rem;
+  font-size: clamp(1.3rem, 4vw, 1.28rem);
   font-weight: 600;
-  line-height: 1.15;
+  line-height: 1.22;
   color: #292524;
 }
 

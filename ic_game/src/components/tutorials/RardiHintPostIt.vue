@@ -108,7 +108,7 @@ defineEmits(["replay-tutorial"]);
 .rardi-hint-postit {
   position: relative;
   margin-top: 8px;
-  padding: 10px 12px 10px 10px;
+  padding: 14px 14px 14px 12px;
   background-color: var(--postit-bg, #fef08a);
   background-image: linear-gradient(
     180deg,
@@ -122,7 +122,7 @@ defineEmits(["replay-tutorial"]);
     inset 0 -4px 8px rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   text-align: left;
   color: #1e293b;
   pointer-events: auto;
@@ -191,17 +191,17 @@ defineEmits(["replay-tutorial"]);
 .postit-golden-rule {
   margin: 0;
   font-family: var(--font-handwritten);
-  font-size: 0.94rem;
+  font-size: clamp(1.04rem, 3.6vw, 1.18rem);
   font-weight: 700;
   color: #292524;
-  line-height: 1.15;
+  line-height: 1.2;
 }
 
 .postit-sketch-strip {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 0;
+  gap: 6px;
+  padding: 3px 0;
 }
 
 .postit-sketch-item {
@@ -212,8 +212,8 @@ defineEmits(["replay-tutorial"]);
 }
 
 .postit-sketch-img {
-  width: 30px;
-  height: 30px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
   image-rendering: pixelated;
   mix-blend-mode: multiply;
@@ -224,7 +224,7 @@ defineEmits(["replay-tutorial"]);
 
 .postit-sketch-label {
   font-family: var(--font-handwritten);
-  font-size: 0.72rem;
+  font-size: 0.84rem;
   font-weight: 700;
   line-height: 1;
   color: #44403c;
@@ -232,21 +232,21 @@ defineEmits(["replay-tutorial"]);
 
 .postit-sketch-arrow {
   font-family: var(--font-handwritten);
-  font-size: 0.85rem;
+  font-size: 1.02rem;
   font-weight: 700;
   color: #b91c1c;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .postit-level-hint {
   margin: 0;
   font-family: var(--font-handwritten);
-  font-size: 0.9rem;
+  font-size: clamp(1.02rem, 3.5vw, 1.15rem);
   font-weight: 600;
   color: #292524;
-  line-height: 1.18;
+  line-height: 1.22;
   border-top: 1px dashed rgba(15, 23, 42, 0.18);
-  padding-top: 3px;
+  padding-top: 4px;
 }
 
 .standard-hint-banner {
