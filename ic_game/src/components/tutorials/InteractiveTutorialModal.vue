@@ -3,7 +3,6 @@ import { ref, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import AudioManager from "../../game/managers/AudioManager";
 import AssistantPushBanner from "./AssistantPushBanner.vue";
-import VisualConceptDiagram from "./VisualConceptDiagram.vue";
 import SpatialProjectionArena from "./SpatialProjectionArena.vue";
 
 const props = defineProps({
@@ -294,14 +293,6 @@ function handleConfirmSkip() {
         <div class="postit-tape-strip" aria-hidden="true"></div>
 
         <div class="visual-note-body">
-          <div class="visual-note-diagram-col">
-            <VisualConceptDiagram
-              :concept="currentActiveNote.actionKey"
-              :customDoodleUrl="currentActiveNote.customDoodleUrl || ''"
-              size="md"
-            />
-          </div>
-
           <div class="visual-note-text-col">
             <h4 class="note-card-title">
               {{ $t(currentActiveNote.titleKey) }}
@@ -433,14 +424,6 @@ function handleConfirmSkip() {
           <header class="zoomed-header">
             <h4 class="zoomed-title">{{ $t(activeZoomedNote.titleKey) }}</h4>
           </header>
-
-          <div class="zoomed-diagram-showcase">
-            <VisualConceptDiagram
-              :concept="activeZoomedNote.actionKey"
-              :customDoodleUrl="activeZoomedNote.customDoodleUrl || ''"
-              size="md"
-            />
-          </div>
 
           <div
             v-if="activeZoomedNote.sketchImages?.length"
@@ -685,14 +668,10 @@ function handleConfirmSkip() {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
-}
-
-.visual-note-diagram-col {
-  flex-shrink: 0;
 }
 
 .visual-note-text-col {
+  width: 100%;
   flex: 1;
   min-width: 0;
   display: flex;
@@ -716,7 +695,7 @@ function handleConfirmSkip() {
   align-items: center;
   justify-content: space-between;
   padding: 4px 2px 6px 2px;
-  margin: 2px 0;
+  margin: 2px 20px;
   border-bottom: 1.5px dashed rgba(68, 64, 60, 0.22);
 }
 
