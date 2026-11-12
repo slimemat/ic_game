@@ -11,12 +11,46 @@
  *      vs. Rotação, exatamente quando as fases de transformação estreiam.
  */
 
+const baseClockImg = new URL(
+  "../../assets/images/base_clock.png",
+  import.meta.url,
+).href;
+const oneQuarterClockImg = new URL(
+  "../../assets/images/one_quarter_clock.png",
+  import.meta.url,
+).href;
+const arrowQuarterClockImg = new URL(
+  "../../assets/images/arrow_quarter_clock.png",
+  import.meta.url,
+).href;
+const oneQuarterAnticlockImg = new URL(
+  "../../assets/images/one_quarter_anticlock.png",
+  import.meta.url,
+).href;
+const arrowQuarterAnticlockImg = new URL(
+  "../../assets/images/arrow_quarter_anticlock.png",
+  import.meta.url,
+).href;
+
+const CLOCK_SKETCH_CW = Object.freeze([
+  { src: baseClockImg, label: "12h–3h", tilt: "-2.5deg" },
+  { src: oneQuarterClockImg, label: "1/4 (90°)", tilt: "1.5deg" },
+  { src: arrowQuarterClockImg, label: "Horário ↷", tilt: "-1.5deg" },
+]);
+
+const CLOCK_SKETCH_CCW = Object.freeze([
+  { src: baseClockImg, label: "12h–9h", tilt: "2deg" },
+  { src: oneQuarterAnticlockImg, label: "1/4 (90°)", tilt: "-1.8deg" },
+  { src: arrowQuarterAnticlockImg, label: "Anti ↶", tilt: "1.5deg" },
+]);
+
 export const VISUAL_CONCEPT_CARDS = Object.freeze({
   rotate_cw: {
     concept: "rotate_cw",
     color: "#fef08a",
     titleKey: "tutorials.rardi_notes.note_1_title",
     goldenRuleKey: "tutorials.rardi_notes.note_1_golden_rule",
+    sketchImages: CLOCK_SKETCH_CW,
     tutorialId: "spatial_orientation",
   },
   rotate_ccw: {
@@ -24,6 +58,7 @@ export const VISUAL_CONCEPT_CARDS = Object.freeze({
     color: "#bfdbfe",
     titleKey: "tutorials.rardi_notes.note_2_title",
     goldenRuleKey: "tutorials.rardi_notes.note_2_golden_rule",
+    sketchImages: CLOCK_SKETCH_CCW,
     tutorialId: "spatial_orientation",
   },
   rotate_180: {
@@ -80,7 +115,7 @@ export const TUTORIALS_CONFIG = Object.freeze({
         icon: "↷",
         titleKey: "tutorials.rardi_notes.note_1_title",
         shortTagKey: "tutorials.rardi_notes.note_1_tag_clean",
-        goldenRuleKey: "tutorials.rardi_notes.note_1_golden_rule",
+        sketchImages: CLOCK_SKETCH_CW,
         textKey: "tutorials.rardi_notes.note_1_text",
         promptKey: "tutorials.desk.step_prompt_cw",
         options: [
@@ -117,7 +152,7 @@ export const TUTORIALS_CONFIG = Object.freeze({
         icon: "↶",
         titleKey: "tutorials.rardi_notes.note_2_title",
         shortTagKey: "tutorials.rardi_notes.note_2_tag_clean",
-        goldenRuleKey: "tutorials.rardi_notes.note_2_golden_rule",
+        sketchImages: CLOCK_SKETCH_CCW,
         textKey: "tutorials.rardi_notes.note_2_text",
         promptKey: "tutorials.desk.step_prompt_ccw",
         options: [

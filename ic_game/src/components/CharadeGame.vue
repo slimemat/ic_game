@@ -42,6 +42,13 @@ onMounted(() => {
     type: Phaser.AUTO,
     parent: gameRoot.value,
     backgroundColor: "#f0f4f8",
+    pixelArt: true,
+    roundPixels: true,
+    render: {
+      pixelArt: true,
+      antialias: false,
+      roundPixels: true,
+    },
     scale: {
       mode: Phaser.Scale.RESIZE,
       width: "100%",

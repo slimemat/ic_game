@@ -55,7 +55,39 @@ defineEmits(["replay-tutorial"]);
         </button>
       </div>
 
-      <p class="postit-golden-rule">
+      <div
+        v-if="visualHint.sketchImages?.length"
+        class="postit-sketch-strip"
+        aria-hidden="true"
+      >
+        <template v-for="(sketch, sIdx) in visualHint.sketchImages" :key="sIdx">
+          <div
+            class="postit-sketch-item"
+            :style="{ '--sketch-tilt': sketch.tilt || '-1.5deg' }"
+          >
+            <img
+              :src="sketch.src"
+              :alt="sketch.label || ''"
+              class="postit-sketch-img"
+              draggable="false"
+            />
+            <span v-if="sketch.label" class="postit-sketch-label">
+              {{ sketch.label }}
+            </span>
+          </div>
+          <span
+            v-if="sIdx < visualHint.sketchImages.length - 1"
+            class="postit-sketch-arrow"
+          >
+            →
+          </span>
+        </template>
+      </div>
+
+      <p
+        v-else-if="visualHint.goldenRuleKey && $t(visualHint.goldenRuleKey)"
+        class="postit-golden-rule"
+      >
         {{ $t(visualHint.goldenRuleKey) }}
       </p>
 
@@ -76,7 +108,7 @@ defineEmits(["replay-tutorial"]);
 .rardi-hint-postit {
   position: relative;
   margin-top: 8px;
-  padding: 10px 12px 10px 10px;
+  padding: 14px 14px 14px 12px;
   background-color: var(--postit-bg, #fef08a);
   background-image: linear-gradient(
     180deg,
@@ -90,7 +122,7 @@ defineEmits(["replay-tutorial"]);
     inset 0 -4px 8px rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   text-align: left;
   color: #1e293b;
   pointer-events: auto;
@@ -158,20 +190,63 @@ defineEmits(["replay-tutorial"]);
 
 .postit-golden-rule {
   margin: 0;
-  font-size: 0.78rem;
-  font-weight: 800;
-  color: #0f172a;
-  line-height: 1.25;
+  font-family: var(--font-handwritten);
+  font-size: clamp(1.04rem, 3.6vw, 1.18rem);
+  font-weight: 700;
+  color: #292524;
+  line-height: 1.2;
+}
+
+.postit-sketch-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+}
+
+.postit-sketch-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: rotate(var(--sketch-tilt, -1.5deg));
+}
+
+.postit-sketch-img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  mix-blend-mode: multiply;
+  filter: sepia(0.58) hue-rotate(-8deg) saturate(1.55) brightness(1.12)
+    contrast(0.95);
+  opacity: 0.88;
+}
+
+.postit-sketch-label {
+  font-family: var(--font-handwritten);
+  font-size: 0.84rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #44403c;
+}
+
+.postit-sketch-arrow {
+  font-family: var(--font-handwritten);
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: #b91c1c;
+  margin-bottom: 10px;
 }
 
 .postit-level-hint {
   margin: 0;
-  font-size: 0.74rem;
+  font-family: var(--font-handwritten);
+  font-size: clamp(1.02rem, 3.5vw, 1.15rem);
   font-weight: 600;
-  color: #334155;
-  line-height: 1.25;
+  color: #292524;
+  line-height: 1.22;
   border-top: 1px dashed rgba(15, 23, 42, 0.18);
-  padding-top: 3px;
+  padding-top: 4px;
 }
 
 .standard-hint-banner {
