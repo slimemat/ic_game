@@ -55,7 +55,39 @@ defineEmits(["replay-tutorial"]);
         </button>
       </div>
 
-      <p class="postit-golden-rule">
+      <div
+        v-if="visualHint.sketchImages?.length"
+        class="postit-sketch-strip"
+        aria-hidden="true"
+      >
+        <template v-for="(sketch, sIdx) in visualHint.sketchImages" :key="sIdx">
+          <div
+            class="postit-sketch-item"
+            :style="{ '--sketch-tilt': sketch.tilt || '-1.5deg' }"
+          >
+            <img
+              :src="sketch.src"
+              :alt="sketch.label || ''"
+              class="postit-sketch-img"
+              draggable="false"
+            />
+            <span v-if="sketch.label" class="postit-sketch-label">
+              {{ sketch.label }}
+            </span>
+          </div>
+          <span
+            v-if="sIdx < visualHint.sketchImages.length - 1"
+            class="postit-sketch-arrow"
+          >
+            →
+          </span>
+        </template>
+      </div>
+
+      <p
+        v-else-if="visualHint.goldenRuleKey && $t(visualHint.goldenRuleKey)"
+        class="postit-golden-rule"
+      >
         {{ $t(visualHint.goldenRuleKey) }}
       </p>
 
@@ -158,18 +190,61 @@ defineEmits(["replay-tutorial"]);
 
 .postit-golden-rule {
   margin: 0;
-  font-size: 0.78rem;
-  font-weight: 800;
-  color: #0f172a;
-  line-height: 1.25;
+  font-family: var(--font-handwritten);
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: #292524;
+  line-height: 1.15;
+}
+
+.postit-sketch-strip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 0;
+}
+
+.postit-sketch-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transform: rotate(var(--sketch-tilt, -1.5deg));
+}
+
+.postit-sketch-img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  mix-blend-mode: multiply;
+  filter: sepia(0.58) hue-rotate(-8deg) saturate(1.55) brightness(1.12)
+    contrast(0.95);
+  opacity: 0.88;
+}
+
+.postit-sketch-label {
+  font-family: var(--font-handwritten);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #44403c;
+}
+
+.postit-sketch-arrow {
+  font-family: var(--font-handwritten);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #b91c1c;
+  margin-bottom: 8px;
 }
 
 .postit-level-hint {
   margin: 0;
-  font-size: 0.74rem;
+  font-family: var(--font-handwritten);
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #334155;
-  line-height: 1.25;
+  color: #292524;
+  line-height: 1.18;
   border-top: 1px dashed rgba(15, 23, 42, 0.18);
   padding-top: 3px;
 }
