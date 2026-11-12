@@ -125,9 +125,14 @@ test("TUTORIALS_CONFIG: spatial_orientation e spatial_reflection possuem notas v
         resolveI18nPath(ptBR, note.shortTagKey),
         `Missing shortTagKey ${note.shortTagKey}`,
       );
+      const hasVisualExplanation =
+        (Array.isArray(note.sketchImages) && note.sketchImages.length > 0) ||
+        Boolean(
+          note.goldenRuleKey && resolveI18nPath(ptBR, note.goldenRuleKey),
+        );
       assert.ok(
-        resolveI18nPath(ptBR, note.goldenRuleKey),
-        `Missing goldenRuleKey ${note.goldenRuleKey}`,
+        hasVisualExplanation,
+        `Nota ${note.id} deve ter sketchImages ou goldenRuleKey válida`,
       );
       assert.ok(
         resolveI18nPath(ptBR, note.textKey),

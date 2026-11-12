@@ -33,6 +33,13 @@ onMounted(() => {
     parent: gameRoot.value,
     width: 800,
     height: 600,
+    pixelArt: true,
+    roundPixels: true,
+    render: {
+      pixelArt: true,
+      antialias: false,
+      roundPixels: true,
+    },
     physics: {
       default: "arcade",
       arcade: { gravity: { y: 300 }, debug: false },

@@ -3,7 +3,6 @@ import { ref, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import AudioManager from "../../game/managers/AudioManager";
 import AssistantPushBanner from "./AssistantPushBanner.vue";
-import VisualConceptDiagram from "./VisualConceptDiagram.vue";
 import SpatialProjectionArena from "./SpatialProjectionArena.vue";
 
 const props = defineProps({
@@ -294,21 +293,53 @@ function handleConfirmSkip() {
         <div class="postit-tape-strip" aria-hidden="true"></div>
 
         <div class="visual-note-body">
-          <div class="visual-note-diagram-col">
-            <VisualConceptDiagram
-              :concept="currentActiveNote.actionKey"
-              :customDoodleUrl="currentActiveNote.customDoodleUrl || ''"
-              size="md"
-            />
-          </div>
-
           <div class="visual-note-text-col">
             <h4 class="note-card-title">
               {{ $t(currentActiveNote.titleKey) }}
             </h4>
 
+            <!-- Sequência de rabiscos desenhados à mão no post-it (ex.: relógio -> 1/4 -> seta) -->
+            <div
+              v-if="currentActiveNote.sketchImages?.length"
+              class="note-sketch-strip"
+              aria-hidden="true"
+            >
+              <template
+                v-for="(sketch, sIdx) in currentActiveNote.sketchImages"
+                :key="sIdx"
+              >
+                <div
+                  class="sketch-step-item"
+                  :style="{
+                    '--sketch-tilt': sketch.tilt || '-1.5deg',
+                    '--step-delay': `${sIdx * 0.8}s`,
+                  }"
+                >
+                  <img
+                    :src="sketch.src"
+                    :alt="sketch.label || ''"
+                    class="sketch-ink-img"
+                    draggable="false"
+                  />
+                  <span v-if="sketch.label" class="sketch-step-label">
+                    {{ sketch.label }}
+                  </span>
+                </div>
+
+                <span
+                  v-if="sIdx < currentActiveNote.sketchImages.length - 1"
+                  class="sketch-drawn-arrow"
+                >
+                  →
+                </span>
+              </template>
+            </div>
+
             <p
-              v-if="currentActiveNote.goldenRuleKey"
+              v-else-if="
+                currentActiveNote.goldenRuleKey &&
+                $t(currentActiveNote.goldenRuleKey)
+              "
               class="note-golden-rule-pill"
             >
               {{ $t(currentActiveNote.goldenRuleKey) }}
@@ -394,16 +425,47 @@ function handleConfirmSkip() {
             <h4 class="zoomed-title">{{ $t(activeZoomedNote.titleKey) }}</h4>
           </header>
 
-          <div class="zoomed-diagram-showcase">
-            <VisualConceptDiagram
-              :concept="activeZoomedNote.actionKey"
-              :customDoodleUrl="activeZoomedNote.customDoodleUrl || ''"
-              size="md"
-            />
+          <div
+            v-if="activeZoomedNote.sketchImages?.length"
+            class="note-sketch-strip is-zoomed"
+            aria-hidden="true"
+          >
+            <template
+              v-for="(sketch, sIdx) in activeZoomedNote.sketchImages"
+              :key="sIdx"
+            >
+              <div
+                class="sketch-step-item"
+                :style="{
+                  '--sketch-tilt': sketch.tilt || '-1.5deg',
+                  '--step-delay': `${sIdx * 0.8}s`,
+                }"
+              >
+                <img
+                  :src="sketch.src"
+                  :alt="sketch.label || ''"
+                  class="sketch-ink-img"
+                  draggable="false"
+                />
+                <span v-if="sketch.label" class="sketch-step-label">
+                  {{ sketch.label }}
+                </span>
+              </div>
+
+              <span
+                v-if="sIdx < activeZoomedNote.sketchImages.length - 1"
+                class="sketch-drawn-arrow"
+              >
+                →
+              </span>
+            </template>
           </div>
 
           <p
-            v-if="activeZoomedNote.goldenRuleKey"
+            v-else-if="
+              activeZoomedNote.goldenRuleKey &&
+              $t(activeZoomedNote.goldenRuleKey)
+            "
             class="note-golden-rule-pill"
           >
             {{ $t(activeZoomedNote.goldenRuleKey) }}
@@ -525,6 +587,7 @@ function handleConfirmSkip() {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
   cursor: pointer;
   transition: all 0.18s ease;
+  height: 6vh;
 }
 
 .rardi-mini-note-tab.is-active {
@@ -552,8 +615,10 @@ function handleConfirmSkip() {
 }
 
 .mini-tab-title {
-  font-size: 0.72rem;
-  font-weight: 800;
+  font-family: var(--font-handwritten);
+  font-size: clamp(1rem, 3.6vw, 1.14rem);
+  font-weight: 700;
+  letter-spacing: 0.01em;
   color: #1e293b;
 }
 
@@ -576,62 +641,160 @@ function handleConfirmSkip() {
   color: #0284c7;
 }
 
-/* POST-IT VISUAL DO RARDI */
+/* POST-IT VISUAL DO RARDI (EXPANDIDO MOBILE-FIRST) */
 .rardi-visual-note-card {
   position: relative;
+  flex: 1 1 auto;
+  min-height: clamp(148px, 21vh, 210px);
+  max-height: 235px;
+  display: flex;
+  align-items: center;
   background-color: var(--note-color, var(--folder-bg));
+  background-image: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.32) 0%,
+    rgba(161, 98, 7, 0.06) 100%
+  );
   border-radius: 12px;
   border: 1.5px solid rgba(15, 23, 42, 0.14);
   box-shadow:
     0 5px 14px rgba(0, 0, 0, 0.1),
     0 1px 3px rgba(0, 0, 0, 0.06);
-  padding: 9px 10px;
+  padding: clamp(14px, 2.4vh, 22px) 12px;
   cursor: pointer;
 }
 
 .visual-note-body {
+  width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
-}
-
-.visual-note-diagram-col {
-  flex-shrink: 0;
 }
 
 .visual-note-text-col {
+  width: 100%;
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  justify-content: center;
+  gap: clamp(6px, 1.2vh, 12px);
 }
 
 .note-card-title {
   margin: 0;
-  font-size: 0.82rem;
-  font-weight: 900;
-  color: #0f172a;
+  font-family: var(--font-handwritten);
+  font-size: clamp(1.32rem, 4.8vw, 1.55rem);
+  font-weight: 700;
+  line-height: 1.05;
+  color: #292524;
+}
+
+/* TIRINHA DE DESENHOS MESCLADOS COM O POST-IT (EFEITO CANETA NO PAPEL AMARELO) */
+.note-sketch-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px 6px 2px;
+  margin: 2px 20px;
+  border-bottom: 1.5px dashed rgba(68, 64, 60, 0.22);
+}
+
+.note-sketch-strip.is-zoomed {
+  justify-content: center;
+  gap: 12px;
+  padding: 8px 14px;
+  width: 100%;
+}
+
+.sketch-step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transform: rotate(var(--sketch-tilt, -1.5deg));
+  animation: sketchStepHighlight 3.6s infinite ease-in-out;
+  animation-delay: var(--step-delay, 0s);
+}
+
+.sketch-ink-img {
+  width: clamp(42px, 11.5vw, 50px);
+  height: clamp(42px, 11.5vw, 50px);
+  object-fit: contain;
+  image-rendering: pixelated;
+  /* Mescla o cinza da imagem com o fundo amarelo do post-it como tinta de caneta */
+  mix-blend-mode: multiply;
+  filter: sepia(0.58) hue-rotate(-8deg) saturate(1.55) brightness(1.12)
+    contrast(0.95);
+  opacity: 0.88;
+  pointer-events: none;
+}
+
+.note-sketch-strip.is-zoomed .sketch-ink-img {
+  width: 64px;
+  height: 64px;
+}
+
+.sketch-step-label {
+  font-family: var(--font-handwritten);
+  font-size: clamp(0.88rem, 2.9vw, 1.02rem);
+  font-weight: 700;
+  line-height: 1;
+  color: #44403c;
+  white-space: nowrap;
+}
+
+.note-sketch-strip.is-zoomed .sketch-step-label {
+  font-size: 1.12rem;
+}
+
+.sketch-drawn-arrow {
+  font-family: var(--font-handwritten);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #b91c1c;
+  opacity: 0.82;
+  margin-bottom: 12px;
+  user-select: none;
+}
+
+.note-sketch-strip.is-zoomed .sketch-drawn-arrow {
+  font-size: 1.4rem;
+  margin-bottom: 16px;
+}
+
+@keyframes sketchStepHighlight {
+  0%,
+  100% {
+    transform: rotate(var(--sketch-tilt, -1.5deg)) scale(1);
+  }
+  18% {
+    transform: rotate(0deg) scale(1.09);
+  }
+  36% {
+    transform: rotate(var(--sketch-tilt, -1.5deg)) scale(1);
+  }
 }
 
 .note-golden-rule-pill {
   margin: 0;
-  padding: 3px 7px;
+  padding: 5px 9px;
   border-radius: 6px;
   background: rgba(255, 255, 255, 0.72);
   border-left: 3px solid #dc2626;
-  font-size: 0.72rem;
-  font-weight: 800;
-  line-height: 1.25;
+  font-family: var(--font-handwritten);
+  font-size: clamp(1.04rem, 3.7vw, 1.18rem);
+  font-weight: 700;
+  line-height: 1.2;
   color: #0f172a;
 }
 
 .note-short-explanation {
   margin: 0;
-  font-size: 0.7rem;
+  font-family: var(--font-handwritten);
+  font-size: clamp(1.3rem, 4vw, 1.28rem);
   font-weight: 600;
-  line-height: 1.28;
-  color: #334155;
+  line-height: 1.22;
+  color: #292524;
 }
 
 /* RODAPÉ DA TELA */
@@ -759,16 +922,18 @@ function handleConfirmSkip() {
 }
 
 .zoomed-title {
-  font-size: 1rem;
-  font-weight: 800;
-  color: #0f172a;
+  font-family: var(--font-handwritten);
+  font-size: 1.38rem;
+  font-weight: 700;
+  color: #292524;
   margin: 0;
 }
 
 .zoomed-body {
-  font-size: 0.85rem;
-  line-height: 1.45;
-  color: #1e293b;
+  font-family: var(--font-handwritten);
+  font-size: 1.12rem;
+  line-height: 1.28;
+  color: #292524;
   font-weight: 600;
   text-align: center;
 }
