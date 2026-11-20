@@ -1,20 +1,24 @@
 <script setup>
-import { onMounted, ref, computed } from "vue";
+import { onMounted, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useGameSessionStore } from "../stores/gameSession";
 import { useStoryStore } from "../stores/story";
-import { STORY_STAGES, TASK_TAGS } from "../game/data/progressionConfig";
+import { useProgressionStore } from "../stores/progression";
+import {
+  STORY_STAGES,
+  TASK_TAGS,
+  calculateStageTotalPayout,
+} from "../game/data/progressionConfig";
 import PauseModal from "./ui/PauseModal.vue";
 import PauseButton from "./ui/PauseButton.vue";
-import lockIcon from "../assets/images/lock.svg";
+import assistantAvatar from "../assets/sprites/assistant_explaining.png";
 
-const emit = defineEmits(["play"]);
+defineEmits(["play"]);
+
 const { t } = useI18n();
 const session = useGameSessionStore();
 const story = useStoryStore();
-
-const showAssistant = ref(true);
-const shakingFolderId = ref(null);
+const progression = useProgressionStore();
 
 onMounted(() => story.setPaused(false));
 
@@ -23,87 +27,35 @@ function quitDashboard() {
   session.setActiveMode("menu");
 }
 
-function getSpriteUrl(char, emotion) {
-  return new URL(
-    `../assets/sprites/${char}_${emotion || "neutral"}.png`,
-    import.meta.url,
-  ).href;
-}
-
 const currentStage = computed(() => story.currentStage);
+const stageNumber = computed(() => currentStage.value.stageNumber);
+const stageTitle = computed(() => t(currentStage.value.titleKey));
+const stageDescription = computed(() => t(currentStage.value.descriptionKey));
+const stageTags = computed(() =>
+  (currentStage.value.tags || [])
+    .map((tagId) => TASK_TAGS[tagId])
+    .filter(Boolean),
+);
+const stageTotalXp = computed(() =>
+  calculateStageTotalPayout(currentStage.value),
+);
+const assistantName = computed(() => t("story.variables.assistantName"));
 
-const stageNumber = computed(() => currentStage.value?.stageNumber || 1);
-
-const stageTitle = computed(() => {
-  const key = currentStage.value?.titleKey;
-  return key ? t(key) : "Padrões Corrompidos";
-});
-
-const stageDescription = computed(() => {
-  const key = currentStage.value?.descriptionKey;
-  return key ? t(key) : "Restaure a integridade dos padrões geométricos.";
-});
-
-const stageTags = computed(() => {
-  const tags = currentStage.value?.tags || [];
-  return tags.map((tagId) => TASK_TAGS[tagId]).filter(Boolean);
-});
-
-/**
- * Lista híbrida de pastas bloqueadas:
- * 1. A próxima etapa real de STORY_STAGES (se existir) para continuidade de progressão.
- * 2. 1 pasta de Easter Egg confidencial no final da fila.
- */
-const lockedFolders = computed(() => {
-  const items = [];
-
-  const nextRealStage = STORY_STAGES.find(
-    (s) => s.stageNumber === stageNumber.value + 1,
-  );
-
-  if (nextRealStage) {
-    const resolvedTags = (nextRealStage.tags || [])
-      .map((tagId) => TASK_TAGS[tagId])
-      .filter(Boolean)
-      .map((tag) => t(tag.labelKey));
-
-    items.push({
-      id: nextRealStage.id,
-      levelLabel: t("story.dashboard.level_badge", {
-        num: nextRealStage.stageNumber,
-      }),
-      tags: resolvedTags,
-      goalLabel: t("story.dashboard.task_goal", {
-        count: nextRealStage.targetChallengesCount,
-      }),
-      eyebrow: t("story.dashboard.ticket_eyebrow", {
-        num: nextRealStage.stageNumber,
-      }),
-      title: t(nextRealStage.titleKey),
-    });
-  }
-
-  // Easter Egg Confidencial no final da fila
-  items.push({
-    id: "easter-egg-99",
-    levelLabel: t("story.dashboard.easter_egg.level"),
-    tags: [t("story.dashboard.easter_egg.tag_secret")],
-    goalLabel: t("story.dashboard.easter_egg.tag_goal"),
-    eyebrow: t("story.dashboard.easter_egg.eyebrow"),
-    title: t("story.dashboard.easter_egg.title"),
-  });
-
-  return items;
-});
-
-function triggerLockedShake(folderId) {
-  shakingFolderId.value = folderId;
-  setTimeout(() => {
-    if (shakingFolderId.value === folderId) {
-      shakingFolderId.value = null;
-    }
-  }, 400);
-}
+const stageSteps = computed(() =>
+  STORY_STAGES.map((stage) => {
+    const isCurrent = stage.id === currentStage.value.id;
+    const isDone =
+      !isCurrent &&
+      (progression.completedStageIds.includes(stage.id) ||
+        stage.stageNumber < stageNumber.value);
+    const status = isCurrent ? "current" : isDone ? "done" : "upcoming";
+    return {
+      id: stage.id,
+      number: stage.stageNumber,
+      status,
+    };
+  }),
+);
 </script>
 
 <template>
@@ -112,9 +64,9 @@ function triggerLockedShake(folderId) {
 
     <PauseModal
       :isOpen="story.isPaused"
+      :showRestart="false"
       @resume="story.setPaused(false)"
       @quit="quitDashboard"
-      :showRestart="false"
     />
 
     <div class="backdrop"></div>
@@ -124,8 +76,8 @@ function triggerLockedShake(folderId) {
         <div class="window-controls">
           <span
             class="dot dot-red"
+            :title="$t('story.dashboard.menu_title')"
             @click="story.setPaused(true)"
-            title="Menu"
           ></span>
           <span class="dot dot-yellow"></span>
           <span class="dot dot-green"></span>
@@ -134,37 +86,55 @@ function triggerLockedShake(folderId) {
       </header>
 
       <div class="window-body">
-        <div class="assistant-chat-bubble anim-fade-in" v-if="showAssistant">
-          <button
-            class="btn-close"
-            @click="showAssistant = false"
-            title="Dispensar"
+        <!-- Trilho minimalista de progressão linear -->
+        <nav
+          class="stage-stepper"
+          :aria-label="$t('story.dashboard.stepper_aria')"
+        >
+          <ol class="stepper-track">
+            <li
+              v-for="(step, idx) in stageSteps"
+              :key="step.id"
+              class="stepper-item"
+            >
+              <span
+                class="step-node"
+                :class="`is-${step.status}`"
+                :aria-label="
+                  $t(`story.dashboard.step_status_${step.status}`, {
+                    num: step.number,
+                  })
+                "
+                :aria-current="step.status === 'current' ? 'step' : undefined"
+              >
+                {{ step.status === "done" ? "✓" : step.number }}
+              </span>
+              <span
+                v-if="idx < stageSteps.length - 1"
+                class="step-connector"
+                :class="{ 'is-filled': idx < stageNumber - 1 }"
+                aria-hidden="true"
+              ></span>
+            </li>
+          </ol>
+          <p class="stepper-caption">
+            {{
+              $t("story.dashboard.step_counter", {
+                current: stageNumber,
+                total: STORY_STAGES.length,
+              })
+            }}
+          </p>
+        </nav>
+
+        <!-- Card único do Chamado Atual em formato de Pastinha do Windows -->
+        <div class="folder-wrapper anim-fade-in">
+          <div
+            class="folder-tabs"
+            :aria-label="$t('story.dashboard.folder_tabs_aria')"
           >
-            &times;
-          </button>
-
-          <div class="avatar-container anim-bounce">
-            <img
-              :src="getSpriteUrl('assistant', 'explaining')"
-              class="avatar-icon"
-              alt="Assistente"
-            />
-          </div>
-
-          <span class="sender-name">{{
-            $t("story.dashboard.assistant_sender")
-          }}</span>
-          <div class="text-content">
-            {{ stageDescription }}
-          </div>
-        </div>
-
-        <!-- Card do Chamado Atual em formato de Pastinha do Windows -->
-        <div class="folder-wrapper">
-          <!-- Abas / Etiquetas Superiores da Pasta -->
-          <div class="folder-tabs" aria-label="Informações do chamado">
-            <span class="folder-tab tab-level">
-              {{ $t("story.dashboard.level_badge", { num: stageNumber }) }}
+            <span class="folder-tab tab-ticket">
+              {{ $t("story.dashboard.ticket_eyebrow", { num: stageNumber }) }}
             </span>
 
             <span
@@ -175,102 +145,57 @@ function triggerLockedShake(folderId) {
             >
               {{ $t(tag.labelKey) }}
             </span>
-
-            <span class="folder-tab tab-goal">
-              {{
-                $t("story.dashboard.task_goal", {
-                  count: currentStage.targetChallengesCount,
-                })
-              }}
-            </span>
           </div>
 
-          <!-- Corpo da Pasta Windows -->
           <div class="folder-card">
             <div class="folder-sheet">
-              <div class="folder-main">
-                <div class="mission-icon-placeholder" aria-hidden="true"></div>
+              <div class="mission-header">
+                <h3 class="mission-title">{{ stageTitle }}</h3>
+                <div class="mission-meta">
+                  <span>
+                    {{
+                      $t("story.dashboard.task_goal", {
+                        count: currentStage.targetChallengesCount,
+                      })
+                    }}
+                  </span>
+                  <span aria-hidden="true">&middot;</span>
+                  <span class="meta-xp">
+                    {{
+                      $t("story.dashboard.reward_short", { xp: stageTotalXp })
+                    }}
+                  </span>
+                </div>
+              </div>
 
-                <div class="mission-info">
-                  <span class="mission-eyebrow">{{
-                    $t("story.dashboard.ticket_eyebrow", { num: stageNumber })
-                  }}</span>
-                  <h3>{{ stageTitle }}</h3>
+              <!-- Recado leve da Malu integrado à folha -->
+              <div class="assistant-note">
+                <div class="assistant-avatar">
+                  <img
+                    :src="assistantAvatar"
+                    :alt="
+                      $t('story.dashboard.assistant_alt', {
+                        name: assistantName,
+                      })
+                    "
+                    class="avatar-icon"
+                  />
+                </div>
+                <div class="assistant-copy">
+                  <span class="assistant-name">{{ assistantName }}</span>
+                  <p class="assistant-message">{{ stageDescription }}</p>
                 </div>
               </div>
 
               <div class="mission-action">
                 <button
+                  type="button"
                   class="btn-primary"
                   @click="$emit('play', currentStage.gameId)"
                 >
-                  {{ $t("story.dashboard.btn_start") }}
+                  <span class="btn-play-icon" aria-hidden="true">▶</span>
+                  <span>{{ $t("story.dashboard.btn_start") }}</span>
                 </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Lista de Próximas Pastas Bloqueadas (P&B Compactas com Cadeado) -->
-        <div
-          class="locked-folders-list"
-          aria-label="Próximos chamados bloqueados"
-        >
-          <div
-            v-for="locked in lockedFolders"
-            :key="locked.id"
-            class="folder-wrapper folder-wrapper--locked"
-            :class="{ 'anim-shake': shakingFolderId === locked.id }"
-            @click="triggerLockedShake(locked.id)"
-            role="button"
-            tabindex="0"
-            :aria-label="`${locked.title} - ${$t('story.dashboard.locked_label')}`"
-          >
-            <!-- Abas em P&B -->
-            <div class="folder-tabs">
-              <span class="folder-tab tab-locked-level">
-                {{ locked.levelLabel }}
-              </span>
-
-              <span
-                v-for="(tagLabel, idx) in locked.tags"
-                :key="idx"
-                class="folder-tab tab-locked-meta"
-              >
-                {{ tagLabel }}
-              </span>
-
-              <span class="folder-tab tab-locked-meta">
-                {{ locked.goalLabel }}
-              </span>
-            </div>
-
-            <!-- Corpo Compacto em P&B (sem o botão de ação) -->
-            <div class="folder-card folder-card--locked">
-              <div class="folder-sheet folder-sheet--locked">
-                <div class="folder-main">
-                  <div
-                    class="mission-icon-placeholder mission-icon--locked"
-                    aria-hidden="true"
-                  ></div>
-
-                  <div class="mission-info">
-                    <span class="mission-eyebrow mission-eyebrow--locked">{{
-                      locked.eyebrow
-                    }}</span>
-                    <h3>{{ locked.title }}</h3>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Overlay com Sprite de Cadeado -->
-              <div class="locked-overlay" aria-hidden="true">
-                <div class="lock-badge">
-                  <img :src="lockIcon" alt="" class="lock-sprite" />
-                  <span class="lock-text">{{
-                    $t("story.dashboard.locked_label")
-                  }}</span>
-                </div>
               </div>
             </div>
           </div>
@@ -314,7 +239,7 @@ function triggerLockedShake(folderId) {
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 440px;
+  max-width: 420px;
   max-height: 92vh;
   background-color: #f4f5f7;
   border-radius: 14px;
@@ -385,99 +310,102 @@ function triggerLockedShake(folderId) {
 
 .window-body {
   background-color: #f8fafc;
-  padding: 1.25rem 1.15rem 1.4rem;
+  padding: 1.15rem 1.15rem 1.4rem;
   overflow-y: auto;
   overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
-  gap: 1.15rem;
+  gap: 1.05rem;
 }
 
-/* ── BALÃO DA ASSISTENTE ── */
-.assistant-chat-bubble {
-  position: relative;
-  background-color: #ebf8ff;
-  border: 2px solid #90cdf4;
-  border-left: 5px solid #3182ce;
-  border-radius: 12px;
-  border-bottom-left-radius: 2px;
-  padding: 12px 30px 12px 12px;
-  margin-left: 16px;
-  margin-top: 6px;
-  /* Sombra sólida sem blur */
-  box-shadow: 0 4px 0 #bee3f8;
+/* ── TRILHO MINIMALISTA DE PROGRESSÃO (STEPPER) ── */
+.stage-stepper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
 }
 
-.assistant-chat-bubble::after {
-  content: "";
-  display: table;
-  clear: both;
-}
-
-.btn-close {
-  position: absolute;
-  top: 6px;
-  right: 10px;
-  background: none;
-  border: none;
-  font-size: 1.35rem;
-  color: #64748b;
-  cursor: pointer;
-  line-height: 1;
-}
-
-.btn-close:hover {
-  color: #e53e3e;
-}
-
-.avatar-container {
-  float: left;
-  width: 52px;
-  height: 52px;
-  margin-top: -16px;
-  margin-left: -26px;
-  margin-right: 10px;
-  margin-bottom: 4px;
-  background-color: #ffffff;
-  border-radius: 50%;
-  border: 2px solid #3182ce;
-  overflow: hidden;
+.stepper-track {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  max-width: 260px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  box-shadow: 0 3px 0 #90cdf4;
-  position: relative;
-  z-index: 2;
 }
 
-.avatar-icon {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  image-rendering: pixelated;
+.stepper-item {
+  display: flex;
+  align-items: center;
+  flex: 1;
 }
 
-.sender-name {
+.stepper-item:last-child {
+  flex: 0 0 auto;
+}
+
+.step-node {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
   font-family: var(--font-mono);
+  font-size: 0.76rem;
   font-weight: 700;
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #2b6cb0;
-  display: block;
-  margin-bottom: 3px;
-  line-height: 1.2;
+  border: 2px solid #cbd5e1;
+  background-color: #ffffff;
+  color: #64748b;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
 }
 
-.text-content {
-  font-family: var(--font-main);
-  color: #1e293b;
-  font-size: 0.94rem;
-  line-height: 1.4;
-  display: block;
+.step-node.is-done {
+  background-color: #ccfbf1;
+  border-color: #0d9488;
+  color: #0f766e;
 }
 
-/* ── PASTA WINDOWS (FOLDER CARD COM ETIQUETAS NO TOPO) ── */
+.step-node.is-current {
+  background-color: #14b8a6;
+  border-color: #0f766e;
+  color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.22);
+}
+
+.step-node.is-upcoming {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #94a3b8;
+}
+
+.step-connector {
+  flex: 1;
+  height: 2px;
+  margin: 0 4px;
+  background-color: #cbd5e1;
+  border-radius: 2px;
+}
+
+.step-connector.is-filled {
+  background-color: #14b8a6;
+}
+
+.stepper-caption {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #475569;
+  letter-spacing: 0.03em;
+}
+
+/* ── PASTA WINDOWS (FOCO ÚNICO COM ETIQUETAS NO TOPO) ── */
 .folder-wrapper {
   display: flex;
   flex-direction: column;
@@ -489,8 +417,7 @@ function triggerLockedShake(folderId) {
   flex-wrap: wrap;
   align-items: flex-end;
   gap: 4px;
-  padding-left: 8px;
-  padding-right: 8px;
+  padding: 0 8px;
   margin-bottom: -2px;
   position: relative;
   z-index: 2;
@@ -512,8 +439,7 @@ function triggerLockedShake(folderId) {
   white-space: nowrap;
 }
 
-/* Aba principal do Nível */
-.tab-level {
+.tab-ticket {
   background-color: var(--folder-bg, #fef08a);
   color: var(--folder-text, #422006);
   padding-top: 7px;
@@ -551,12 +477,6 @@ function triggerLockedShake(folderId) {
   border-color: #b91c1c;
 }
 
-.tab-goal {
-  background-color: #e0f2fe;
-  color: #0c4a6e;
-  border-color: #0284c7;
-}
-
 /* Corpo principal da Pastinha Windows */
 .folder-card {
   position: relative;
@@ -565,7 +485,6 @@ function triggerLockedShake(folderId) {
   border: 2px solid var(--folder-border, #ca8a04);
   border-radius: 10px;
   padding: 10px;
-  /* Sombra sólida (hard shadow sem blur) */
   box-shadow: 0 6px 0 var(--folder-shadow, #a16207);
 }
 
@@ -574,41 +493,76 @@ function triggerLockedShake(folderId) {
   background-color: var(--folder-surface, #fffbeb);
   border: 1.5px solid #fde047;
   border-radius: 7px;
-  padding: 14px;
+  padding: 16px 14px;
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-.folder-main {
+.mission-header {
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.mission-icon-placeholder {
-  width: 58px;
-  height: 58px;
+.mission-title {
+  margin: 0;
+  font-family: var(--font-main);
+  color: var(--folder-text, #422006);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.mission-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #78350f;
+}
+
+.meta-xp {
+  color: #0f766e;
+  font-weight: 700;
+}
+
+/* ── RECADO LEVE DA ASSISTENTE DENTRO DA FOLHA ── */
+.assistant-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 11px;
+  background-color: rgba(255, 255, 255, 0.72);
+  border: 1px solid #bae6fd;
+  border-left: 3px solid #38bdf8;
+  border-radius: 8px;
+}
+
+.assistant-avatar {
   flex-shrink: 0;
-  border-radius: 10px;
-  background-color: #38bdf8;
-  border: 2px solid #0284c7;
-  box-shadow: 0 3px 0 #0369a1;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  border: 1.5px solid #38bdf8;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.mission-icon-placeholder::after {
-  content: "DOC";
-  font-family: var(--font-mono);
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
+.avatar-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
 }
 
-.mission-info {
+.assistant-copy {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -616,30 +570,34 @@ function triggerLockedShake(folderId) {
   gap: 2px;
 }
 
-.mission-eyebrow {
+.assistant-name {
   font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--folder-shadow, #a16207);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.mission-info h3 {
-  margin: 0;
-  font-family: var(--font-main);
-  color: var(--folder-text, #422006);
-  font-size: 1.08rem;
+  font-size: 0.7rem;
   font-weight: 700;
-  line-height: 1.25;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #0369a1;
 }
 
+.assistant-message {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.38;
+  color: #1e293b;
+}
+
+/* ── CTA PRINCIPAL ── */
 .mission-action {
   width: 100%;
 }
 
 .btn-primary {
   width: 100%;
+  min-height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   font-family: var(--font-main);
   background-color: #14b8a6;
   color: #ffffff;
@@ -648,9 +606,8 @@ function triggerLockedShake(folderId) {
   border-radius: 8px;
   cursor: pointer;
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.02rem;
   letter-spacing: 0.01em;
-  /* Sombra sólida sem blur */
   box-shadow: 0 4px 0 #0f766e;
   transition:
     transform 0.12s ease,
@@ -669,123 +626,20 @@ function triggerLockedShake(folderId) {
   box-shadow: 0 1px 0 #0f766e;
 }
 
-/* ── PASTAS BLOQUEADAS EM P&B (COMPACTAS COM CADEADO) ── */
-.locked-folders-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.95rem;
-}
-
-.folder-wrapper--locked {
-  cursor: not-allowed;
-  user-select: none;
-  opacity: 0.88;
-  transition: opacity 0.15s ease;
-}
-
-.folder-wrapper--locked:hover {
-  opacity: 0.96;
-}
-
-.tab-locked-level {
-  background-color: #cbd5e1;
-  color: #334155;
-  border-color: #64748b;
-  padding-top: 6px;
-}
-
-.tab-locked-meta {
-  background-color: #e2e8f0;
-  color: #475569;
-  border-color: #64748b;
-}
-
-.folder-card--locked {
-  background-color: #cbd5e1;
-  border-color: #64748b;
-  box-shadow: 0 5px 0 #475569;
-  padding: 8px;
-  overflow: hidden;
-}
-
-.folder-sheet--locked {
-  background-color: #f1f5f9;
-  border-color: #cbd5e1;
-  padding: 10px 12px;
-  filter: grayscale(1);
-}
-
-.mission-icon--locked {
-  width: 44px;
-  height: 44px;
-  background-color: #94a3b8;
-  border-color: #475569;
-  box-shadow: 0 2px 0 #334155;
-}
-
-.mission-eyebrow--locked {
-  color: #64748b;
-}
-
-.folder-sheet--locked .mission-info h3 {
-  color: #475569;
-  font-size: 0.95rem;
-}
-
-.locked-overlay {
-  position: absolute;
-  inset: 0;
-  background-color: rgba(15, 23, 42, 0.18);
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding-right: 14px;
-  pointer-events: none;
-}
-
-.lock-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background-color: #f8fafc;
-  border: 2px solid #1e293b;
-  border-radius: 8px;
-  padding: 5px 10px;
-  box-shadow: 0 3px 0 #1e293b;
-}
-
-.lock-sprite {
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
-  display: block;
-}
-
-.lock-text {
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: #1e293b;
-  letter-spacing: 0.06em;
+.btn-play-icon {
+  font-size: 0.82rem;
+  line-height: 1;
 }
 
 /* ── ANIMAÇÕES ── */
 .anim-fade-in {
-  animation: fade-in 0.35s ease-out;
-}
-
-.anim-bounce {
-  animation: pop-in 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.anim-shake {
-  animation: locked-shake 0.35s ease-in-out;
+  animation: fade-in 0.3s ease-out;
 }
 
 @keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -793,39 +647,10 @@ function triggerLockedShake(folderId) {
   }
 }
 
-@keyframes pop-in {
-  from {
-    transform: scale(0.6);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes locked-shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  20% {
-    transform: translateX(-5px);
-  }
-  40% {
-    transform: translateX(5px);
-  }
-  60% {
-    transform: translateX(-3px);
-  }
-  80% {
-    transform: translateX(3px);
-  }
-}
-
 @media (max-width: 400px) {
   .window-body {
-    padding: 1rem 0.9rem 1.2rem;
+    padding: 0.95rem 0.9rem 1.15rem;
+    gap: 0.9rem;
   }
 
   .folder-tab {
@@ -833,26 +658,23 @@ function triggerLockedShake(folderId) {
     padding: 4px 7px 5px;
   }
 
-  .mission-icon-placeholder {
-    width: 50px;
-    height: 50px;
+  .folder-sheet {
+    padding: 14px 12px;
+    gap: 12px;
   }
 
-  .mission-icon--locked {
-    width: 40px;
-    height: 40px;
+  .mission-title {
+    font-size: 1.05rem;
   }
+}
 
-  .mission-info h3 {
-    font-size: 0.98rem;
-  }
-
-  .lock-badge {
-    padding: 4px 8px;
-  }
-
-  .lock-text {
-    font-size: 0.62rem;
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade-in,
+  .step-node,
+  .btn-primary,
+  .dot-red {
+    animation: none;
+    transition: none;
   }
 }
 </style>

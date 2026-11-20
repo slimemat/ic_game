@@ -317,12 +317,12 @@ function handleConfirmSkip() {
                 >
                   <img
                     :src="sketch.src"
-                    :alt="sketch.label || ''"
+                    :alt="sketch.labelKey ? $t(sketch.labelKey) : ''"
                     class="sketch-ink-img"
                     draggable="false"
                   />
-                  <span v-if="sketch.label" class="sketch-step-label">
-                    {{ sketch.label }}
+                  <span v-if="sketch.labelKey" class="sketch-step-label">
+                    {{ $t(sketch.labelKey) }}
                   </span>
                 </div>
 
@@ -443,12 +443,12 @@ function handleConfirmSkip() {
               >
                 <img
                   :src="sketch.src"
-                  :alt="sketch.label || ''"
+                  :alt="sketch.labelKey ? $t(sketch.labelKey) : ''"
                   class="sketch-ink-img"
                   draggable="false"
                 />
-                <span v-if="sketch.label" class="sketch-step-label">
-                  {{ sketch.label }}
+                <span v-if="sketch.labelKey" class="sketch-step-label">
+                  {{ $t(sketch.labelKey) }}
                 </span>
               </div>
 

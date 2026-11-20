@@ -33,10 +33,6 @@ function goToIndex(index) {
   if (index >= 0 && index < TABS.length) activeTab.value = index;
 }
 
-function goToTab(id) {
-  goToIndex(TABS.findIndex((tab) => tab.id === id));
-}
-
 const swipe = useSwipe({
   onSwipeLeft: () => goToIndex(activeTab.value + 1),
   onSwipeRight: () => goToIndex(activeTab.value - 1),
@@ -56,7 +52,6 @@ function playGame(gameId) {
   <div class="hub-shell">
     <header class="hub-header">
       <h1>{{ $t("mainMenu.title") }}</h1>
-      <p>{{ $t("mainMenu.subtitle") }}</p>
     </header>
 
     <div
@@ -78,7 +73,6 @@ function playGame(gameId) {
             :is="tab.component"
             @start-story="selectMode('story')"
             @select-game="playGame"
-            @navigate="goToTab"
           />
         </section>
       </div>
@@ -108,7 +102,7 @@ function playGame(gameId) {
 .hub-header {
   flex-shrink: 0;
   text-align: center;
-  padding: max(16px, env(safe-area-inset-top)) 16px 8px;
+  padding: max(12px, env(safe-area-inset-top)) 16px 6px;
 }
 
 .hub-header h1 {
@@ -116,18 +110,6 @@ function playGame(gameId) {
   font-size: 1.5rem;
   line-height: 1.2;
   letter-spacing: normal;
-}
-
-.hub-header p {
-  margin: 4px 0 0;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-}
-
-.tab-viewport {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
 }
 
 .tab-track {
