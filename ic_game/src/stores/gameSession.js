@@ -28,9 +28,8 @@ export const useGameSessionStore = defineStore("gameSession", () => {
    * Which high-level mode the player has selected from the Main Menu.
    *
    * Possible values:
-   *   'menu'         – initial / no selection yet
-   *   'story'        – Story Mode selected
-   *   'level-select' – Level Select selected
+   *   'menu'  – initial / no selection yet
+   *   'story' – Story Mode selected
    */
   const activeMode = ref("menu");
 
@@ -43,7 +42,7 @@ export const useGameSessionStore = defineStore("gameSession", () => {
 
   /**
    * Set the active navigation mode.
-   * @param {'menu'|'story'|'level-select'} mode
+   * @param {'menu'|'story'} mode
    */
   function setActiveMode(mode) {
     activeMode.value = mode;

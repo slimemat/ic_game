@@ -4,8 +4,6 @@ import { useGameSessionStore } from "./stores/gameSession";
 import { useStoryStore, STORY_CHECKPOINTS } from "./stores/story";
 import { scenes } from "./data/dialogues";
 import HubShell from "./components/HubShell.vue";
-import Home from "./components/Home.vue";
-import GameSelection from "./components/GameSelection.vue";
 import TestGame from "./components/TestGame.vue";
 import PatternRecognitionGame from "./components/PatternRecognitionGame.vue";
 import MatrixMirrorGame from "./components/MatrixMirrorGame.vue";
@@ -25,8 +23,6 @@ const story = useStoryStore();
  * 'dialogue'        → Modo História: cutscene de introdução da tarefa
  * 'post-cutscene'   → Modo História: cutscene de conclusão da etapa
  * 'promotion'       → Modo História: tela/modal de promoção
- * 'home'            → existing Home / hub screen
- * 'selection'       → GameSelection component
  * <game-id>         → a specific mini-game
  *
  * No Modo História a tela é derivada de `story.checkpoint`.
@@ -78,8 +74,6 @@ watch(
         story.advanceCheckpoint(STORY_CHECKPOINTS.DASHBOARD);
       }
       syncScreenWithCheckpoint();
-    } else if (mode === "level-select") {
-      activeScreen.value = "home";
     } else if (mode === "menu") {
       activeScreen.value = "main-menu";
     }
@@ -169,18 +163,6 @@ function playGame(gameId) {
     <PromotionModal :isOpen="true" @continue="story.finishPromotion()" />
   </template>
 
-  <!-- ── Existing Hub flow ──────────────────────────────────────────────── -->
-  <Home
-    v-else-if="activeScreen === 'home'"
-    @play="activeScreen = $event"
-    @choose-games="activeScreen = 'selection'"
-    @back="goToMenu()"
-  />
-  <GameSelection
-    v-else-if="activeScreen === 'selection'"
-    @select="activeScreen = $event"
-    @back="activeScreen = 'home'"
-  />
   <TestGame
     v-else-if="activeScreen === 'test-platformer'"
     @back="goToMenu()"
@@ -206,7 +188,9 @@ function playGame(gameId) {
 
   <!-- ── Fallback ───────────────────────────────────────────────────────── -->
   <div v-else class="game-not-found">
-    <h2>Jogo em desenvolvimento</h2>
-    <button class="btn-primary" @click="goToMenu()">Voltar ao Menu</button>
+    <h2>{{ $t("global.game_not_found") }}</h2>
+    <button class="btn-primary" @click="goToMenu()">
+      {{ $t("global.buttons.back_to_menu") }}
+    </button>
   </div>
 </template>

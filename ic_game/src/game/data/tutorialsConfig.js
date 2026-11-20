@@ -33,15 +33,39 @@ const arrowQuarterAnticlockImg = new URL(
 ).href;
 
 const CLOCK_SKETCH_CW = Object.freeze([
-  { src: baseClockImg, label: "12h–3h", tilt: "-2.5deg" },
-  { src: oneQuarterClockImg, label: "1/4 (90°)", tilt: "1.5deg" },
-  { src: arrowQuarterClockImg, label: "Horário ↷", tilt: "-1.5deg" },
+  {
+    src: baseClockImg,
+    labelKey: "tutorials.sketches.clock_cw_1",
+    tilt: "-2.5deg",
+  },
+  {
+    src: oneQuarterClockImg,
+    labelKey: "tutorials.sketches.clock_quarter",
+    tilt: "1.5deg",
+  },
+  {
+    src: arrowQuarterClockImg,
+    labelKey: "tutorials.sketches.clock_cw_dir",
+    tilt: "-1.5deg",
+  },
 ]);
 
 const CLOCK_SKETCH_CCW = Object.freeze([
-  { src: baseClockImg, label: "12h–9h", tilt: "2deg" },
-  { src: oneQuarterAnticlockImg, label: "1/4 (90°)", tilt: "-1.8deg" },
-  { src: arrowQuarterAnticlockImg, label: "Anti ↶", tilt: "1.5deg" },
+  {
+    src: baseClockImg,
+    labelKey: "tutorials.sketches.clock_ccw_1",
+    tilt: "2deg",
+  },
+  {
+    src: oneQuarterAnticlockImg,
+    labelKey: "tutorials.sketches.clock_quarter",
+    tilt: "-1.8deg",
+  },
+  {
+    src: arrowQuarterAnticlockImg,
+    labelKey: "tutorials.sketches.clock_ccw_dir",
+    tilt: "1.5deg",
+  },
 ]);
 
 export const VISUAL_CONCEPT_CARDS = Object.freeze({
@@ -49,7 +73,7 @@ export const VISUAL_CONCEPT_CARDS = Object.freeze({
     concept: "rotate_cw",
     color: "#fef08a",
     titleKey: "tutorials.rardi_notes.note_1_title",
-    goldenRuleKey: "tutorials.rardi_notes.note_1_golden_rule",
+    badgeKey: "tutorials.diagram.badges.rotate_cw",
     sketchImages: CLOCK_SKETCH_CW,
     tutorialId: "spatial_orientation",
   },
@@ -57,7 +81,7 @@ export const VISUAL_CONCEPT_CARDS = Object.freeze({
     concept: "rotate_ccw",
     color: "#bfdbfe",
     titleKey: "tutorials.rardi_notes.note_2_title",
-    goldenRuleKey: "tutorials.rardi_notes.note_2_golden_rule",
+    badgeKey: "tutorials.diagram.badges.rotate_ccw",
     sketchImages: CLOCK_SKETCH_CCW,
     tutorialId: "spatial_orientation",
   },
@@ -65,28 +89,35 @@ export const VISUAL_CONCEPT_CARDS = Object.freeze({
     concept: "rotate_180",
     color: "#fef08a",
     titleKey: "tutorials.rardi_notes.note_180_title",
-    goldenRuleKey: "tutorials.rardi_notes.note_180_golden_rule",
+    badgeKey: "tutorials.diagram.badges.rotate_180",
     tutorialId: "spatial_orientation",
   },
   rotate_45: {
     concept: "rotate_45",
     color: "#fef08a",
     titleKey: "tutorials.rardi_notes.note_45_title",
-    goldenRuleKey: "tutorials.rardi_notes.note_45_golden_rule",
+    badgeKey: "tutorials.diagram.badges.rotate_45",
+    tutorialId: "spatial_orientation",
+  },
+  rotate_ccw_45: {
+    concept: "rotate_ccw_45",
+    color: "#bfdbfe",
+    titleKey: "tutorials.rardi_notes.note_ccw_45_title",
+    badgeKey: "tutorials.diagram.badges.rotate_ccw_45",
     tutorialId: "spatial_orientation",
   },
   flip_h: {
     concept: "flip_h",
     color: "#fbcfe8",
     titleKey: "tutorials.rardi_notes.note_3_title",
-    goldenRuleKey: "tutorials.rardi_notes.note_3_golden_rule",
+    badgeKey: "tutorials.diagram.badges.flip_h",
     tutorialId: "spatial_reflection",
   },
   flip_v: {
     concept: "flip_v",
     color: "#bbf7d0",
     titleKey: "tutorials.rardi_notes.note_4_title",
-    goldenRuleKey: "tutorials.rardi_notes.note_4_golden_rule",
+    badgeKey: "tutorials.diagram.badges.flip_v",
     tutorialId: "spatial_reflection",
   },
 });
@@ -390,6 +421,9 @@ export function resolveVisualHintForLevel(levelConfig, activeStepIndex = 0) {
   }
   if (activeHintKey.includes("180")) {
     return VISUAL_CONCEPT_CARDS.rotate_180;
+  }
+  if (activeHintKey.includes("45") && activeHintKey.includes("ccw")) {
+    return VISUAL_CONCEPT_CARDS.rotate_ccw_45;
   }
   if (activeHintKey.includes("45")) {
     return VISUAL_CONCEPT_CARDS.rotate_45;
