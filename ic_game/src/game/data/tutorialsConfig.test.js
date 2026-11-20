@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import {
   TUTORIALS_CONFIG,
+  VISUAL_CONCEPT_CARDS,
   getTutorialForLevel,
   resolveVisualHintForLevel,
 } from "./tutorialsConfig.js";
@@ -181,6 +182,18 @@ test("resolveVisualHintForLevel: retorna o card visual do Rardi para fases espac
   assert.ok(hintL2);
   assert.equal(hintL2.concept, "rotate_ccw");
 
+  // Fase 10 (-45° Anti-horário)
+  const hintL10 = resolveVisualHintForLevel(LEVEL_CONFIGS[9], 0);
+  assert.ok(hintL10);
+  assert.equal(hintL10.concept, "rotate_ccw_45");
+  assert.equal(hintL10.tutorialId, "spatial_orientation");
+
+  // Fase 11 (90° Horário dentro de transformation -> deve abrir tutorial de Rotação)
+  const hintL11 = resolveVisualHintForLevel(LEVEL_CONFIGS[10], 0);
+  assert.ok(hintL11);
+  assert.equal(hintL11.concept, "rotate_cw");
+  assert.equal(hintL11.tutorialId, "spatial_orientation");
+
   // Fase 12 (Espelho Horizontal)
   const hintL12 = resolveVisualHintForLevel(LEVEL_CONFIGS[11], 0);
   assert.ok(hintL12);
@@ -194,4 +207,41 @@ test("resolveVisualHintForLevel: retorna o card visual do Rardi para fases espac
   // Fase 21 (Padrão de Cores -> não deve exibir post-it espacial do Rardi)
   const hintL21 = resolveVisualHintForLevel(LEVEL_CONFIGS[20], 0);
   assert.equal(hintL21, null);
+});
+
+test("VISUAL_CONCEPT_CARDS: todos os cards e sketches possuem chaves i18n válidas em pt-BR.json", () => {
+  for (const card of Object.values(VISUAL_CONCEPT_CARDS)) {
+    assert.ok(
+      resolveI18nPath(ptBR, card.titleKey),
+      `Chave titleKey ausente: ${card.titleKey}`,
+    );
+    assert.ok(
+      resolveI18nPath(ptBR, card.badgeKey),
+      `Chave badgeKey ausente: ${card.badgeKey}`,
+    );
+
+    if (Array.isArray(card.sketchImages)) {
+      for (const sketch of card.sketchImages) {
+        assert.ok(
+          resolveI18nPath(ptBR, sketch.labelKey),
+          `Chave labelKey ausente no sketch de ${card.concept}: ${sketch.labelKey}`,
+        );
+      }
+    }
+  }
+
+  for (const tut of Object.values(TUTORIALS_CONFIG)) {
+    for (const note of tut.rardiNotes || []) {
+      for (const sketch of note.sketchImages || []) {
+        assert.ok(
+          resolveI18nPath(ptBR, sketch.labelKey),
+          `Chave labelKey ausente no sketch da nota ${note.id}: ${sketch.labelKey}`,
+        );
+      }
+    }
+  }
+
+  assert.ok(resolveI18nPath(ptBR, "tutorials.diagram.top_anchor"));
+  assert.ok(resolveI18nPath(ptBR, "tutorials.desk.btn_replay_short"));
+  assert.ok(resolveI18nPath(ptBR, "tutorials.desk.btn_replay_micro"));
 });
