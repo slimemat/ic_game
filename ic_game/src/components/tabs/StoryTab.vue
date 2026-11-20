@@ -1,299 +1,187 @@
 <script setup>
-import { computed } from "vue";
-import { useStoryStore, STORY_CHECKPOINTS } from "../../stores/story";
-import { useProgressionStore } from "../../stores/progression";
-import { useDebugActions } from "../../composables/useDebugActions";
+import { ref } from "vue";
+import StoryDebugPanel from "../story/StoryDebugPanel.vue";
+import { useStoryChapterSelect } from "../../composables/useStoryChapterSelect";
 
 const emit = defineEmits(["start-story"]);
 
-const story = useStoryStore();
-const progression = useProgressionStore();
 const {
-  message,
-  selectedShift,
-  selectedStars,
+  companyName,
+  hasProgress,
+  currentStageNumber,
   currentDay,
-  currentCheckpoint,
-  setShiftDecision,
-  setStarsDecision,
-  jumpToPreset,
-  resetProgress,
-} = useDebugActions();
+  chapters,
+  feedbackMessage,
+  selectChapter,
+  resetStoryProgress,
+} = useStoryChapterSelect();
 
-// O painel de debug só existe em desenvolvimento
 const isDev = import.meta.env.DEV;
+const isDebugOpen = ref(false);
+const isConfirmingReset = ref(false);
 
-const hasProgress = computed(
-  () =>
-    story.checkpoint !== STORY_CHECKPOINTS.INTRO_CUTSCENE ||
-    progression.totalXp > 0,
-);
+function handleSelectChapter(chapterId) {
+  isConfirmingReset.value = false;
+  if (selectChapter(chapterId)) {
+    emit("start-story");
+  }
+}
 
-function handleJump(presetId) {
-  jumpToPreset(presetId);
-  emit("start-story");
+function handleConfirmReset() {
+  resetStoryProgress();
+  isConfirmingReset.value = false;
 }
 </script>
 
 <template>
   <div class="tab-content">
-    <h2>{{ $t("hub.story.title") }}</h2>
-    <p class="subtitle">
-      {{
-        hasProgress
-          ? $t("hub.story.subtitle_progress")
-          : $t("hub.story.subtitle_new")
-      }}
-    </p>
+    <div class="story-intro">
+      <h2>{{ $t("hub.story.title") }}</h2>
+      <p class="subtitle">
+        {{
+          hasProgress
+            ? $t("hub.story.subtitle_current", {
+                day: currentDay,
+                stage: currentStageNumber,
+              })
+            : $t("hub.story.subtitle_new", { companyName })
+        }}
+      </p>
+    </div>
 
     <button type="button" class="btn-story" @click="emit('start-story')">
-      {{
-        hasProgress ? $t("hub.story.btn_continue") : $t("hub.story.btn_start")
-      }}
+      <span class="btn-play-icon" aria-hidden="true">▶</span>
+      <span>
+        {{
+          hasProgress ? $t("hub.story.btn_continue") : $t("hub.story.btn_start")
+        }}
+      </span>
     </button>
 
-    <section
-      v-if="isDev"
-      class="debug-panel"
-      :aria-label="$t('hub.debug.aria')"
-    >
-      <div class="debug-header-row">
-        <span class="debug-badge">{{ $t("hub.debug.badge") }}</span>
-      </div>
+    <!-- Seletor Amigável de Pontos da História -->
+    <section class="chapters-section">
+      <h3 class="section-eyebrow">{{ $t("hub.story.chapters_title") }}</h3>
 
-      <!-- Resumo do Estado Ativo no Pinia -->
-      <div class="debug-status-box">
-        <span class="debug-status-eyebrow">
-          {{ $t("hub.debug.status_title") }}
-        </span>
-        <div
-          class="debug-active-shift"
-          :class="selectedShift === 'night' ? 'is-night' : 'is-day'"
-        >
-          {{
-            selectedShift === "night"
-              ? $t("hub.debug.status_shift_night")
-              : $t("hub.debug.status_shift_day")
-          }}
-        </div>
-        <div class="debug-meta-pills">
-          <span class="debug-meta-pill">
-            {{ $t("hub.debug.status_day", { day: currentDay }) }}
-          </span>
-          <span class="debug-meta-pill">
-            {{ $t("hub.debug.status_stars", { stars: selectedStars }) }}
-          </span>
-          <span class="debug-meta-pill">
-            {{
-              $t("hub.debug.status_checkpoint", {
-                checkpoint: currentCheckpoint,
-              })
-            }}
-          </span>
-        </div>
-      </div>
+      <ol class="chapters-list" :aria-label="$t('hub.story.chapters_aria')">
+        <li v-for="chapter in chapters" :key="chapter.id">
+          <button
+            type="button"
+            class="chapter-card"
+            :class="`is-${chapter.status}`"
+            :aria-label="`${chapter.eyebrow}: ${chapter.title} (${chapter.statusLabel})`"
+            :aria-current="chapter.status === 'current' ? 'step' : undefined"
+            @click="handleSelectChapter(chapter.id)"
+          >
+            <span class="chapter-status" aria-hidden="true">
+              {{
+                chapter.status === "done"
+                  ? "✓"
+                  : chapter.status === "current"
+                    ? "●"
+                    : "○"
+              }}
+            </span>
 
-      <!-- Feedback Toast -->
+            <span class="chapter-info">
+              <span class="chapter-eyebrow">{{ chapter.eyebrow }}</span>
+              <strong class="chapter-title">{{ chapter.title }}</strong>
+            </span>
+
+            <span class="chapter-right">
+              <span class="chapter-meta">{{ chapter.meta }}</span>
+              <span class="chapter-arrow" aria-hidden="true">›</span>
+            </span>
+          </button>
+        </li>
+      </ol>
+    </section>
+
+    <!-- Limpeza Segura de Progresso -->
+    <section class="reset-section">
       <Transition name="fade">
-        <p v-if="message" class="debug-feedback">{{ message }}</p>
+        <p v-if="feedbackMessage" class="story-feedback" role="status">
+          {{ feedbackMessage }}
+        </p>
       </Transition>
 
-      <!-- 1. Switches de Decisões Pré-Definidas -->
-      <div class="debug-section">
-        <h3 class="debug-section-title">
-          {{ $t("hub.debug.decisions_title") }}
-        </h3>
-
-        <div class="debug-control-group">
-          <span class="debug-control-label">
-            {{ $t("hub.debug.shift_label") }}
-          </span>
-          <div class="debug-switch-row" role="group">
-            <button
-              type="button"
-              class="debug-switch-btn"
-              :class="{ 'is-selected-night': selectedShift === 'night' }"
-              :aria-pressed="selectedShift === 'night'"
-              @click="setShiftDecision('night')"
-            >
-              {{ $t("hub.debug.shift_night_btn") }}
-            </button>
-            <button
-              type="button"
-              class="debug-switch-btn"
-              :class="{ 'is-selected-day': selectedShift === 'day' }"
-              :aria-pressed="selectedShift === 'day'"
-              @click="setShiftDecision('day')"
-            >
-              {{ $t("hub.debug.shift_day_btn") }}
-            </button>
-          </div>
-        </div>
-
-        <div class="debug-control-group">
-          <span class="debug-control-label">
-            {{ $t("hub.debug.stars_label") }}
-          </span>
-          <div class="debug-switch-row" role="group">
-            <button
-              v-for="starCount in [3, 2, 1]"
-              :key="starCount"
-              type="button"
-              class="debug-switch-btn debug-switch-btn--compact"
-              :class="{ 'is-selected-star': selectedStars === starCount }"
-              :aria-pressed="selectedStars === starCount"
-              @click="setStarsDecision(starCount)"
-            >
-              {{ $t("hub.debug.stars_btn", { stars: starCount }) }}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 2. Atalhos de Cutscenes -->
-      <div class="debug-section">
-        <h3 class="debug-section-title">
-          {{ $t("hub.debug.cutscenes_title") }}
-        </h3>
-        <div class="debug-btn-list">
-          <button
-            type="button"
-            class="btn-debug btn-debug-cutscene"
-            @click="handleJump('cutscene-intro')"
-          >
-            {{ $t("hub.debug.presets.cutscene_intro") }}
-          </button>
-
-          <button
-            type="button"
-            class="btn-debug btn-debug-cutscene"
-            @click="handleJump('cutscene-pre-1')"
-          >
-            {{ $t("hub.debug.presets.cutscene_pre_1") }}
-          </button>
-
-          <button
-            type="button"
-            class="btn-debug btn-debug-cutscene"
-            @click="handleJump('cutscene-post-1')"
-          >
-            {{
-              $t("hub.debug.presets.cutscene_post_1", { stars: selectedStars })
-            }}
-          </button>
-
-          <button
-            type="button"
-            class="btn-debug btn-debug-highlight"
-            :class="selectedShift === 'night' ? 'is-night' : 'is-day'"
-            @click="handleJump('cutscene-post-2')"
-          >
-            {{
-              selectedShift === "night"
-                ? $t("hub.debug.presets.cutscene_post_2_night")
-                : $t("hub.debug.presets.cutscene_post_2_day")
-            }}
-          </button>
-        </div>
-      </div>
-
-      <!-- 3. Atalhos de Jogos e Telas -->
-      <div class="debug-section">
-        <h3 class="debug-section-title">
-          {{ $t("hub.debug.games_title") }}
-        </h3>
-        <div class="debug-btn-list">
-          <button
-            type="button"
-            class="btn-debug btn-debug-jump"
-            @click="handleJump('screen-dashboard')"
-          >
-            {{ $t("hub.debug.presets.screen_dashboard") }}
-          </button>
-
-          <button
-            type="button"
-            class="btn-debug btn-debug-jump"
-            @click="handleJump('game-stage-1')"
-          >
-            {{ $t("hub.debug.presets.game_stage_1") }}
-          </button>
-
-          <button
-            type="button"
-            class="btn-debug btn-debug-jump"
-            @click="handleJump('game-stage-2')"
-          >
-            {{
-              selectedShift === "night"
-                ? $t("hub.debug.presets.game_stage_2_night")
-                : $t("hub.debug.presets.game_stage_2_day")
-            }}
-          </button>
-
-          <button
-            type="button"
-            class="btn-debug btn-debug-jump"
-            @click="handleJump('game-stage-2-multi')"
-          >
-            {{ $t("hub.debug.presets.game_stage_2_multi") }}
-          </button>
-
-          <button
-            type="button"
-            class="btn-debug btn-debug-jump"
-            @click="handleJump('game-stage-3')"
-          >
-            {{ $t("hub.debug.presets.game_stage_3") }}
-          </button>
-
-          <button
-            type="button"
-            class="btn-debug btn-debug-jump"
-            @click="handleJump('screen-promotion')"
-          >
-            {{ $t("hub.debug.presets.screen_promotion") }}
-          </button>
-        </div>
-      </div>
-
-      <!-- 4. Atalhos de Tutoriais Interativos (Oficina) -->
-      <div class="debug-section">
-        <h3 class="debug-section-title">
-          🎓 {{ $t("hub.debug.tutorials_title") }}
-        </h3>
-        <div class="debug-btn-list">
-          <button
-            type="button"
-            class="btn-debug btn-debug-tutorial"
-            @click="handleJump('tutorial-spatial-orientation')"
-          >
-            🗄️ {{ $t("hub.debug.btn_tut_spatial_orientation") }}
-          </button>
-          <button
-            type="button"
-            class="btn-debug btn-debug-reset-tut"
-            @click="jumpToPreset('tutorial-reset')"
-          >
-            ↺ {{ $t("hub.debug.btn_tut_reset") }}
-          </button>
-        </div>
-      </div>
-
-      <!-- 5. Reset Pinia / LocalStorage -->
-      <button
-        type="button"
-        class="btn-debug btn-debug-reset"
-        :title="$t('hub.debug.reset_title')"
-        @click="resetProgress"
+      <div
+        v-if="isConfirmingReset"
+        class="reset-confirm-card"
+        role="alertdialog"
+        aria-labelledby="story-reset-title"
       >
-        {{ $t("hub.debug.reset_label") }}
+        <h4 id="story-reset-title" class="reset-confirm-title">
+          {{ $t("hub.story.reset_confirm_title") }}
+        </h4>
+        <p class="reset-confirm-message">
+          {{ $t("hub.story.reset_confirm_message") }}
+        </p>
+        <div class="reset-confirm-actions">
+          <button
+            type="button"
+            class="btn-reset-cancel"
+            @click="isConfirmingReset = false"
+          >
+            {{ $t("hub.story.reset_cancel") }}
+          </button>
+          <button
+            type="button"
+            class="btn-reset-confirm"
+            @click="handleConfirmReset"
+          >
+            {{ $t("hub.story.reset_confirm") }}
+          </button>
+        </div>
+      </div>
+
+      <button
+        v-else
+        type="button"
+        class="btn-reset-trigger"
+        :disabled="!hasProgress"
+        @click="isConfirmingReset = true"
+      >
+        <span aria-hidden="true">↺</span>
+        <span>{{ $t("hub.story.reset_btn") }}</span>
       </button>
     </section>
+
+    <!-- Painel Técnico de Debug Recolhível (Apenas DEV) -->
+    <footer v-if="isDev" class="dev-debug-footer">
+      <button
+        type="button"
+        class="btn-debug-toggle"
+        :aria-expanded="isDebugOpen"
+        @click="isDebugOpen = !isDebugOpen"
+      >
+        <span>
+          {{
+            isDebugOpen
+              ? $t("hub.debug.toggle_hide")
+              : $t("hub.debug.toggle_show")
+          }}
+        </span>
+        <span
+          class="debug-chevron"
+          :class="{ 'is-open': isDebugOpen }"
+          aria-hidden="true"
+        >
+          ▾
+        </span>
+      </button>
+
+      <StoryDebugPanel v-if="isDebugOpen" @start-story="emit('start-story')" />
+    </footer>
   </div>
 </template>
 
 <style scoped>
+.story-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .subtitle {
   margin: 0;
   color: var(--text-muted);
@@ -302,294 +190,336 @@ function handleJump(presetId) {
 
 .btn-story {
   width: 100%;
-  min-height: 56px;
-  padding: 16px 24px;
+  min-height: 54px;
+  padding: 14px 20px;
   border-radius: 12px;
   border: 2px solid var(--light-green);
-  background: transparent;
+  background: rgba(160, 236, 208, 0.08);
   color: var(--light-green);
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.05rem;
+  font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   transition:
     transform 0.1s ease,
     background-color 0.2s ease;
 }
 
 .btn-story:hover {
-  background: rgba(74, 222, 128, 0.08);
+  background: rgba(160, 236, 208, 0.16);
 }
 
 .btn-story:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
 }
 
-.debug-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 14px 16px;
-  background: rgba(15, 23, 42, 0.85);
-  border: 1px dashed rgba(244, 63, 94, 0.55);
-  border-radius: 12px;
-  text-align: left;
+.btn-play-icon {
+  font-size: 0.85rem;
+  line-height: 1;
 }
 
-.debug-header-row {
-  display: flex;
-  justify-content: center;
-}
-
-.debug-badge {
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #f43f5e;
-  background: rgba(244, 63, 94, 0.15);
-  padding: 3px 10px;
-  border-radius: 6px;
-}
-
-.debug-status-box {
+/* ── Seletor Amigável de Pontos da História ── */
+.chapters-section {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: rgba(30, 41, 59, 0.85);
-  border: 1px solid rgba(148, 163, 184, 0.25);
 }
 
-.debug-status-eyebrow {
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #94a3b8;
-}
-
-.debug-active-shift {
-  font-size: 0.84rem;
-  font-weight: 700;
-  padding: 6px 10px;
-  border-radius: 7px;
-  line-height: 1.3;
-}
-
-.debug-active-shift.is-night {
-  background: rgba(128, 90, 213, 0.24);
-  border: 1px solid rgba(167, 139, 250, 0.55);
-  color: #ddd6fe;
-}
-
-.debug-active-shift.is-day {
-  background: rgba(245, 158, 11, 0.2);
-  border: 1px solid rgba(251, 191, 36, 0.55);
-  color: #fef08a;
-}
-
-.debug-meta-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.debug-meta-pill {
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  color: #cbd5e1;
-}
-
-.debug-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(148, 163, 184, 0.16);
-}
-
-.debug-section-title {
+.section-eyebrow {
   margin: 0;
-  font-size: 0.78rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #e2e8f0;
-}
-
-.debug-control-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.debug-control-label {
-  font-size: 0.75rem;
-  color: #94a3b8;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
   font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-dim);
 }
 
-.debug-switch-row {
-  display: flex;
-  gap: 6px;
-}
-
-.debug-switch-btn {
-  flex: 1;
-  min-height: 38px;
-  padding: 6px 10px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  border-radius: 8px;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  background: rgba(30, 41, 59, 0.65);
-  color: #94a3b8;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.debug-switch-btn:hover {
-  border-color: rgba(203, 213, 225, 0.6);
-  color: #f8fafc;
-}
-
-.debug-switch-btn.is-selected-night {
-  background: rgba(128, 90, 213, 0.32);
-  border-color: #a78bfa;
-  color: #f5f3ff;
-  box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.4);
-}
-
-.debug-switch-btn.is-selected-day {
-  background: rgba(245, 158, 11, 0.28);
-  border-color: #fbbf24;
-  color: #fef9c3;
-  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.4);
-}
-
-.debug-switch-btn.is-selected-star {
-  background: rgba(14, 165, 233, 0.28);
-  border-color: #38bdf8;
-  color: #e0f2fe;
-}
-
-.debug-btn-list {
+.chapters-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 8px;
 }
 
-.btn-debug {
+.chapter-card {
   width: 100%;
-  min-height: 42px;
-  padding: 9px 12px;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  text-align: left;
+  color: var(--text-main);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    transform 0.12s ease;
+}
+
+.chapter-card:hover,
+.chapter-card:focus-visible {
+  border-color: var(--accent-color);
+  background: rgba(54, 57, 59, 0.9);
+}
+
+.chapter-card:active {
+  transform: scale(0.99);
+}
+
+.chapter-card.is-current {
+  border-color: var(--light-green);
+  background: rgba(14, 165, 233, 0.1);
+}
+
+.chapter-status {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: rgba(148, 163, 184, 0.12);
+  color: var(--text-muted);
+}
+
+.chapter-card.is-done .chapter-status {
+  background: rgba(148, 221, 188, 0.18);
+  color: var(--medium-green);
+}
+
+.chapter-card.is-current .chapter-status {
+  background: rgba(160, 236, 208, 0.22);
+  color: var(--light-green);
+}
+
+.chapter-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chapter-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.chapter-card.is-current .chapter-eyebrow {
+  color: var(--light-green);
+}
+
+.chapter-title {
+  font-size: 0.94rem;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.chapter-right {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chapter-meta {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.chapter-arrow {
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--text-muted);
+}
+
+/* ── Reset Seguro ── */
+.reset-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.story-feedback {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(148, 221, 188, 0.14);
+  border: 1px solid rgba(148, 221, 188, 0.45);
+  color: var(--light-green);
   font-size: 0.84rem;
   font-weight: 600;
-  border-radius: 8px;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.15s ease;
-}
-
-.btn-debug-cutscene {
-  background: rgba(168, 85, 247, 0.14);
-  border: 1px solid rgba(168, 85, 247, 0.4);
-  color: #e9d5ff;
-}
-
-.btn-debug-cutscene:hover {
-  background: rgba(168, 85, 247, 0.28);
-  color: #fff;
-}
-
-.btn-debug-highlight.is-night {
-  background: rgba(128, 90, 213, 0.28);
-  border: 1.5px solid #a78bfa;
-  color: #f5f3ff;
-}
-
-.btn-debug-highlight.is-night:hover {
-  background: rgba(128, 90, 213, 0.42);
-  color: #fff;
-}
-
-.btn-debug-highlight.is-day {
-  background: rgba(245, 158, 11, 0.24);
-  border: 1.5px solid #fbbf24;
-  color: #fef9c3;
-}
-
-.btn-debug-highlight.is-day:hover {
-  background: rgba(245, 158, 11, 0.38);
-  color: #fff;
-}
-
-.btn-debug-jump {
-  background: rgba(56, 189, 248, 0.15);
-  border: 1px solid rgba(56, 189, 248, 0.45);
-  color: #7dd3fc;
-}
-
-.btn-debug-jump:hover {
-  background: rgba(56, 189, 248, 0.3);
-  color: #fff;
-}
-
-.btn-debug-reset {
-  margin-top: 4px;
   text-align: center;
-  background: rgba(239, 68, 68, 0.15);
-  border: 1px solid rgba(239, 68, 68, 0.45);
-  color: #fca5a5;
 }
 
-.btn-debug-reset:hover {
-  background: rgba(239, 68, 68, 0.3);
-  color: #fff;
-}
-
-.debug-feedback {
-  margin: 0;
-  padding: 6px 10px;
-  border-radius: 6px;
-  background: rgba(16, 185, 129, 0.15);
-  border: 1px solid rgba(16, 185, 129, 0.4);
-  font-size: 0.8rem;
+.btn-reset-trigger {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.88rem;
   font-weight: 600;
-  color: #4ade80;
-  text-align: center;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.btn-reset-trigger:not(:disabled):hover {
+  color: #fca5a5;
+  border-color: rgba(239, 68, 68, 0.45);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.btn-reset-trigger:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.reset-confirm-card {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.9);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.reset-confirm-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fecaca;
+}
+
+.reset-confirm-message {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.35;
+  color: var(--text-muted);
+}
+
+.reset-confirm-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.btn-reset-cancel,
+.btn-reset-confirm {
+  flex: 1;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-reset-cancel {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-main);
+}
+
+.btn-reset-confirm {
+  background: rgba(239, 68, 68, 0.22);
+  border: 1px solid rgba(239, 68, 68, 0.65);
+  color: #fecaca;
+}
+
+/* ── Debug Recolhível (Apenas DEV) ── */
+.dev-debug-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.btn-debug-toggle {
+  align-self: center;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px dashed rgba(244, 63, 94, 0.45);
+  background: rgba(15, 23, 42, 0.6);
+  color: #fda4af;
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.btn-debug-toggle:hover {
+  background: rgba(244, 63, 94, 0.14);
+  border-color: rgba(244, 63, 94, 0.75);
+}
+
+.debug-chevron {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.debug-chevron.is-open {
+  transform: rotate(180deg);
 }
 
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.25s ease;
 }
+
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
 }
 
-.btn-debug-tutorial {
-  border-color: rgba(56, 189, 248, 0.45);
-  color: #38bdf8;
-  background: rgba(14, 165, 233, 0.1);
-}
-.btn-debug-tutorial:hover {
-  background: rgba(14, 165, 233, 0.22);
-  border-color: #38bdf8;
-}
-
-.btn-debug-reset-tut {
-  border-color: rgba(234, 179, 8, 0.45);
-  color: #eab308;
-  background: rgba(234, 179, 8, 0.08);
-}
-.btn-debug-reset-tut:hover {
-  background: rgba(234, 179, 8, 0.2);
-  border-color: #eab308;
+@media (prefers-reduced-motion: reduce) {
+  .btn-story,
+  .chapter-card,
+  .btn-reset-trigger,
+  .btn-debug-toggle,
+  .debug-chevron,
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: none;
+  }
 }
 </style>
