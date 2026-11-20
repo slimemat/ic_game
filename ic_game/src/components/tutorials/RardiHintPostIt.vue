@@ -1,12 +1,13 @@
 <script setup>
+import { computed } from "vue";
 import VisualConceptDiagram from "./VisualConceptDiagram.vue";
 
 /**
  * RardiHintPostIt: Exibe a "Cola Visual do Rardi" em formato de post-it rabiscado
- * quando o jogador abre o botão de Dica (?) nas fases espaciais, ou exibe o card
- * de dica padrão nas demais fases (ex.: padrões de cores), respeitando SRP e OCP.
+ * quando o jogador abre o botão de Dica (?) nas fases espaciais, ou exibe o banner
+ * padrão nas demais fases (ex.: padrões de cores), respeitando SRP e OCP.
  */
-defineProps({
+const props = defineProps({
   /** Texto de dica contextual da fase/sub-etapa atual */
   hintText: {
     type: String,
@@ -19,7 +20,19 @@ defineProps({
   },
 });
 
-defineEmits(["replay-tutorial"]);
+const emit = defineEmits(["replay-tutorial"]);
+
+const isMirrorConcept = computed(
+  () =>
+    props.visualHint?.concept === "flip_h" ||
+    props.visualHint?.concept === "flip_v",
+);
+
+function handleReplayClick() {
+  if (props.visualHint?.tutorialId) {
+    emit("replay-tutorial", props.visualHint.tutorialId);
+  }
+}
 </script>
 
 <template>
@@ -32,29 +45,50 @@ defineEmits(["replay-tutorial"]);
   >
     <div class="postit-tape" aria-hidden="true"></div>
 
-    <!-- Diagrama animado à esquerda (mostra o TOPO e os LADOS em movimento) -->
-    <VisualConceptDiagram
-      :concept="visualHint.concept"
-      size="sm"
-      :customDoodleUrl="visualHint.customDoodleUrl || null"
-    />
+    <!-- Zona 1: Faixa superior dedicada ao conceito + referência curta -->
+    <header class="postit-header">
+      <span class="postit-concept-badge">
+        📌 {{ $t(visualHint.titleKey) }}
+      </span>
+      <span
+        v-if="visualHint.badgeKey"
+        class="postit-ref-pill"
+        :class="{ 'is-mirror': isMirrorConcept }"
+      >
+        {{ $t(visualHint.badgeKey) }}
+      </span>
+    </header>
 
-    <!-- Explicação rápida + Regra de Ouro à direita -->
-    <div class="postit-body">
-      <div class="postit-header-row">
-        <span class="postit-author-tag">
-          📌 {{ $t(visualHint.titleKey) }}
-        </span>
-        <button
-          v-if="visualHint.tutorialId"
-          type="button"
-          class="btn-replay-mini"
-          @click.stop="$emit('replay-tutorial', visualHint.tutorialId)"
-        >
-          {{ $t("tutorials.desk.btn_replay_short") }}
-        </button>
-      </div>
+    <!-- Zona 2: Diagrama animado clicável (abre "Rever Prática") + apoio visual e frase única -->
+    <component
+      :is="visualHint.tutorialId ? 'button' : 'div'"
+      :type="visualHint.tutorialId ? 'button' : undefined"
+      class="postit-diagram-trigger"
+      :class="{ 'is-interactive': Boolean(visualHint.tutorialId) }"
+      :aria-label="
+        visualHint.tutorialId
+          ? $t('tutorials.desk.btn_replay_short')
+          : undefined
+      "
+      :title="
+        visualHint.tutorialId
+          ? $t('tutorials.desk.btn_replay_short')
+          : undefined
+      "
+      @click.stop="handleReplayClick"
+    >
+      <VisualConceptDiagram
+        class="postit-diagram"
+        :concept="visualHint.concept"
+        size="sm"
+        :customDoodleUrl="visualHint.customDoodleUrl || null"
+      />
+      <span v-if="visualHint.tutorialId" class="diagram-replay-caption">
+        ↺ {{ $t("tutorials.desk.btn_replay_micro") }}
+      </span>
+    </component>
 
+    <div class="postit-copy">
       <div
         v-if="visualHint.sketchImages?.length"
         class="postit-sketch-strip"
@@ -67,12 +101,12 @@ defineEmits(["replay-tutorial"]);
           >
             <img
               :src="sketch.src"
-              :alt="sketch.label || ''"
+              :alt="sketch.labelKey ? $t(sketch.labelKey) : ''"
               class="postit-sketch-img"
               draggable="false"
             />
-            <span v-if="sketch.label" class="postit-sketch-label">
-              {{ sketch.label }}
+            <span v-if="sketch.labelKey" class="postit-sketch-label">
+              {{ $t(sketch.labelKey) }}
             </span>
           </div>
           <span
@@ -83,13 +117,6 @@ defineEmits(["replay-tutorial"]);
           </span>
         </template>
       </div>
-
-      <p
-        v-else-if="visualHint.goldenRuleKey && $t(visualHint.goldenRuleKey)"
-        class="postit-golden-rule"
-      >
-        {{ $t(visualHint.goldenRuleKey) }}
-      </p>
 
       <p class="postit-level-hint">
         {{ hintText }}
@@ -107,8 +134,9 @@ defineEmits(["replay-tutorial"]);
 <style scoped>
 .rardi-hint-postit {
   position: relative;
+  width: 100%;
   margin-top: 8px;
-  padding: 14px 14px 14px 12px;
+  padding: 12px 13px 11px;
   background-color: var(--postit-bg, #fef08a);
   background-image: linear-gradient(
     180deg,
@@ -120,9 +148,13 @@ defineEmits(["replay-tutorial"]);
   box-shadow:
     0 8px 20px rgba(0, 0, 0, 0.35),
     inset 0 -4px 8px rgba(0, 0, 0, 0.04);
-  display: flex;
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr);
+  grid-template-areas:
+    "header header"
+    "diagram copy";
   align-items: center;
-  gap: 12px;
+  gap: 8px 12px;
   text-align: left;
   color: #1e293b;
   pointer-events: auto;
@@ -142,69 +174,117 @@ defineEmits(["replay-tutorial"]);
   pointer-events: none;
 }
 
-.postit-body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.postit-header-row {
+/* ── Zona 1: Faixa Superior (100% largura, 1 linha) ── */
+.postit-header {
+  grid-area: header;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed rgba(113, 63, 18, 0.22);
 }
 
-.postit-author-tag {
-  font-size: 0.72rem;
+.postit-concept-badge {
+  min-width: 0;
+  font-size: 0.74rem;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.03em;
   color: #713f12;
-  background: rgba(255, 255, 255, 0.65);
-  padding: 1px 6px;
-  border-radius: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.btn-replay-mini {
-  background: #0f172a;
-  color: #f8fafc;
-  border: none;
+.postit-ref-pill {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: #0369a1;
+  background: #e0f2fe;
+  border: 1px solid #7dd3fc;
   border-radius: 6px;
   padding: 2px 7px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition:
-    transform 0.15s ease,
-    background-color 0.15s ease;
+  line-height: 1.2;
   white-space: nowrap;
 }
 
-.btn-replay-mini:hover {
-  background: #0284c7;
+.postit-ref-pill.is-mirror {
+  color: #be185d;
+  background: #fce7f3;
+  border-color: #f9a8d4;
+}
+
+/* ── Zona 2: Diagrama Clicável + Explicação ── */
+.postit-diagram-trigger {
+  grid-area: diagram;
+  background: none;
+  border: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  color: inherit;
+  transition: transform 0.12s ease;
+}
+
+.postit-diagram-trigger.is-interactive {
+  cursor: pointer;
+}
+
+.postit-diagram-trigger.is-interactive:hover {
   transform: translateY(-1px);
 }
 
-.postit-golden-rule {
-  margin: 0;
-  font-family: var(--font-handwritten);
-  font-size: clamp(1.04rem, 3.6vw, 1.18rem);
-  font-weight: 700;
-  color: #292524;
-  line-height: 1.2;
+.postit-diagram-trigger.is-interactive:active {
+  transform: scale(0.96);
+}
+
+.postit-diagram-trigger.is-interactive:focus-visible {
+  outline: 2px solid #0284c7;
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+.diagram-replay-caption {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: rgba(113, 63, 18, 0.72);
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+}
+
+.postit-diagram-trigger.is-interactive:hover .diagram-replay-caption {
+  color: #0369a1;
+}
+
+.postit-copy {
+  grid-area: copy;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
 .postit-sketch-strip {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 3px 0;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  width: 100%;
+  gap: 2px;
+  padding: 1px 0;
 }
 
 .postit-sketch-item {
+  flex: 1 1 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -212,8 +292,8 @@ defineEmits(["replay-tutorial"]);
 }
 
 .postit-sketch-img {
-  width: 38px;
-  height: 38px;
+  width: clamp(26px, 8vw, 34px);
+  height: clamp(26px, 8vw, 34px);
   object-fit: contain;
   image-rendering: pixelated;
   mix-blend-mode: multiply;
@@ -224,15 +304,17 @@ defineEmits(["replay-tutorial"]);
 
 .postit-sketch-label {
   font-family: var(--font-handwritten);
-  font-size: 0.84rem;
+  font-size: clamp(0.68rem, 2.5vw, 0.8rem);
   font-weight: 700;
   line-height: 1;
   color: #44403c;
+  white-space: nowrap;
 }
 
 .postit-sketch-arrow {
+  flex-shrink: 0;
   font-family: var(--font-handwritten);
-  font-size: 1.02rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: #b91c1c;
   margin-bottom: 10px;
@@ -241,12 +323,29 @@ defineEmits(["replay-tutorial"]);
 .postit-level-hint {
   margin: 0;
   font-family: var(--font-handwritten);
-  font-size: clamp(1.02rem, 3.5vw, 1.15rem);
-  font-weight: 600;
+  font-size: clamp(1.06rem, 3.6vw, 1.2rem);
+  font-weight: 700;
   color: #292524;
   line-height: 1.22;
-  border-top: 1px dashed rgba(15, 23, 42, 0.18);
-  padding-top: 4px;
+}
+
+@media (max-width: 360px) {
+  .rardi-hint-postit {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 8px 10px;
+  }
+
+  .postit-diagram {
+    width: 72px;
+    height: 72px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .postit-diagram-trigger,
+  .diagram-replay-caption {
+    transition: none;
+  }
 }
 
 .standard-hint-banner {

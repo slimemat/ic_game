@@ -508,6 +508,7 @@
       "notes_tray_title": "Cola Visual do Rardi:",
       "btn_minimize": "Praticar na Prancheta ⬆",
       "btn_replay_short": "Rever Prática",
+      "btn_replay_micro": "Rever",
       "btn_next_step": "Próximo Passo",
       "step_1_solved_prompt": "Isso aí! Observe como a peça encaixou em verde. Quando quiser, toque na Nota 2 ou em 'Próximo Passo'!",
       "close_note": "Fechar anotação",
@@ -537,6 +538,25 @@
       "note_status_pending": "Pendente",
       "note_status_done": "Concluído ✓"
     },
+    "diagram": {
+      "top_anchor": "Topo",
+      "badges": {
+        "rotate_cw": "12h ↷ 3h",
+        "rotate_ccw": "12h ↶ 9h",
+        "rotate_180": "12h ↻ 6h",
+        "rotate_45": "+45° ↷",
+        "rotate_ccw_45": "-45° ↶",
+        "flip_h": "Esq ⇄ Dir",
+        "flip_v": "Topo ⇅ Base"
+      }
+    },
+    "sketches": {
+      "clock_cw_1": "12h–3h",
+      "clock_quarter": "1/4 (90°)",
+      "clock_cw_dir": "Horário ↷",
+      "clock_ccw_1": "12h–9h",
+      "clock_ccw_dir": "Anti ↶"
+    },
     "rardi_notes": {
       "note_1_title": "Giro Horário (↷)",
       "note_1_tag": "Giro Horário ↷",
@@ -548,20 +568,21 @@
       "note_2_tag_clean": "2. Anti-Horário (↶)",
       "note_2_golden_rule": "",
       "note_2_text": "Vai contra os ponteiros do relógio: 1 quarto de volta para a esquerda!",
-      "note_3_title": "Cola do Rardi: Espelho Horizontal (⇄)",
+      "note_3_title": "Espelho Horizontal (⇄)",
       "note_3_tag": "Espelho H ⇄",
       "note_3_tag_clean": "1. Espelho H (⇄)",
       "note_3_golden_rule": "Página de Livro (⇄): O TOPO (▲) fica FIXO em cima! Só troque Esquerda ↔ Direita.",
       "note_3_text": "Não confunda com giro! No espelho horizontal, o topo NUNCA sai de cima: apenas o lado esquerdo e o direito trocam de lugar.",
-      "note_4_title": "Cola do Rardi: Espelho Vertical (⇅)",
+      "note_4_title": "Espelho Vertical (⇅)",
       "note_4_tag": "Espelho V ⇅",
       "note_4_tag_clean": "2. Espelho V (⇅)",
       "note_4_golden_rule": "Reflexo na Água (⇅): Vira de ponta-cabeça (Topo ↕ Base), mantendo Esquerda e Direita!",
       "note_4_text": "O topo vai para a base e a base vai para o topo, mas o que estava na esquerda continua na esquerda!",
-      "note_180_title": "Cola do Rardi: Meia-Volta (180°)",
+      "note_180_title": "Meia-Volta (180°)",
       "note_180_golden_rule": "Meia-Volta (12h ↻ 6h): Vira de cabeça para baixo (Topo vai p/ a base E lados trocam)!",
-      "note_45_title": "Cola do Rardi: Passo Diagonal (45°)",
-      "note_45_golden_rule": "Passo Curto (45°): A figura inclina na diagonal (metade de 90°) a cada etapa!"
+      "note_45_title": "Passo Diagonal (+45° ↷)",
+      "note_45_golden_rule": "Passo Curto (45°): A figura inclina na diagonal (metade de 90°) a cada etapa!",
+      "note_ccw_45_title": "Diagonal Anti-Horária (-45° ↶)"
     }
   }
 }

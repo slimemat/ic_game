@@ -147,13 +147,13 @@ const currentVisualHint = computed(() =>
   resolveVisualHintForLevel(currentLevelConfig.value, currentStepIndex.value),
 );
 
-function handleReplayTutorial() {
+function handleReplayTutorial(tutorialId) {
   isHintOpen.value = false;
-  const targetTutorialId =
+  const fallbackId =
     currentLevelConfig.value?.type === "transformation"
       ? "spatial_reflection"
       : "spatial_orientation";
-  replayTutorial(targetTutorialId);
+  replayTutorial(tutorialId || fallbackId);
 }
 
 const currentTypeName = computed(() => {
@@ -782,27 +782,6 @@ const triggerWarning = (msg, type = "info") => {
 
 .step-text {
   flex: 1;
-}
-
-.pattern-hint-text {
-  margin: 8px 0 0;
-  padding-top: 8px;
-  width: 100%;
-  max-width: 40ch;
-  border-top: 1px solid rgba(56, 189, 248, 0.25);
-  font-family: var(--font-main);
-  font-size: clamp(0.9rem, 2.8vw, 1.02rem);
-  font-weight: 500;
-  line-height: 1.35;
-  color: #bae6fd;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.hint-bulb {
-  flex-shrink: 0;
 }
 
 .pattern-bottom-microcopy {
