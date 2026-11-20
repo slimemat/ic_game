@@ -1,8 +1,8 @@
 {
   "global": {
+    "game_not_found": "Jogo em desenvolvimento",
     "buttons": {
       "play": "Jogar",
-      "choose_games": "Escolher Jogos",
       "back": "Voltar",
       "pause": "Pausar",
       "restart": "Reiniciar",
@@ -131,18 +131,7 @@
     }
   },
   "mainMenu": {
-    "title": "Logic Hub",
-    "subtitle": "Bem-vindo(a)! Escolha como quer jogar.",
-    "level_label": "Nível:",
-    "nav_aria_label": "Modos de jogo",
-    "buttons": {
-      "story_mode": "Modo História",
-      "level_select": "Selecionar Fase"
-    },
-    "active_mode": {
-      "story": "Modo História ativado",
-      "level_select": "Seleção de Fase ativada"
-    }
+    "title": "Logic Hub"
   },
   "restPanel": {
     "window_title": "Sala de Descanso",
@@ -152,22 +141,6 @@
     "missions_done": "{done} de {total} concluídos",
     "all_done": "Você concluiu todos os chamados desta versão. Aproveite o café! ☕",
     "btn_continue": "Continuar Chamado"
-  },
-  "home": {
-    "welcome": "Bem-vindo(a) de volta",
-    "title": "Logic Hub",
-    "available_games": "{count} jogos disponíveis",
-    "level": "Nível:",
-    "beginner": "Iniciante",
-    "pick_of_day": "Jogo do dia",
-    "pick_subtitle": "Nossa sugestão baseada no seu perfil",
-    "cta_choose": "Escolher outro jogo"
-  },
-  "selection": {
-    "back_button": "← Voltar",
-    "search_placeholder": "Buscar jogo...",
-    "all_categories": "Todas as Categorias",
-    "no_results": "Nenhum jogo encontrado."
   },
   "games": {
     "test-platformer": {
