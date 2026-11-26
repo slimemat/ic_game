@@ -10,9 +10,11 @@ import { useChatEffects } from "../composables/useChatEffects";
 import AudioManager from "../game/managers/AudioManager";
 import PauseModal from "./ui/PauseModal.vue";
 import PauseButton from "./ui/PauseButton.vue";
+import LobbyBackdrop from "./ui/lobby/LobbyBackdrop.vue";
 import ChatHeader from "./story/ChatHeader.vue";
 import ChatSystemNotice from "./story/ChatSystemNotice.vue";
 import StickyNotesCarousel from "./story/StickyNotesCarousel.vue";
+import { resolveChatBackdropTheme } from "../game/data/lobbyThemes";
 import spritepaintImg from "../assets/images/spritepaint.png";
 
 /**
@@ -171,6 +173,14 @@ const headerInfo = computed(() => {
     }).format(names),
   };
 });
+
+const chatBackdropTheme = computed(() =>
+  resolveChatBackdropTheme(
+    headerInfo.value?.variant,
+    currentStageNumber.value,
+    story.storyDecisions,
+  ),
+);
 
 // ── Sprites (com fallback para <personagem>_neutral.png) ──────────────────
 const sprites = import.meta.glob("../assets/sprites/*.png", {
@@ -463,7 +473,15 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="story-mode-container" :class="{ 'anim-screen-shake': isShaking }">
+  <div
+    class="story-mode-container"
+    :class="{
+      'anim-screen-shake': isShaking,
+      'is-night-mode': headerInfo?.variant === 'bot',
+    }"
+  >
+    <LobbyBackdrop :theme="chatBackdropTheme" />
+
     <template v-if="interactive">
       <PauseButton class="pause-btn-fixed" @click="story.setPaused(true)" />
 
@@ -734,7 +752,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #d1c0a8;
+  background-color: var(--aero-sky-mid, #bae6fd);
   position: relative;
   overflow: hidden;
   font-family: "consolas", "Courier New", monospace;
@@ -748,6 +766,8 @@ onUnmounted(() => {
 }
 
 .chat-history {
+  position: relative;
+  z-index: 1;
   flex-grow: 1;
   padding: 5rem 1rem 1rem 1rem;
   overflow-y: auto;
@@ -925,12 +945,35 @@ onUnmounted(() => {
 
 /* ── ÁREA DE ESCOLHAS ── */
 .reply-area {
+  position: relative;
+  z-index: 1;
   padding: 1rem;
-  background: rgba(0, 0, 0, 0.05);
-  border-top: 1px dashed rgba(0, 0, 0, 0.1);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.48) 0%,
+    rgba(240, 249, 255, 0.72) 100%
+  );
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1.5px solid rgba(255, 255, 255, 0.88);
+  box-shadow:
+    0 -6px 20px rgba(14, 74, 110, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
+}
+
+.is-night-mode .reply-area {
+  background: linear-gradient(
+    180deg,
+    rgba(30, 27, 75, 0.58) 0%,
+    rgba(49, 46, 129, 0.76) 100%
+  );
+  border-top-color: rgba(167, 139, 250, 0.45);
+  box-shadow:
+    0 -6px 22px rgba(15, 23, 42, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 .reply-btn {
