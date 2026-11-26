@@ -1,6 +1,10 @@
 <script setup>
 import { ref } from "vue";
 import StoryDebugPanel from "../story/StoryDebugPanel.vue";
+import LobbySectionHeader from "../ui/lobby/LobbySectionHeader.vue";
+import AeroGlassCard from "../ui/lobby/AeroGlassCard.vue";
+import AeroActionButton from "../ui/lobby/AeroActionButton.vue";
+import AppIcon from "../ui/AppIcon.vue";
 import { useStoryChapterSelect } from "../../composables/useStoryChapterSelect";
 
 const emit = defineEmits(["start-story"]);
@@ -10,6 +14,7 @@ const {
   hasProgress,
   currentStageNumber,
   currentDay,
+  recap,
   chapters,
   feedbackMessage,
   selectChapter,
@@ -35,41 +40,62 @@ function handleConfirmReset() {
 
 <template>
   <div class="tab-content">
-    <div class="story-intro">
-      <h2>{{ $t("hub.story.title") }}</h2>
-      <p class="subtitle">
-        {{
-          hasProgress
-            ? $t("hub.story.subtitle_current", {
-                day: currentDay,
-                stage: currentStageNumber,
-              })
-            : $t("hub.story.subtitle_new", { companyName })
-        }}
-      </p>
-    </div>
+    <LobbySectionHeader
+      :title="$t('hub.story.title')"
+      :subtitle="
+        hasProgress
+          ? $t('hub.story.subtitle_current', {
+              day: currentDay,
+              stage: currentStageNumber,
+            })
+          : $t('hub.story.subtitle_new', { companyName })
+      "
+    />
 
-    <button
-      type="button"
-      class="btn-tactile btn-tactile--primary btn-tactile--lg btn-tactile--block"
-      @click="emit('start-story')"
-    >
-      <span class="btn-play-icon" aria-hidden="true">▶</span>
-      <span>
+    <!-- Resumo da Jornada (Story Recap) -->
+    <AeroGlassCard variant="accent" padding="md" class="recap-card">
+      <div class="recap-header">
+        <span class="recap-badge">
+          <AppIcon name="sparkles" :size="14" />
+          <span>{{ $t("hub.story.recap_title") }}</span>
+        </span>
+      </div>
+
+      <dl class="recap-list">
+        <div class="recap-row">
+          <dt>{{ $t("hub.story.recap_last_label") }}</dt>
+          <dd>{{ recap.lastCompletedText }}</dd>
+        </div>
+        <div class="recap-row">
+          <dt>{{ $t("hub.story.recap_next_label") }}</dt>
+          <dd class="is-highlight">{{ recap.nextStepText }}</dd>
+        </div>
+      </dl>
+
+      <AeroActionButton
+        variant="primary"
+        size="lg"
+        block
+        icon="play"
+        @click="emit('start-story')"
+      >
         {{
           hasProgress ? $t("hub.story.btn_continue") : $t("hub.story.btn_start")
         }}
-      </span>
-    </button>
+      </AeroActionButton>
+    </AeroGlassCard>
 
-    <!-- Seletor Amigável de Pontos da História -->
+    <!-- Linha do Tempo / Pontos da História -->
     <section class="chapters-section">
       <h3 class="section-eyebrow">{{ $t("hub.story.chapters_title") }}</h3>
 
       <ol class="chapters-list" :aria-label="$t('hub.story.chapters_aria')">
         <li v-for="chapter in chapters" :key="chapter.id">
-          <button
-            type="button"
+          <AeroGlassCard
+            as="button"
+            :variant="chapter.status === 'current' ? 'accent' : 'default'"
+            padding="none"
+            interactive
             class="chapter-card"
             :class="`is-${chapter.status}`"
             :aria-label="`${chapter.eyebrow}: ${chapter.title} (${chapter.statusLabel})`"
@@ -77,13 +103,17 @@ function handleConfirmReset() {
             @click="handleSelectChapter(chapter.id)"
           >
             <span class="chapter-status" aria-hidden="true">
-              {{
-                chapter.status === "done"
-                  ? "✓"
-                  : chapter.status === "current"
-                    ? "●"
-                    : "○"
-              }}
+              <AppIcon
+                v-if="chapter.status === 'done'"
+                name="check"
+                :size="15"
+              />
+              <AppIcon
+                v-else-if="chapter.status === 'current'"
+                name="play"
+                :size="13"
+              />
+              <span v-else class="status-dot"></span>
             </span>
 
             <span class="chapter-info">
@@ -92,15 +122,21 @@ function handleConfirmReset() {
             </span>
 
             <span class="chapter-right">
-              <span class="chapter-meta">{{ chapter.meta }}</span>
+              <span
+                v-if="chapter.status === 'current'"
+                class="chapter-current-pill"
+              >
+                {{ chapter.statusLabel }}
+              </span>
+              <span v-else class="chapter-meta">{{ chapter.meta }}</span>
               <span class="chapter-arrow" aria-hidden="true">›</span>
             </span>
-          </button>
+          </AeroGlassCard>
         </li>
       </ol>
     </section>
 
-    <!-- Limpeza Segura de Progresso -->
+    <!-- Limpeza Segura de Progresso (Link discreto no rodapé) -->
     <section class="reset-section">
       <Transition name="fade">
         <p v-if="feedbackMessage" class="story-feedback" role="status">
@@ -108,8 +144,10 @@ function handleConfirmReset() {
         </p>
       </Transition>
 
-      <div
+      <AeroGlassCard
         v-if="isConfirmingReset"
+        variant="elevated"
+        padding="md"
         class="reset-confirm-card"
         role="alertdialog"
         aria-labelledby="story-reset-title"
@@ -121,33 +159,36 @@ function handleConfirmReset() {
           {{ $t("hub.story.reset_confirm_message") }}
         </p>
         <div class="reset-confirm-actions">
-          <button
-            type="button"
-            class="btn-tactile btn-tactile--ghost-dark btn-tactile--sm btn-reset-flex"
+          <AeroActionButton
+            variant="secondary"
+            size="sm"
+            class="btn-reset-flex"
             @click="isConfirmingReset = false"
           >
             {{ $t("hub.story.reset_cancel") }}
-          </button>
-          <button
-            type="button"
-            class="btn-tactile btn-tactile--danger btn-tactile--sm btn-reset-flex"
+          </AeroActionButton>
+          <AeroActionButton
+            variant="danger"
+            size="sm"
+            class="btn-reset-flex"
             @click="handleConfirmReset"
           >
             {{ $t("hub.story.reset_confirm") }}
-          </button>
+          </AeroActionButton>
         </div>
-      </div>
+      </AeroGlassCard>
 
-      <button
-        v-else
-        type="button"
-        class="btn-tactile btn-tactile--ghost-dark btn-tactile--block"
-        :disabled="!hasProgress"
-        @click="isConfirmingReset = true"
-      >
-        <span aria-hidden="true">↺</span>
-        <span>{{ $t("hub.story.reset_btn") }}</span>
-      </button>
+      <div v-else class="reset-link-wrap">
+        <AeroActionButton
+          variant="ghost-link"
+          size="sm"
+          icon="reset"
+          :disabled="!hasProgress"
+          @click="isConfirmingReset = true"
+        >
+          {{ $t("hub.story.reset_btn") }}
+        </AeroActionButton>
+      </div>
     </section>
 
     <!-- Painel Técnico de Debug Recolhível (Apenas DEV) -->
@@ -180,24 +221,70 @@ function handleConfirmReset() {
 </template>
 
 <style scoped>
-.story-intro {
+/* ── Resumo Card ── */
+.recap-card {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 12px;
 }
 
-.subtitle {
+.recap-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.recap-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(14, 165, 233, 0.14);
+  border: 1px solid rgba(14, 165, 233, 0.28);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #0369a1;
+}
+
+.recap-list {
   margin: 0;
-  color: var(--text-muted);
-  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.btn-play-icon {
-  font-size: 0.85rem;
-  line-height: 1;
+.recap-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-/* ── Seletor Amigável de Pontos da História ── */
+.recap-row dt {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--aero-text-muted, #475569);
+}
+
+.recap-row dd {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.3;
+  color: var(--aero-text-secondary, #334155);
+}
+
+.recap-row dd.is-highlight {
+  font-weight: 700;
+  color: var(--aero-text-primary, #0f172a);
+}
+
+/* ── Timeline de Pontos da História ── */
 .chapters-section {
   display: flex;
   flex-direction: column;
@@ -208,10 +295,10 @@ function handleConfirmReset() {
   margin: 0;
   font-family: var(--font-mono);
   font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--text-dim);
+  color: var(--aero-text-secondary, #334155);
 }
 
 .chapters-list {
@@ -220,65 +307,53 @@ function handleConfirmReset() {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 9px;
 }
 
 .chapter-card {
   width: 100%;
-  min-height: 54px;
+  min-height: 58px;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 14px;
-  text-align: left;
-  color: var(--text-main);
-  background: var(--bg-panel);
-  border: 1px solid var(--border-default);
-  border-radius: 10px;
-  cursor: pointer;
-  transition:
-    border-color 0.18s ease,
-    background-color 0.18s ease,
-    transform 0.12s ease;
+  padding: 11px 14px;
+  border-radius: 15px;
 }
 
-.chapter-card:hover,
-.chapter-card:focus-visible {
-  border-color: var(--accent-color);
-  background: rgba(54, 57, 59, 0.9);
-}
-
-.chapter-card:active {
-  transform: scale(0.99);
-}
-
-.chapter-card.is-current {
-  border-color: var(--light-green);
-  background: rgba(14, 165, 233, 0.1);
+.chapter-card.is-available {
+  opacity: 0.88;
 }
 
 .chapter-status {
   flex-shrink: 0;
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  font-weight: 700;
-  background: rgba(148, 163, 184, 0.12);
-  color: var(--text-muted);
+  background: rgba(15, 23, 42, 0.08);
+  color: var(--aero-text-muted, #475569);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #94a3b8;
 }
 
 .chapter-card.is-done .chapter-status {
-  background: rgba(148, 221, 188, 0.18);
-  color: var(--medium-green);
+  background: rgba(16, 185, 129, 0.18);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #047857;
 }
 
 .chapter-card.is-current .chapter-status {
-  background: rgba(160, 236, 208, 0.22);
-  color: var(--light-green);
+  background: linear-gradient(135deg, #0ea5e9 0%, #14b8a6 100%);
+  border-color: rgba(255, 255, 255, 0.9);
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(14, 165, 233, 0.32);
 }
 
 .chapter-info {
@@ -292,20 +367,21 @@ function handleConfirmReset() {
 .chapter-eyebrow {
   font-family: var(--font-mono);
   font-size: 0.68rem;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--aero-text-muted, #475569);
 }
 
 .chapter-card.is-current .chapter-eyebrow {
-  color: var(--light-green);
+  color: var(--aero-accent, #0284c7);
 }
 
 .chapter-title {
-  font-size: 0.94rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
   line-height: 1.25;
+  color: var(--aero-text-primary, #0f172a);
   overflow-wrap: anywhere;
 }
 
@@ -316,67 +392,81 @@ function handleConfirmReset() {
   gap: 6px;
 }
 
+.chapter-current-pill {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(14, 165, 233, 0.16);
+  border: 1px solid rgba(14, 165, 233, 0.32);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #0369a1;
+}
+
 .chapter-meta {
   font-family: var(--font-mono);
   font-size: 0.72rem;
-  color: var(--text-dim);
+  font-weight: 600;
+  color: var(--aero-text-muted, #475569);
   white-space: nowrap;
 }
 
 .chapter-arrow {
   font-size: 1.2rem;
   line-height: 1;
-  color: var(--text-muted);
+  color: var(--aero-text-muted, #475569);
 }
 
-/* ── Reset Seguro ── */
+/* ── Reset Seguro (Demoted Link + Glass Confirm) ── */
 .reset-section {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding-top: 4px;
+}
+
+.reset-link-wrap {
+  display: flex;
+  justify-content: center;
 }
 
 .story-feedback {
   margin: 0;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: rgba(148, 221, 188, 0.14);
-  border: 1px solid rgba(148, 221, 188, 0.45);
-  color: var(--light-green);
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: rgba(209, 250, 229, 0.9);
+  border: 1px solid rgba(16, 185, 129, 0.45);
+  color: #065f46;
   font-size: 0.84rem;
-  font-weight: 600;
+  font-weight: 700;
   text-align: center;
 }
 
 .reset-confirm-card {
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: rgba(30, 41, 59, 0.9);
-  border: 1px solid rgba(239, 68, 68, 0.45);
+  border-color: rgba(239, 68, 68, 0.45);
   display: flex;
   flex-direction: column;
   gap: 8px;
-  text-align: left;
 }
 
 .reset-confirm-title {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: 0.96rem;
   font-weight: 700;
-  color: #fecaca;
+  color: #991b1b;
 }
 
 .reset-confirm-message {
   margin: 0;
-  font-size: 0.84rem;
-  line-height: 1.35;
-  color: var(--text-muted);
+  font-size: 0.85rem;
+  line-height: 1.38;
+  color: var(--aero-text-secondary, #334155);
 }
 
 .reset-confirm-actions {
   display: flex;
   gap: 8px;
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .btn-reset-flex {
@@ -389,20 +479,20 @@ function handleConfirmReset() {
   flex-direction: column;
   gap: 12px;
   padding-top: 12px;
-  border-top: 1px solid rgba(148, 163, 184, 0.18);
+  border-top: 1px solid rgba(15, 23, 42, 0.12);
 }
 
 .btn-debug-toggle {
   align-self: center;
-  min-height: 44px;
-  padding: 8px 14px;
+  min-height: 40px;
+  padding: 6px 14px;
   border-radius: 999px;
-  border: 1px dashed rgba(244, 63, 94, 0.45);
-  background: rgba(15, 23, 42, 0.6);
-  color: #fda4af;
+  border: 1px dashed rgba(225, 29, 72, 0.45);
+  background: rgba(255, 255, 255, 0.65);
+  color: #be123c;
   font-family: var(--font-mono);
-  font-size: 0.76rem;
-  font-weight: 600;
+  font-size: 0.74rem;
+  font-weight: 700;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -413,8 +503,8 @@ function handleConfirmReset() {
 }
 
 .btn-debug-toggle:hover {
-  background: rgba(244, 63, 94, 0.14);
-  border-color: rgba(244, 63, 94, 0.75);
+  background: rgba(255, 228, 230, 0.85);
+  border-color: rgba(225, 29, 72, 0.75);
 }
 
 .debug-chevron {
@@ -437,7 +527,6 @@ function handleConfirmReset() {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .chapter-card,
   .btn-debug-toggle,
   .debug-chevron,
   .fade-enter-active,

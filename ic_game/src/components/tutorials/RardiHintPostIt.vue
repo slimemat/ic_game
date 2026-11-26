@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, onUnmounted } from "vue";
+import { useCustomizationStore } from "../../stores/customization";
 import PostItSketchDiagram from "./PostItSketchDiagram.vue";
 import PostItHand from "./PostItHand.vue";
 
@@ -41,6 +42,11 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["close", "replay-tutorial"]);
+
+const customization = useCustomizationStore();
+const resolvedHandSkinId = computed(
+  () => props.handSkinId || customization.resolvedEquippedHandSkinId,
+);
 
 const canReplay = computed(() => Boolean(props.visualHint?.tutorialId));
 
@@ -93,7 +99,7 @@ onUnmounted(() => {
       </button>
 
       <!-- Mão customizável em 3 seções (palma traseira + braço em z-index 1, polegar em z-index 3) -->
-      <PostItHand :skinId="handSkinId" />
+      <PostItHand :skinId="resolvedHandSkinId" />
 
       <!-- Camada média (z-index: 2): Post-it Quadrado (clicar no corpo NÃO fecha o modal) -->
       <article

@@ -47,6 +47,34 @@ test("HAND_SKINS: todas as skins registradas possuem assets e chaves i18n válid
     }
     assert.ok(skin.arm.fillColor);
     assert.ok(skin.arm.borderColor);
+    assert.ok(skin.unlockCondition?.type, `${key}: unlockCondition ausente`);
+  }
+
+  assert.equal(HAND_SKINS.blue.unlockCondition.type, "free");
+  assert.deepEqual(HAND_SKINS.cow.unlockCondition, {
+    type: "xp",
+    requiredXp: 400,
+  });
+  assert.deepEqual(HAND_SKINS.tiger.unlockCondition, {
+    type: "xp",
+    requiredXp: 675,
+  });
+
+  const requiredUiKeys = [
+    "customization.ui.title",
+    "customization.ui.subtitle",
+    "customization.ui.equipped",
+    "customization.ui.equip",
+    "customization.ui.locked",
+    "customization.ui.unlock_free",
+    "customization.ui.unlock_xp",
+    "customization.ui.progress_xp",
+  ];
+  for (const uiKey of requiredUiKeys) {
+    assert.ok(
+      resolveI18nPath(ptBR, uiKey),
+      `Chave i18n '${uiKey}' ausente em pt-BR.json`,
+    );
   }
 });
 

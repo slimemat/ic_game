@@ -56,6 +56,13 @@
       "profile": "Perfil",
       "ranking": "Ranking"
     },
+    "home": {
+      "chapter_badge": "Capítulo {chapter} • Dia {day}",
+      "active_ticket": "Chamado Ativo",
+      "btn_start": "Iniciar Jogo",
+      "btn_continue": "Continuar Jogo",
+      "all_done": "Você concluiu todos os chamados desta versão. Aproveite o café! ☕"
+    },
     "challenges": {
       "title": "Desafios",
       "subtitle": "Selecione um jogo para treinar suas habilidades"
@@ -67,6 +74,12 @@
       "subtitle_current": "Dia {day} • Chamado #0{stage} em andamento",
       "btn_start": "Iniciar Jornada",
       "btn_continue": "Continuar Jornada",
+      "recap_title": "Resumo",
+      "recap_last_label": "Último marco",
+      "recap_next_label": "Próximo passo",
+      "recap_new_journey": "Você está prestes a iniciar seu primeiro dia na {companyName}.",
+      "recap_prologue_done": "Boas-vindas concluídas na {companyName}",
+      "recap_all_done": "Todos os chamados atuais foram concluídos!",
       "chapters_title": "Pontos da História",
       "chapters_aria": "Selecionar ponto da história",
       "prologue_eyebrow": "Prólogo",
@@ -92,8 +105,13 @@
     },
     "ranking": {
       "title": "Ranking",
+      "subtitle": "Placar de desempenho na Logicompany",
       "you": "Você",
-      "xp": "{xp} XP"
+      "xp": "{xp} XP",
+      "role_client": "Pesquisadora",
+      "role_manager": "Gerência",
+      "role_assistant": "Assistente",
+      "role_bot": "Sistema Noturno"
     },
     "debug": {
       "toggle_show": "🛠️ Ferramentas de Debug",
@@ -353,7 +371,7 @@
         "description": "Análise crítica de anomalias com sequências profundas."
       },
       "stage4": {
-        "title": "Chamado #04 - Espelhamento de Matrizes",
+        "title": "Espelhamento de Matrizes",
         "description": "Calibre e espelhe os blocos de dados na matriz para restaurar os setores lógicos corrompidos."
       }
     },
@@ -585,6 +603,16 @@
       "blue": "Mão Azul",
       "cow": "Mão Vaquinha",
       "tiger": "Mão Tigre"
+    },
+    "ui": {
+      "title": "Personalizar Braço",
+      "subtitle": "Novos visuais desbloqueiam automaticamente com seu XP, sem gastar pontos.",
+      "equipped": "Equipado",
+      "equip": "Equipar",
+      "locked": "Bloqueado",
+      "unlock_free": "Desbloqueado",
+      "unlock_xp": "Requer {xp} XP",
+      "progress_xp": "{current} / {target} XP"
     }
   }
 }

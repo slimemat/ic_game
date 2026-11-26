@@ -53,6 +53,28 @@
   --color-invalid-border: #ef4444;
   --color-invalid-bg: #fee2e2;
   --color-invalid-shadow: #b91c1c;
+
+  /* ── Frutiger Aero Lobby Design Tokens ── */
+  --aero-sky-top: #7dd3fc;
+  --aero-sky-mid: #bae6fd;
+  --aero-sky-bottom: #f0f9ff;
+  --aero-accent: #0284c7;
+  --aero-accent-bright: #0ea5e9;
+  --aero-teal: #14b8a6;
+  --aero-teal-deep: #0f766e;
+
+  --aero-glass-bg: rgba(255, 255, 255, 0.72);
+  --aero-glass-bg-strong: rgba(255, 255, 255, 0.88);
+  --aero-glass-bg-subtle: rgba(255, 255, 255, 0.52);
+  --aero-glass-border: rgba(255, 255, 255, 0.82);
+  --aero-glass-border-soft: rgba(14, 165, 233, 0.22);
+  --aero-glass-shadow:
+    0 10px 28px rgba(14, 74, 110, 0.14), 0 2px 6px rgba(14, 74, 110, 0.08);
+  --aero-glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+
+  --aero-text-primary: #0f172a;
+  --aero-text-secondary: #334155;
+  --aero-text-muted: #475569;
 }
 
 * {
@@ -607,6 +629,84 @@ h1 {
 
 .btn-tactile--block {
   width: 100%;
+}
+
+.btn-tactile--gloss {
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 4px 0 var(--btn-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.btn-tactile--gloss::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 52% 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.28),
+    rgba(255, 255, 255, 0)
+  );
+  pointer-events: none;
+}
+
+.btn-tactile--gloss:hover:not(:disabled) {
+  box-shadow:
+    0 5px 0 var(--btn-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.btn-tactile--gloss:active:not(:disabled) {
+  box-shadow:
+    0 1px 0 var(--btn-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.btn-tactile--gloss.btn-tactile--sm {
+  box-shadow:
+    0 3px 0 var(--btn-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.btn-tactile--gloss.btn-tactile--sm:hover:not(:disabled) {
+  box-shadow:
+    0 4px 0 var(--btn-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.btn-tactile--gloss.btn-tactile--sm:active:not(:disabled) {
+  box-shadow:
+    0 1px 0 var(--btn-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.btn-tactile--ghost-link {
+  --btn-bg: transparent;
+  --btn-bg-hover: rgba(239, 68, 68, 0.1);
+  --btn-border: transparent;
+  --btn-shadow: transparent;
+  --btn-color: #b91c1c;
+
+  min-height: 40px;
+  padding: 6px 12px;
+  border-width: 1px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.btn-tactile--ghost-link:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  border-color: rgba(220, 38, 38, 0.25);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.btn-tactile--ghost-link:active:not(:disabled) {
+  transform: scale(0.98);
+  box-shadow: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -5,6 +5,8 @@
  * - Novas customizações são adicionadas apenas criando a pasta em
  *   `src/assets/sprites/hands/<skinId>/` e registrando uma entrada via
  *   `createHandSkin` aqui, sem alterar `PostItHand.vue` ou `RardiHintPostIt.vue`.
+ * - Desbloqueios são declarativos via `unlockCondition` (avaliados passivamente
+ *   por `unlockConditions.js` sem nunca descontar XP do plano de carreira).
  */
 
 const DEFAULT_BORDER_COLOR = "#262626";
@@ -18,13 +20,19 @@ function resolveHandAsset(skinId, fileName) {
 
 function createHandSkin(
   id,
-  { fillColor, borderColor = DEFAULT_BORDER_COLOR, hasArmTile = false } = {},
+  {
+    fillColor,
+    borderColor = DEFAULT_BORDER_COLOR,
+    hasArmTile = false,
+    unlockCondition = { type: "free" },
+  } = {},
 ) {
   return Object.freeze({
     id,
     nameKey: `customization.hands.${id}`,
     thumbSrc: resolveHandAsset(id, "thumb"),
     palmBackSrc: resolveHandAsset(id, "palm-back"),
+    unlockCondition: Object.freeze({ ...unlockCondition }),
     arm: Object.freeze({
       tileSrc: hasArmTile ? resolveHandAsset(id, "arm") : null,
       fillColor,
@@ -36,9 +44,22 @@ function createHandSkin(
 export const DEFAULT_HAND_SKIN_ID = "blue";
 
 export const HAND_SKINS = Object.freeze({
-  blue: createHandSkin("blue", { fillColor: "#1c3377" }),
-  cow: createHandSkin("cow", { fillColor: "#f8fafc", hasArmTile: true }),
-  tiger: createHandSkin("tiger", { fillColor: "#f97316", hasArmTile: true }),
+  blue: createHandSkin("blue", {
+    fillColor: "#1c3377",
+    unlockCondition: { type: "free" },
+  }),
+  cow: createHandSkin("cow", {
+    fillColor: "#f8fafc",
+    hasArmTile: true,
+    // Etapa 1 rende 200–225 XP; Etapa 1 + Etapa 2 (turno extra) rende 400–455 XP
+    unlockCondition: { type: "xp", requiredXp: 400 },
+  }),
+  tiger: createHandSkin("tiger", {
+    fillColor: "#f97316",
+    hasArmTile: true,
+    // Etapa 1 + 2 + 3 rende 675–770 XP
+    unlockCondition: { type: "xp", requiredXp: 675 },
+  }),
 });
 
 /**
