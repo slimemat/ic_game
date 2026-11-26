@@ -64,7 +64,7 @@ const isClockConcept = computed(
       />
       <path
         v-else-if="concept === 'rotate_180'"
-        d="M 70 65 L 70 21 A 44 44 0 0 1 114 65 Z"
+        d="M 70 21 A 44 44 0 0 1 70 109 Z"
         class="highlighter-sector"
       />
 
