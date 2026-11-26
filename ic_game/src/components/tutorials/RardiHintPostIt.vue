@@ -89,7 +89,7 @@ onUnmounted(() => {
       </button>
 
       <!-- Camada traseira (z-index: 1): Palma da mão + braço saindo por trás do post-it até a base da tela -->
-      <div class="postit-hand-back" aria-hidden="true">
+      <div class="postit-hand-layer postit-hand-back" aria-hidden="true">
         <img
           :src="handBackSpriteImg"
           alt=""
@@ -140,7 +140,7 @@ onUnmounted(() => {
       </article>
 
       <!-- Camada frontal (z-index: 3): Polegar em pixel art segurando a borda inferior direita -->
-      <div class="postit-hand-front" aria-hidden="true">
+      <div class="postit-hand-layer postit-hand-front" aria-hidden="true">
         <img
           :src="handSpriteImg"
           alt=""
@@ -323,8 +323,8 @@ onUnmounted(() => {
   line-height: 1;
 }
 
-/* Camada traseira (z-index: 1): Palma hexagonal da mão por trás do post-it + braço até a base da tela */
-.postit-hand-back {
+/* Camadas da mão em pixel art (escala inteira 3x = 96x96) compartilhando o mesmo pivô */
+.postit-hand-layer {
   position: absolute;
   right: -46px;
   bottom: -26px;
@@ -333,7 +333,14 @@ onUnmounted(() => {
   transform-origin: 51px 70px;
   transform: rotate(-24deg);
   pointer-events: none;
+}
+
+.postit-hand-back {
   z-index: 1;
+}
+
+.postit-hand-front {
+  z-index: 3;
 }
 
 .postit-arm-back {
@@ -349,19 +356,6 @@ onUnmounted(() => {
   transform: rotate(-24deg);
   pointer-events: none;
   z-index: 1;
-}
-
-/* Camada frontal (z-index: 3): Polegar em pixel art (escala inteira 3x = 96x96) encaixado na quina inferior direita */
-.postit-hand-front {
-  position: absolute;
-  right: -46px;
-  bottom: -26px;
-  width: 96px;
-  height: 96px;
-  transform-origin: 51px 70px;
-  transform: rotate(-24deg);
-  pointer-events: none;
-  z-index: 3;
 }
 
 .postit-hand-sprite {
