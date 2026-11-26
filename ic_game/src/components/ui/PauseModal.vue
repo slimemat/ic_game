@@ -8,21 +8,6 @@
       aria-modal="true"
       :aria-label="$t('global.modals.pause_title')"
     >
-      <!-- ── Placeholders / Sprites Decorativos (pointer-events: none) ── -->
-      <!-- Nuvem Decorativa Frutiger Aero -->
-      <div class="sprite-placeholder placeholder-cloud" aria-hidden="true">
-        <img :src="cloudImg" alt="" class="frutiger-cloud" />
-      </div>
-
-      <!-- Clipe de Papel em Pixel Art -->
-      <div
-        class="sprite-placeholder placeholder-clip"
-        aria-hidden="true"
-        title="Clipe de Papel"
-      >
-        <img :src="paperclipImg" alt="" class="pixelart-clip" />
-      </div>
-
       <!-- ── Barra Superior Estilo Frutiger Aero OS / Janela ── -->
       <header class="card-header">
         <div class="window-controls" aria-hidden="true">
@@ -131,8 +116,6 @@
 import { ref, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import ptBR from "../../locales/pt-BR.json";
-import paperclipImg from "../../assets/images/paperclip.png";
-import cloudImg from "../../assets/images/cloud.png";
 
 const props = defineProps({
   isOpen: {
@@ -302,45 +285,6 @@ const customThemeStyle = computed(() => {
   --theme-accent-hover: #059669;
   --theme-accent-glow: rgba(16, 185, 129, 0.38);
   --theme-accent-subtle: rgba(16, 185, 129, 0.14);
-}
-
-/* ── Placeholders para Sprites Decorativos ── */
-.sprite-placeholder {
-  position: absolute;
-  pointer-events: none;
-  z-index: 10;
-  user-select: none;
-}
-
-/* Nuvem Frutiger Aero */
-.placeholder-cloud {
-  top: -34px;
-  left: -20px;
-}
-
-.frutiger-cloud {
-  width: 90px;
-  height: auto;
-  opacity: 0.85;
-  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.18));
-  animation: float-cloud 4s ease-in-out infinite alternate;
-}
-
-/* Clipe de Papel */
-.placeholder-clip {
-  top: -22px;
-  right: 22px;
-}
-
-.pixelart-clip {
-  width: 58px;
-  height: 58px;
-  display: block;
-  image-rendering: pixelated;
-  image-rendering: -moz-crisp-edges;
-  image-rendering: crisp-edges;
-  filter: drop-shadow(2px 3px 5px rgba(0, 0, 0, 0.35));
-  transform: rotate(12deg);
 }
 
 /* ── Cabeçalho Frutiger Aero OS Window ── */
@@ -526,15 +470,6 @@ const customThemeStyle = computed(() => {
   }
 }
 
-@keyframes float-cloud {
-  0% {
-    transform: translateY(0px) rotate(-1deg);
-  }
-  100% {
-    transform: translateY(6px) rotate(1deg);
-  }
-}
-
 /* ── Ajustes para Telas Pequenas / Mobile ── */
 @media (max-width: 420px) {
   .pause-card {
@@ -542,21 +477,6 @@ const customThemeStyle = computed(() => {
   }
   .card-body {
     padding: 1rem 1rem 1.3rem;
-  }
-  .placeholder-cloud {
-    top: -28px;
-    left: -12px;
-  }
-  .frutiger-cloud {
-    width: 76px;
-  }
-  .placeholder-clip {
-    top: -18px;
-    right: 16px;
-  }
-  .pixelart-clip {
-    width: 48px;
-    height: 48px;
   }
   .pause-sprite-wrapper {
     width: 68px;
