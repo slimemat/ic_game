@@ -215,6 +215,10 @@ function toggleHint() {
   AudioManager.play("reply_sfx", { volume: 0.45 });
 }
 
+function closeHint() {
+  isHintOpen.value = false;
+}
+
 /** Passa para a cena Phaser os dados que ela precisa (via registry). */
 function syncRegistry() {
   game.value?.registry.set("level", currentLevel.value);
@@ -471,15 +475,6 @@ const triggerWarning = (msg, type = "info") => {
         <h1 v-else :key="currentLevel" class="pattern-prompt-title">
           {{ currentPromptText }}
         </h1>
-
-        <transition name="hint-fade">
-          <RardiHintPostIt
-            v-if="isHintOpen && currentHintText"
-            :hintText="currentHintText"
-            :visualHint="currentVisualHint"
-            @replay-tutorial="handleReplayTutorial"
-          />
-        </transition>
       </div>
     </header>
 
@@ -502,6 +497,17 @@ const triggerWarning = (msg, type = "info") => {
           {{ $t("pattern.mechanics.drag_to_slot") }}
         </span>
       </div>
+    </transition>
+
+    <!-- Modal Full-Focus de Dica (Post-it do Rardi) -->
+    <transition name="postit-modal-fade">
+      <RardiHintPostIt
+        v-if="isHintOpen && currentHintText"
+        :hintText="currentHintText"
+        :visualHint="currentVisualHint"
+        @close="closeHint"
+        @replay-tutorial="handleReplayTutorial"
+      />
     </transition>
 
     <!-- Micro-Tutorial Interativo Just-in-Time (Bancada de Edição) -->
@@ -825,19 +831,21 @@ const triggerWarning = (msg, type = "info") => {
   }
 }
 
-.hint-fade-enter-active,
-.hint-fade-leave-active,
+.postit-modal-fade-enter-active,
+.postit-modal-fade-leave-active {
+  transition: opacity 0.22s ease;
+}
+
+.postit-modal-fade-enter-from,
+.postit-modal-fade-leave-to {
+  opacity: 0;
+}
+
 .microcopy-fade-enter-active,
 .microcopy-fade-leave-active {
   transition:
     opacity 0.22s ease,
     transform 0.22s ease;
-}
-
-.hint-fade-enter-from,
-.hint-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-4px);
 }
 
 .microcopy-fade-enter-from,
