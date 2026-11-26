@@ -29,11 +29,18 @@ defineProps({
   align-items: center;
   gap: 6px;
   max-width: 90%;
-  padding: 4px 12px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.4);
-  color: #666;
-  font-size: 0.85rem;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    0 4px 12px rgba(14, 74, 110, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  color: var(--aero-text-secondary, #334155);
+  font-size: 0.84rem;
+  font-weight: 600;
   text-align: center;
   line-height: 1.3;
 }

@@ -85,7 +85,11 @@ const handleTouchEnd = (action) => {
 <template>
   <main class="game-screen">
     <div class="ui-header">
-      <button class="action-button secondary" @click="$emit('back')">
+      <button
+        type="button"
+        class="btn-tactile btn-tactile--secondary btn-tactile--sm"
+        @click="$emit('back')"
+      >
         {{ $t("global.buttons.back") }}
       </button>
       <div class="score-display">{{ $t("test_game.score", { score }) }}</div>
@@ -149,10 +153,18 @@ const handleTouchEnd = (action) => {
         </div>
       </template>
       <template #actions>
-        <button @click="restartGame" class="btn btn-primary">
+        <button
+          type="button"
+          @click="restartGame"
+          class="btn-tactile btn-tactile--primary btn-tactile--lg btn-tactile--block"
+        >
           {{ $t("global.buttons.restart_level") }}
         </button>
-        <button @click="$emit('back')" class="btn btn-secondary">
+        <button
+          type="button"
+          @click="$emit('back')"
+          class="btn-tactile btn-tactile--secondary btn-tactile--block"
+        >
           {{ $t("global.buttons.quit") }}
         </button>
       </template>

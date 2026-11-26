@@ -1,130 +1,120 @@
 <script setup>
 import gamesData from "../../data/games.json";
+import LobbySectionHeader from "../ui/lobby/LobbySectionHeader.vue";
+import AeroGlassCard from "../ui/lobby/AeroGlassCard.vue";
+import ChallengeThumbnail from "../ui/lobby/ChallengeThumbnail.vue";
+import AeroActionButton from "../ui/lobby/AeroActionButton.vue";
 
 defineEmits(["select-game"]);
 </script>
 
 <template>
   <div class="tab-content">
-    <h2>{{ $t("hub.challenges.title") }}</h2>
-    <p class="subtitle">{{ $t("hub.challenges.subtitle") }}</p>
+    <LobbySectionHeader
+      :title="$t('hub.challenges.title')"
+      :subtitle="$t('hub.challenges.subtitle')"
+    />
 
-    <ul class="games-grid">
+    <ul class="games-list">
       <li v-for="game in gamesData" :key="game.id">
-        <button
-          type="button"
-          class="game-card"
-          @click="$emit('select-game', game.id)"
-        >
-          <img
+        <AeroGlassCard padding="sm" class="game-row-card">
+          <ChallengeThumbnail
             :src="game.previewImage"
-            alt=""
-            class="game-img"
-            loading="lazy"
+            :category="game.category"
+            :icon="game.icon"
           />
-          <span class="game-body">
-            <span class="game-category">
+
+          <div class="game-info">
+            <span class="game-category-pill">
               {{ $t(`global.categories.${game.category}`) }}
             </span>
-            <strong>{{ $t(`games.${game.id}.title`) }}</strong>
-            <span class="game-desc">
+            <strong class="game-title">{{
+              $t(`games.${game.id}.title`)
+            }}</strong>
+            <p class="game-desc">
               {{ $t(`games.${game.id}.description`) }}
-            </span>
-            <span class="play-label">{{ $t("global.buttons.play") }}</span>
-          </span>
-        </button>
+            </p>
+          </div>
+
+          <AeroActionButton
+            variant="primary"
+            size="sm"
+            icon="play"
+            class="game-play-btn"
+            @click="$emit('select-game', game.id)"
+          >
+            {{ $t("global.buttons.play") }}
+          </AeroActionButton>
+        </AeroGlassCard>
       </li>
     </ul>
   </div>
 </template>
 
 <style scoped>
-.subtitle {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-}
-
-.games-grid {
+.games-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 14px;
-}
-
-@media (min-width: 520px) {
-  .games-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.game-card {
   display: flex;
   flex-direction: column;
-  width: 100%;
-  padding: 0;
-  overflow: hidden;
-  text-align: left;
-  color: inherit;
-  background: var(--bg-panel);
-  border: 1px solid var(--border-default);
-  border-radius: 12px;
-  cursor: pointer;
-  transition:
-    transform 0.2s,
-    border-color 0.2s;
+  gap: 10px;
 }
 
-.game-card:hover,
-.game-card:focus-visible {
-  border-color: var(--accent-color);
-  transform: translateY(-2px);
+.game-row-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.game-card:active {
-  transform: scale(0.98);
-}
-
-.game-img {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-}
-
-.game-body {
+.game-info {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 12px 14px 14px;
+  gap: 3px;
 }
 
-.game-category {
+.game-category-pill {
+  align-self: flex-start;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(14, 165, 233, 0.14);
+  border: 1px solid rgba(14, 165, 233, 0.25);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--accent-color);
+  color: #0369a1;
 }
 
-.game-body strong {
-  font-size: 1.05rem;
+.game-title {
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--aero-text-primary, #0f172a);
 }
 
 .game-desc {
-  color: var(--text-muted);
-  font-size: 0.88rem;
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.3;
+  color: var(--aero-text-secondary, #334155);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.play-label {
-  align-self: flex-start;
-  margin-top: 8px;
-  padding: 8px 16px;
-  border-radius: 6px;
-  background: var(--accent-color);
-  color: #fff;
-  font-weight: 700;
-  font-size: 0.9rem;
+.game-play-btn {
+  flex-shrink: 0;
+}
+
+@media (max-width: 390px) {
+  .game-row-card {
+    gap: 10px;
+  }
 }
 </style>

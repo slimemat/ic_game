@@ -1,11 +1,17 @@
 <script setup>
-import { computed } from "vue";
-import VisualConceptDiagram from "./VisualConceptDiagram.vue";
+import { computed, onMounted, onUnmounted } from "vue";
+import { useCustomizationStore } from "../../stores/customization";
+import PostItSketchDiagram from "./PostItSketchDiagram.vue";
+import PostItHand from "./PostItHand.vue";
 
 /**
- * RardiHintPostIt: Exibe a "Cola Visual do Rardi" em formato de post-it rabiscado
- * quando o jogador abre o botão de Dica (?) nas fases espaciais, ou exibe o banner
- * padrão nas demais fases (ex.: padrões de cores), respeitando SRP e OCP.
+ * RardiHintPostIt: Modal full-focus de dica em formato de post-it quadrado
+ * com estética de caneta esferográfica azul, mão em pixel art segurando o papel
+ * e marcador de página lateral para rever o tutorial.
+ *
+ * Princípios SOLID (SRP & OCP):
+ * - Genérico e reutilizável para qualquer mini-jogo: exibe `hintText` obrigatoriamente
+ *   e, opcionalmente, um diagrama espacial (`visualHint`) + botão de rever tutorial.
  */
 const props = defineProps({
   /** Texto de dica contextual da fase/sub-etapa atual */
@@ -13,358 +19,310 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  /** Metadados opcionais da cola visual do Rardi (retornados por resolveVisualHintForLevel) */
+  /** Metadados opcionais da cola visual (ex.: retornados por resolveVisualHintForLevel) */
   visualHint: {
     type: Object,
     default: null,
   },
+  /** Permite exibir ou ocultar o botão de fechar (X) */
+  showClose: {
+    type: Boolean,
+    default: true,
+  },
+  /** Rótulo customizável para o botão de rever tutorial (fallback via i18n) */
+  replayLabel: {
+    type: String,
+    default: "",
+  },
+  /** ID da skin customizável da mão que segura o post-it */
+  handSkinId: {
+    type: String,
+    default: undefined,
+  },
 });
 
-const emit = defineEmits(["replay-tutorial"]);
+const emit = defineEmits(["close", "replay-tutorial"]);
 
-const isMirrorConcept = computed(
-  () =>
-    props.visualHint?.concept === "flip_h" ||
-    props.visualHint?.concept === "flip_v",
+const customization = useCustomizationStore();
+const resolvedHandSkinId = computed(
+  () => props.handSkinId || customization.resolvedEquippedHandSkinId,
 );
+
+const canReplay = computed(() => Boolean(props.visualHint?.tutorialId));
+
+function handleClose() {
+  emit("close");
+}
 
 function handleReplayClick() {
   if (props.visualHint?.tutorialId) {
     emit("replay-tutorial", props.visualHint.tutorialId);
   }
 }
+
+function handleKeydown(event) {
+  if (event.key === "Escape") {
+    handleClose();
+  }
+}
+
+onMounted(() => {
+  window.addEventListener("keydown", handleKeydown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", handleKeydown);
+});
 </script>
 
 <template>
-  <!-- Modo 1: Post-it Visual do Rardi (Fases de Rotação e Transformação/Espelho) -->
   <div
-    v-if="visualHint"
-    class="rardi-hint-postit"
-    :style="{ '--postit-bg': visualHint.color || '#fef08a' }"
-    role="note"
+    class="postit-backdrop"
+    role="dialog"
+    aria-modal="true"
+    :aria-label="$t('pattern.hint_button_label')"
+    @click="handleClose"
   >
-    <div class="postit-tape" aria-hidden="true"></div>
-
-    <!-- Zona 1: Faixa superior dedicada ao conceito + referência curta -->
-    <header class="postit-header">
-      <span class="postit-concept-badge">
-        📌 {{ $t(visualHint.titleKey) }}
-      </span>
-      <span
-        v-if="visualHint.badgeKey"
-        class="postit-ref-pill"
-        :class="{ 'is-mirror': isMirrorConcept }"
+    <div class="postit-stage" @click.stop>
+      <!-- Aba adesiva / marcador de página na borda inferior esquerda -->
+      <button
+        v-if="canReplay"
+        type="button"
+        class="postit-replay-tab"
+        :aria-label="replayLabel || $t('tutorials.desk.btn_replay_tutorial')"
+        @click.stop="handleReplayClick"
       >
-        {{ $t(visualHint.badgeKey) }}
-      </span>
-    </header>
+        <span class="replay-tab-icon" aria-hidden="true">↺</span>
+        <span class="replay-tab-text">
+          {{ replayLabel || $t("tutorials.desk.btn_replay_tutorial") }}
+        </span>
+      </button>
 
-    <!-- Zona 2: Diagrama animado clicável (abre "Rever Prática") + apoio visual e frase única -->
-    <component
-      :is="visualHint.tutorialId ? 'button' : 'div'"
-      :type="visualHint.tutorialId ? 'button' : undefined"
-      class="postit-diagram-trigger"
-      :class="{ 'is-interactive': Boolean(visualHint.tutorialId) }"
-      :aria-label="
-        visualHint.tutorialId
-          ? $t('tutorials.desk.btn_replay_short')
-          : undefined
-      "
-      :title="
-        visualHint.tutorialId
-          ? $t('tutorials.desk.btn_replay_short')
-          : undefined
-      "
-      @click.stop="handleReplayClick"
-    >
-      <VisualConceptDiagram
-        class="postit-diagram"
-        :concept="visualHint.concept"
-        size="sm"
-        :customDoodleUrl="visualHint.customDoodleUrl || null"
-      />
-      <span v-if="visualHint.tutorialId" class="diagram-replay-caption">
-        ↺ {{ $t("tutorials.desk.btn_replay_micro") }}
-      </span>
-    </component>
+      <!-- Mão customizável em 3 seções (palma traseira + braço em z-index 1, polegar em z-index 3) -->
+      <PostItHand :skinId="resolvedHandSkinId" />
 
-    <div class="postit-copy">
-      <div
-        v-if="visualHint.sketchImages?.length"
-        class="postit-sketch-strip"
-        aria-hidden="true"
+      <!-- Camada média (z-index: 2): Post-it Quadrado (clicar no corpo NÃO fecha o modal) -->
+      <article
+        class="rardi-hint-postit"
+        :style="{ '--postit-bg': visualHint?.color || '#fef08a' }"
+        role="note"
+        @click.stop
       >
-        <template v-for="(sketch, sIdx) in visualHint.sketchImages" :key="sIdx">
-          <div
-            class="postit-sketch-item"
-            :style="{ '--sketch-tilt': sketch.tilt || '-1.5deg' }"
+        <!-- Botão X com área de toque mínima invisível de 44x44px -->
+        <button
+          v-if="showClose"
+          type="button"
+          class="postit-close-btn"
+          :aria-label="$t('tutorials.desk.close_note')"
+          @click.stop="handleClose"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            class="postit-close-svg"
+            aria-hidden="true"
+            fill="none"
           >
-            <img
-              :src="sketch.src"
-              :alt="sketch.labelKey ? $t(sketch.labelKey) : ''"
-              class="postit-sketch-img"
-              draggable="false"
-            />
-            <span v-if="sketch.labelKey" class="postit-sketch-label">
-              {{ $t(sketch.labelKey) }}
-            </span>
-          </div>
-          <span
-            v-if="sIdx < visualHint.sketchImages.length - 1"
-            class="postit-sketch-arrow"
-          >
-            →
-          </span>
-        </template>
-      </div>
+            <path d="M6 6 L18 18" />
+            <path d="M18 6 L6 18" />
+          </svg>
+        </button>
 
-      <p class="postit-level-hint">
-        {{ hintText }}
-      </p>
+        <!-- Conteúdo principal em caneta esferográfica azul -->
+        <div class="postit-body">
+          <PostItSketchDiagram
+            v-if="visualHint?.concept"
+            class="postit-diagram"
+            :concept="visualHint.concept"
+          />
+
+          <p class="postit-level-hint" :class="{ 'is-text-only': !visualHint }">
+            {{ hintText }}
+          </p>
+        </div>
+      </article>
     </div>
   </div>
-
-  <!-- Modo 2: Dica padrão limpa (Fases de Cores ou outros contextos sem diagrama espacial) -->
-  <p v-else class="standard-hint-banner">
-    <span class="hint-bulb" aria-hidden="true">💡</span>
-    <span>{{ hintText }}</span>
-  </p>
 </template>
 
 <style scoped>
+.postit-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(10, 15, 28, 0.72);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  overflow: hidden;
+}
+
+.postit-stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: postit-lift 0.38s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes postit-lift {
+  from {
+    opacity: 0;
+    transform: translateY(55vh) rotate(-4deg) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(-1deg) scale(1);
+  }
+}
+
 .rardi-hint-postit {
   position: relative;
-  width: 100%;
-  margin-top: 8px;
-  padding: 12px 13px 11px;
+  width: min(82vw, 336px);
+  aspect-ratio: 1 / 1;
+  padding: 36px 22px 28px;
   background-color: var(--postit-bg, #fef08a);
   background-image: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.38) 0%,
-    rgba(0, 0, 0, 0.03) 100%
+    170deg,
+    rgba(255, 255, 255, 0.42) 0%,
+    rgba(0, 0, 0, 0.04) 100%
   );
-  border-radius: 10px;
-  border: 1.5px solid rgba(161, 98, 7, 0.32);
+  border-radius: 4px;
   box-shadow:
-    0 8px 20px rgba(0, 0, 0, 0.35),
-    inset 0 -4px 8px rgba(0, 0, 0, 0.04);
-  display: grid;
-  grid-template-columns: 80px minmax(0, 1fr);
-  grid-template-areas:
-    "header header"
-    "diagram copy";
+    0 22px 44px rgba(0, 0, 0, 0.48),
+    0 4px 10px rgba(0, 0, 0, 0.25),
+    inset 0 -10px 18px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: 8px 12px;
-  text-align: left;
-  color: #1e293b;
   pointer-events: auto;
-  transform: rotate(-0.4deg);
+  z-index: 2;
 }
 
-.postit-tape {
+/* Botão X com área de toque invisível mínima de 44x44px */
+.postit-close-btn {
   position: absolute;
-  top: -6px;
-  left: 50%;
-  transform: translateX(-50%) rotate(-1.5deg);
-  width: 56px;
-  height: 11px;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px dashed rgba(0, 0, 0, 0.16);
-  border-radius: 2px;
-  pointer-events: none;
-}
-
-/* ── Zona 1: Faixa Superior (100% largura, 1 linha) ── */
-.postit-header {
-  grid-area: header;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px dashed rgba(113, 63, 18, 0.22);
-}
-
-.postit-concept-badge {
-  min-width: 0;
-  font-size: 0.74rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: #713f12;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.postit-ref-pill {
-  flex-shrink: 0;
-  font-family: var(--font-mono);
-  font-size: 0.66rem;
-  font-weight: 700;
-  color: #0369a1;
-  background: #e0f2fe;
-  border: 1px solid #7dd3fc;
-  border-radius: 6px;
-  padding: 2px 7px;
-  line-height: 1.2;
-  white-space: nowrap;
-}
-
-.postit-ref-pill.is-mirror {
-  color: #be185d;
-  background: #fce7f3;
-  border-color: #f9a8d4;
-}
-
-/* ── Zona 2: Diagrama Clicável + Explicação ── */
-.postit-diagram-trigger {
-  grid-area: diagram;
-  background: none;
-  border: none;
+  top: 2px;
+  right: 2px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  color: inherit;
-  transition: transform 0.12s ease;
-}
-
-.postit-diagram-trigger.is-interactive {
+  border: none;
+  background: transparent;
+  display: grid;
+  place-items: center;
   cursor: pointer;
+  z-index: 5;
+  border-radius: 50%;
+  transition: transform 0.14s ease;
 }
 
-.postit-diagram-trigger.is-interactive:hover {
-  transform: translateY(-1px);
+.postit-close-btn:active {
+  transform: scale(0.9);
 }
 
-.postit-diagram-trigger.is-interactive:active {
-  transform: scale(0.96);
+.postit-close-btn:focus-visible {
+  outline: 2px solid #1e40af;
+  outline-offset: -4px;
 }
 
-.postit-diagram-trigger.is-interactive:focus-visible {
-  outline: 2px solid #0284c7;
-  outline-offset: 2px;
-  border-radius: 10px;
+.postit-close-svg {
+  width: 22px;
+  height: 22px;
+  stroke: #1e40af;
+  stroke-width: 2.8;
+  stroke-linecap: round;
 }
 
-.diagram-replay-caption {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  font-weight: 600;
-  color: rgba(113, 63, 18, 0.72);
-  letter-spacing: 0.02em;
-  line-height: 1;
-  white-space: nowrap;
-  transition: color 0.15s ease;
-}
-
-.postit-diagram-trigger.is-interactive:hover .diagram-replay-caption {
-  color: #0369a1;
-}
-
-.postit-copy {
-  grid-area: copy;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.postit-sketch-strip {
-  display: flex;
-  align-items: center;
-  flex-wrap: nowrap;
-  justify-content: space-between;
+.postit-body {
   width: 100%;
-  gap: 2px;
-  padding: 1px 0;
-}
-
-.postit-sketch-item {
-  flex: 1 1 0;
-  min-width: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  transform: rotate(var(--sketch-tilt, -1.5deg));
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
 }
 
-.postit-sketch-img {
-  width: clamp(26px, 8vw, 34px);
-  height: clamp(26px, 8vw, 34px);
-  object-fit: contain;
-  image-rendering: pixelated;
-  mix-blend-mode: multiply;
-  filter: sepia(0.58) hue-rotate(-8deg) saturate(1.55) brightness(1.12)
-    contrast(0.95);
-  opacity: 0.88;
-}
-
-.postit-sketch-label {
-  font-family: var(--font-handwritten);
-  font-size: clamp(0.68rem, 2.5vw, 0.8rem);
-  font-weight: 700;
-  line-height: 1;
-  color: #44403c;
-  white-space: nowrap;
-}
-
-.postit-sketch-arrow {
+.postit-diagram {
   flex-shrink: 0;
-  font-family: var(--font-handwritten);
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: #b91c1c;
-  margin-bottom: 10px;
 }
 
 .postit-level-hint {
   margin: 0;
   font-family: var(--font-handwritten);
-  font-size: clamp(1.06rem, 3.6vw, 1.2rem);
+  font-size: clamp(1.32rem, 5vw, 1.56rem);
   font-weight: 700;
-  color: #292524;
-  line-height: 1.22;
+  color: #1e40af;
+  line-height: 1.18;
+  letter-spacing: 0.01em;
 }
 
-@media (max-width: 360px) {
-  .rardi-hint-postit {
-    grid-template-columns: 72px minmax(0, 1fr);
-    gap: 8px 10px;
-  }
+.postit-level-hint.is-text-only {
+  font-size: clamp(1.48rem, 5.6vw, 1.8rem);
+  line-height: 1.24;
+  padding: 0 6px;
+}
 
-  .postit-diagram {
-    width: 72px;
-    height: 72px;
-  }
+/* Aba adesiva / marcador de página colorido na borda inferior esquerda */
+.postit-replay-tab {
+  position: absolute;
+  left: 16px;
+  bottom: -36px;
+  z-index: 1;
+  min-height: 44px;
+  padding: 12px 16px 8px;
+  border: none;
+  border-radius: 0 0 10px 10px;
+  background: #f97316;
+  color: #fffbeb;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-main);
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.32),
+    inset 0 6px 8px rgba(0, 0, 0, 0.14);
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.postit-replay-tab:hover {
+  background: #ea580c;
+  transform: translateY(2px);
+}
+
+.postit-replay-tab:active {
+  transform: translateY(4px);
+}
+
+.postit-replay-tab:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+.replay-tab-icon {
+  font-size: 1rem;
+  line-height: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .postit-diagram-trigger,
-  .diagram-replay-caption {
+  .postit-stage {
+    animation: none;
+    transform: rotate(-1deg);
+  }
+  .postit-close-btn,
+  .postit-replay-tab {
     transition: none;
   }
-}
-
-.standard-hint-banner {
-  margin: 7px 0 0;
-  padding-top: 7px;
-  border-top: 1px solid rgba(148, 163, 184, 0.22);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-family: var(--font-main);
-  font-size: clamp(0.78rem, 2.2vw, 0.9rem);
-  font-weight: 500;
-  color: #fde68a;
-  line-height: 1.35;
-}
-
-.hint-bulb {
-  font-size: 0.95rem;
-  flex-shrink: 0;
 }
 </style>

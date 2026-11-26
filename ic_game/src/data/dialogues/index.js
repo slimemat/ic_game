@@ -19,15 +19,26 @@
  *
  * Os textos ficam em story.scenes.<cena>.<idDoNó> no pt-BR.json.
  */
+const INTRO_HEADER_BASE = Object.freeze({
+  variant: "default",
+  eyebrowKey: "hub.story.prologue_eyebrow",
+  titleKey: "hub.story.prologue_title",
+});
+
 export const scenes = {
   // Cena de abertura do Modo História
   intro: {
     start: "intro",
+    header: true,
     systemMessage: true, // lê story.scenes.intro._system
     nodes: {
       intro: {
         speaker: "assistant",
         emotion: "neutral",
+        header: {
+          ...INTRO_HEADER_BASE,
+          participants: ["assistant"],
+        },
         choices: [
           { id: "choiceA", next: "replyA" },
           { id: "choiceB", next: "replyB" },
@@ -53,6 +64,10 @@ export const scenes = {
         type: "presence",
         action: "join",
         char: "manager",
+        header: {
+          ...INTRO_HEADER_BASE,
+          participants: ["assistant", "manager"],
+        },
         next: "manager_enters",
       },
       manager_enters: {
@@ -74,6 +89,10 @@ export const scenes = {
         type: "presence",
         action: "leave",
         char: "manager",
+        header: {
+          ...INTRO_HEADER_BASE,
+          participants: ["assistant"],
+        },
         next: "assistant_finish_player",
       },
       assistant_finish_player: {

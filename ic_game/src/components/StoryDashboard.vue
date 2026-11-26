@@ -190,7 +190,7 @@ const stageSteps = computed(() =>
               <div class="mission-action">
                 <button
                   type="button"
-                  class="btn-primary"
+                  class="btn-tactile btn-tactile--primary btn-tactile--lg btn-tactile--block"
                   @click="$emit('play', currentStage.gameId)"
                 >
                   <span class="btn-play-icon" aria-hidden="true">▶</span>
@@ -591,41 +591,6 @@ const stageSteps = computed(() =>
   width: 100%;
 }
 
-.btn-primary {
-  width: 100%;
-  min-height: 52px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-family: var(--font-main);
-  background-color: #14b8a6;
-  color: #ffffff;
-  border: 2px solid #0f766e;
-  padding: 0.75rem 1.25rem;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 1.02rem;
-  letter-spacing: 0.01em;
-  box-shadow: 0 4px 0 #0f766e;
-  transition:
-    transform 0.12s ease,
-    background-color 0.15s ease,
-    box-shadow 0.12s ease;
-}
-
-.btn-primary:hover {
-  background-color: #0d9488;
-  transform: translateY(-1px);
-  box-shadow: 0 5px 0 #0f766e;
-}
-
-.btn-primary:active {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 #0f766e;
-}
-
 .btn-play-icon {
   font-size: 0.82rem;
   line-height: 1;
@@ -671,7 +636,6 @@ const stageSteps = computed(() =>
 @media (prefers-reduced-motion: reduce) {
   .anim-fade-in,
   .step-node,
-  .btn-primary,
   .dot-red {
     animation: none;
     transition: none;

@@ -6,13 +6,15 @@ import { STORY_STAGES } from "../game/data/progressionConfig";
 import {
   PROLOGUE_CHAPTER_ID,
   buildStoryChapters,
+  buildStoryRecap,
+  hasStoryProgress,
   resolveChapterDay,
 } from "../game/logic/storyChapters";
 
 const FEEDBACK_MS = 3500;
 
 /**
- * Player-facing Story Mode chapter selector and safe progress reset.
+ * Player-facing Story Mode chapter selector, recap summary, and safe progress reset.
  * Consumes existing Pinia stores without duplicating progression rules.
  */
 export function useStoryChapterSelect() {
@@ -27,15 +29,52 @@ export function useStoryChapterSelect() {
 
   const companyName = computed(() => t("story.variables.companyName"));
 
-  const hasProgress = computed(
-    () =>
-      story.checkpoint !== STORY_CHECKPOINTS.INTRO_CUTSCENE ||
-      progression.totalXp > 0 ||
-      progression.completedStageIds.length > 0,
+  const hasProgress = computed(() =>
+    hasStoryProgress({
+      checkpoint: story.checkpoint,
+      totalXp: progression.totalXp,
+      completedStageIds: progression.completedStageIds,
+      introCheckpoint: STORY_CHECKPOINTS.INTRO_CUTSCENE,
+    }),
   );
 
   const currentStageNumber = computed(() => story.currentStage.stageNumber);
   const currentDay = computed(() => story.currentDay || 1);
+
+  const recap = computed(() => {
+    const raw = buildStoryRecap({
+      stages: STORY_STAGES,
+      currentStageId: story.currentStageId,
+      checkpoint: story.checkpoint,
+      completedStageIds: progression.completedStageIds,
+      totalXp: progression.totalXp,
+      introCheckpoint: STORY_CHECKPOINTS.INTRO_CUTSCENE,
+    });
+
+    const lastCompletedText = raw.lastCompletedStage
+      ? `${t("story.dashboard.ticket_eyebrow", { num: raw.lastCompletedStage.stageNumber })} • ${t(raw.lastCompletedStage.titleKey)}`
+      : raw.hasCompletedIntro
+        ? t("hub.story.recap_prologue_done", {
+            companyName: companyName.value,
+          })
+        : t("hub.story.recap_new_journey", {
+            companyName: companyName.value,
+          });
+
+    const nextStepText = raw.allCompleted
+      ? t("hub.story.recap_all_done")
+      : raw.nextStage
+        ? `${t("story.dashboard.ticket_eyebrow", { num: raw.nextStage.stageNumber })} • ${t(raw.nextStage.titleKey)}`
+        : t("hub.story.recap_new_journey", {
+            companyName: companyName.value,
+          });
+
+    return {
+      ...raw,
+      lastCompletedText,
+      nextStepText,
+    };
+  });
 
   const chapters = computed(() =>
     buildStoryChapters({
@@ -121,6 +160,7 @@ export function useStoryChapterSelect() {
     hasProgress,
     currentStageNumber,
     currentDay,
+    recap,
     chapters,
     feedbackMessage,
     selectChapter,

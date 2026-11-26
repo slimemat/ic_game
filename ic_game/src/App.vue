@@ -189,7 +189,11 @@ function playGame(gameId) {
   <!-- ── Fallback ───────────────────────────────────────────────────────── -->
   <div v-else class="game-not-found">
     <h2>{{ $t("global.game_not_found") }}</h2>
-    <button class="btn-primary" @click="goToMenu()">
+    <button
+      type="button"
+      class="btn-tactile btn-tactile--primary"
+      @click="goToMenu()"
+    >
       {{ $t("global.buttons.back_to_menu") }}
     </button>
   </div>

@@ -1,14 +1,15 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useProgressionStore } from "../stores/progression";
-import { useStoryStore } from "../stores/story";
+import { useStoryStore, STORY_CHECKPOINTS } from "../stores/story";
 import {
   STORY_STAGES,
   calculateStageTotalPayout,
 } from "../game/data/progressionConfig";
+import { hasStoryProgress } from "../game/logic/storyChapters";
 
 /**
- * Resume cargo, XP e chamados para a Sala de Descanso.
+ * Resume cargo, XP, progresso da história e chamado ativo para o Lobby.
  * Só lê das stores existentes; não duplica regra de negócio.
  */
 export function useRestSummary() {
@@ -28,7 +29,17 @@ export function useRestSummary() {
     const currentDone = completedIds.includes(story.currentStageId);
     const stage = story.currentStage;
 
+    const hasProgress = hasStoryProgress({
+      checkpoint: story.checkpoint,
+      totalXp: progression.totalXp,
+      completedStageIds: completedIds,
+      introCheckpoint: STORY_CHECKPOINTS.INTRO_CUTSCENE,
+    });
+
     return {
+      hasProgress,
+      currentDay: story.currentDay || 1,
+      chapterNumber: 1,
       rank: {
         title: t(rank.titleKey),
         badgeLabel: rank.badgeLabel,

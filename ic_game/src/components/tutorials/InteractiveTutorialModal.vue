@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import AudioManager from "../../game/managers/AudioManager";
 import AssistantPushBanner from "./AssistantPushBanner.vue";
+import PostItSketchDiagram from "./PostItSketchDiagram.vue";
 import SpatialProjectionArena from "./SpatialProjectionArena.vue";
 
 const props = defineProps({
@@ -47,7 +48,15 @@ watch(
     shakingNoteIndex.value = -1;
     activeErrorTipKey.value = null;
     activeZoomedNoteId.value = null;
+    showSkipDialog.value = false;
+    isSubmitting.value = false;
   },
+);
+
+const windowTitle = computed(() =>
+  props.tutorial?.id === "spatial_reflection"
+    ? t("tutorials.desk.window_title_reflection")
+    : t("tutorials.desk.window_title_rotation"),
 );
 
 const totalSteps = computed(() => rardiNotes.value.length || 1);
@@ -220,186 +229,178 @@ function handleConfirmSkip() {
     class="tutorial-overlay modal-backdrop-blur"
     role="dialog"
     aria-modal="true"
+    :aria-label="windowTitle"
+    @mousedown.stop
+    @mouseup.stop
+    @click.stop
+    @keydown.stop
   >
-    <div class="desk-surface fullscreen-desk">
-      <!-- 1. NOTIFICAÇÃO PUSH DA MALU (Componente Modular SRP) -->
-      <AssistantPushBanner
-        :message="currentNotificationMessage"
-        :messageKey="notificationKey"
-        :counterLabel="counterLabel"
-        :isError="Boolean(activeErrorTipKey)"
-        :isDone="isAllStepsCompleted || Boolean(currentStepSolvedOptionId)"
-      />
-
-      <!-- 2. CABEÇALHO + ABAS DE NOTAS DO RARDI -->
-      <div class="top-notes-header-row">
-        <div class="tutorial-header-bar">
-          <h3 class="tutorial-title">
-            {{
-              tutorial?.id === "spatial_reflection"
-                ? $t("tutorials.desk.reflection_title")
-                : $t("tutorials.desk.desk_title")
-            }}
-          </h3>
-          <span class="tutorial-badge">
-            {{
-              tutorial?.id === "spatial_reflection"
-                ? $t("tutorials.desk.reflection_badge")
-                : $t("tutorials.desk.desk_badge")
-            }}
-          </span>
-        </div>
-
-        <div
-          class="desk-notes-tray"
-          :title="$t('tutorials.desk.notes_tray_title')"
-        >
+    <div class="tutorial-window os-window-chrome">
+      <!-- Barra superior estilo macOS (igual Painel de Chamados e Sala de Descanso) -->
+      <header class="os-window-bar">
+        <div class="os-window-dots">
           <button
-            v-for="(note, idx) in rardiNotes"
-            :key="note.id"
             type="button"
-            class="rardi-mini-note-tab"
-            :class="{
-              'is-locked': !isNoteUnlocked(idx),
-              'is-shaking': shakingNoteIndex === idx,
-              'is-active': idx === activeStepIndex,
-              'is-done': isNoteCompleted(idx),
-              'is-next-invited': canGoToNextStep && idx === activeStepIndex + 1,
-              'just-completed': idx === lastCompletedNoteIndex,
-            }"
-            :style="{ '--note-color': note.color }"
-            :title="
-              !isNoteUnlocked(idx) ? $t('tutorials.desk.note_locked_tip') : ''
-            "
-            @click="handleNoteTabClick(note, idx, $event)"
-          >
-            <span class="mini-tab-title">{{ $t(note.shortTagKey) }}</span>
-            <span v-if="isNoteCompleted(idx)" class="tab-status-done">✓</span>
-            <span v-else-if="!isNoteUnlocked(idx)" class="tab-status-locked"
-              >🔒</span
-            >
-            <span v-else class="tab-status-active">●</span>
-          </button>
+            class="os-dot os-dot--red"
+            :title="$t('tutorials.unified.btn_skip')"
+            :aria-label="$t('tutorials.unified.btn_skip')"
+            @click.stop="showSkipDialog = true"
+          ></button>
+          <span class="os-dot os-dot--yellow" aria-hidden="true"></span>
+          <span class="os-dot os-dot--green" aria-hidden="true"></span>
         </div>
-      </div>
+        <div class="os-window-bar-title">{{ windowTitle }}</div>
+      </header>
 
-      <!-- 3. POST-IT VISUAL DO RARDI (Diagrama animado com marcador ▲ + Regra de Ouro) -->
-      <section
-        v-if="currentActiveNote"
-        class="rardi-visual-note-card"
-        :style="{ '--note-color': currentActiveNote.color }"
-        @click="openNoteZoom(currentActiveNote, $event)"
-      >
-        <div class="postit-tape-strip" aria-hidden="true"></div>
+      <div class="tutorial-window-body">
+        <!-- 1. CABEÇALHO COMPACTO DE PAPELARIA DA MALU -->
+        <AssistantPushBanner
+          :message="currentNotificationMessage"
+          :messageKey="notificationKey"
+          :counterLabel="counterLabel"
+          :isError="Boolean(activeErrorTipKey)"
+          :isDone="isAllStepsCompleted || Boolean(currentStepSolvedOptionId)"
+        />
 
-        <div class="visual-note-body">
-          <div class="visual-note-text-col">
-            <h4 class="note-card-title">
-              {{ $t(currentActiveNote.titleKey) }}
-            </h4>
-
-            <!-- Sequência de rabiscos desenhados à mão no post-it (ex.: relógio -> 1/4 -> seta) -->
-            <div
-              v-if="currentActiveNote.sketchImages?.length"
-              class="note-sketch-strip"
-              aria-hidden="true"
-            >
-              <template
-                v-for="(sketch, sIdx) in currentActiveNote.sketchImages"
-                :key="sIdx"
-              >
-                <div
-                  class="sketch-step-item"
-                  :style="{
-                    '--sketch-tilt': sketch.tilt || '-1.5deg',
-                    '--step-delay': `${sIdx * 0.8}s`,
-                  }"
-                >
-                  <img
-                    :src="sketch.src"
-                    :alt="sketch.labelKey ? $t(sketch.labelKey) : ''"
-                    class="sketch-ink-img"
-                    draggable="false"
-                  />
-                  <span v-if="sketch.labelKey" class="sketch-step-label">
-                    {{ $t(sketch.labelKey) }}
-                  </span>
-                </div>
-
-                <span
-                  v-if="sIdx < currentActiveNote.sketchImages.length - 1"
-                  class="sketch-drawn-arrow"
-                >
-                  →
-                </span>
-              </template>
-            </div>
-
-            <p
-              v-else-if="
-                currentActiveNote.goldenRuleKey &&
-                $t(currentActiveNote.goldenRuleKey)
+        <!-- 2. PASTA SANFONADA: ABAS MANILA + POST-IT DE EXPLICAÇÃO -->
+        <div class="notes-folder-block">
+          <div
+            class="manila-tabs-row"
+            role="tablist"
+            :aria-label="$t('tutorials.desk.notes_tray_title')"
+          >
+            <button
+              v-for="(note, idx) in rardiNotes"
+              :key="note.id"
+              type="button"
+              role="tab"
+              :aria-selected="idx === activeStepIndex"
+              class="manila-folder-tab"
+              :class="{
+                'is-locked': !isNoteUnlocked(idx),
+                'is-shaking': shakingNoteIndex === idx,
+                'is-active': idx === activeStepIndex,
+                'is-done': isNoteCompleted(idx),
+                'is-next-invited':
+                  canGoToNextStep && idx === activeStepIndex + 1,
+                'just-completed': idx === lastCompletedNoteIndex,
+              }"
+              :style="{ '--note-color': note.color }"
+              :title="
+                !isNoteUnlocked(idx) ? $t('tutorials.desk.note_locked_tip') : ''
               "
-              class="note-golden-rule-pill"
+              @click="handleNoteTabClick(note, idx, $event)"
             >
-              {{ $t(currentActiveNote.goldenRuleKey) }}
-            </p>
-
-            <p class="note-short-explanation">
-              {{ $t(currentActiveNote.textKey) }}
-            </p>
+              <span class="manila-tab-label">{{ $t(note.shortTagKey) }}</span>
+              <span
+                v-if="isNoteCompleted(idx)"
+                class="tab-status-done"
+                aria-hidden="true"
+              >
+                ✓
+              </span>
+              <svg
+                v-else-if="!isNoteUnlocked(idx)"
+                class="tab-lock-pixel-svg"
+                viewBox="0 0 12 14"
+                width="11"
+                height="13"
+                shape-rendering="crispEdges"
+                aria-hidden="true"
+              >
+                <path
+                  fill="currentColor"
+                  d="M4 1h4v1H4zM3 2h1v3H3zM8 2h1v3H8zM1 5h10v8H1z"
+                />
+                <path fill="#e2e8f0" d="M5 8h2v2H5zM5 10h2v1H5z" />
+              </svg>
+              <span v-else class="tab-status-active" aria-hidden="true">●</span>
+            </button>
           </div>
+
+          <!-- 3. POST-IT DE EXPLICAÇÃO (Alinhado ao RardiHintPostIt) -->
+          <section
+            v-if="currentActiveNote"
+            class="rardi-postit-card"
+            :style="{ '--note-color': currentActiveNote.color }"
+            @click="openNoteZoom(currentActiveNote, $event)"
+          >
+            <div class="postit-card-layout">
+              <div class="postit-diagram-col">
+                <PostItSketchDiagram :concept="currentActiveNote.actionKey" />
+              </div>
+
+              <div class="postit-copy-col">
+                <h4 class="note-card-title">
+                  {{ $t(currentActiveNote.titleKey) }}
+                </h4>
+                <p
+                  v-if="
+                    currentActiveNote.goldenRuleKey &&
+                    $t(currentActiveNote.goldenRuleKey)
+                  "
+                  class="note-golden-rule-tag"
+                >
+                  {{ $t(currentActiveNote.goldenRuleKey) }}
+                </p>
+                <p class="note-short-explanation">
+                  {{ $t(currentActiveNote.textKey) }}
+                </p>
+              </div>
+            </div>
+          </section>
         </div>
-      </section>
 
-      <!-- 4. PALCO DE PROJEÇÃO E DRAG-AND-DROP (Componente Modular SRP) -->
-      <SpatialProjectionArena
-        v-if="currentActiveNote"
-        :options="currentStepOptions"
-        :actionKey="currentActiveNote.actionKey"
-        :initialPlacedOptionId="currentStepSolvedOptionId"
-        @option-placed="handleOptionPlaced"
-        @option-removed="handleOptionRemoved"
-      />
+        <!-- 4. PALCO DE PROJEÇÃO E DRAG-AND-DROP (Sandbox isolado) -->
+        <SpatialProjectionArena
+          v-if="currentActiveNote"
+          :options="currentStepOptions"
+          :actionKey="currentActiveNote.actionKey"
+          :initialPlacedOptionId="currentStepSolvedOptionId"
+          :sandboxMode="true"
+          @option-placed="handleOptionPlaced"
+          @option-removed="handleOptionRemoved"
+        />
 
-      <!-- 5. RODAPÉ DA TELA (Pular Tutorial à esquerda + Próximo Passo / Iniciar Desafio à direita) -->
-      <footer class="fullscreen-footer">
-        <button
-          type="button"
-          class="btn-text-skip"
-          @click="showSkipDialog = true"
-        >
-          {{ $t("tutorials.unified.btn_skip") }}
-        </button>
-
-        <transition name="fade" mode="out-in">
+        <!-- 5. RODAPÉ DA JANELA -->
+        <footer class="tutorial-window-footer">
           <button
-            v-if="canGoToNextStep"
-            key="btn-next-step"
             type="button"
-            class="btn-next-step"
-            @click="goToNextStep"
+            class="btn-text-skip"
+            @click.stop="showSkipDialog = true"
           >
-            <span>{{ $t("tutorials.desk.btn_next_step") }}</span>
-            <span class="arrow-sym">→</span>
+            {{ $t("tutorials.unified.btn_skip") }}
           </button>
 
-          <button
-            v-else-if="isAllStepsCompleted"
-            key="btn-start-challenge"
-            type="button"
-            class="btn-start-challenge"
-            :disabled="isSubmitting"
-            @click="handleStartChallenge"
-          >
-            <span>{{ $t("tutorials.unified.btn_start") }}</span>
-            <span class="arrow-sym">→</span>
-          </button>
-        </transition>
-      </footer>
+          <transition name="fade" mode="out-in">
+            <button
+              v-if="canGoToNextStep"
+              key="btn-next-step"
+              type="button"
+              class="btn-tactile btn-tactile--primary btn-footer-cta"
+              @click.stop="goToNextStep"
+            >
+              <span>{{ $t("tutorials.desk.btn_next_step") }}</span>
+              <span class="arrow-sym" aria-hidden="true">→</span>
+            </button>
+
+            <button
+              v-else-if="isAllStepsCompleted"
+              key="btn-start-challenge"
+              type="button"
+              class="btn-tactile btn-tactile--primary btn-footer-cta is-ready-pulse"
+              :disabled="isSubmitting"
+              @click.stop.prevent="handleStartChallenge"
+            >
+              <span>{{ $t("tutorials.unified.btn_start") }}</span>
+              <span class="arrow-sym" aria-hidden="true">→</span>
+            </button>
+          </transition>
+        </footer>
+      </div>
     </div>
 
-    <!-- OVERLAY DE ZOOM OPCIONAL DA NOTA DO RARDI -->
+    <!-- OVERLAY DE ZOOM OPCIONAL DA NOTA DO RARDI (Reutilizando PostItSketchDiagram) -->
     <transition name="note-zoom">
       <div
         v-if="activeZoomedNote"
@@ -419,54 +420,21 @@ function handleConfirmSkip() {
             ✕
           </button>
 
-          <div class="postit-tape-strip zoomed-tape" aria-hidden="true"></div>
-
           <header class="zoomed-header">
             <h4 class="zoomed-title">{{ $t(activeZoomedNote.titleKey) }}</h4>
           </header>
 
-          <div
-            v-if="activeZoomedNote.sketchImages?.length"
-            class="note-sketch-strip is-zoomed"
-            aria-hidden="true"
-          >
-            <template
-              v-for="(sketch, sIdx) in activeZoomedNote.sketchImages"
-              :key="sIdx"
-            >
-              <div
-                class="sketch-step-item"
-                :style="{
-                  '--sketch-tilt': sketch.tilt || '-1.5deg',
-                  '--step-delay': `${sIdx * 0.8}s`,
-                }"
-              >
-                <img
-                  :src="sketch.src"
-                  :alt="sketch.labelKey ? $t(sketch.labelKey) : ''"
-                  class="sketch-ink-img"
-                  draggable="false"
-                />
-                <span v-if="sketch.labelKey" class="sketch-step-label">
-                  {{ $t(sketch.labelKey) }}
-                </span>
-              </div>
-
-              <span
-                v-if="sIdx < activeZoomedNote.sketchImages.length - 1"
-                class="sketch-drawn-arrow"
-              >
-                →
-              </span>
-            </template>
-          </div>
+          <PostItSketchDiagram
+            class="zoomed-diagram"
+            :concept="activeZoomedNote.actionKey"
+          />
 
           <p
-            v-else-if="
+            v-if="
               activeZoomedNote.goldenRuleKey &&
               $t(activeZoomedNote.goldenRuleKey)
             "
-            class="note-golden-rule-pill"
+            class="note-golden-rule-tag"
           >
             {{ $t(activeZoomedNote.goldenRuleKey) }}
           </p>
@@ -481,26 +449,37 @@ function handleConfirmSkip() {
     <!-- MODAL INTERNO DE CONFIRMAÇÃO PARA PULAR -->
     <transition name="fade">
       <div v-if="showSkipDialog" class="confirm-skip-modal modal-backdrop-blur">
-        <div class="confirm-box">
-          <h4 class="confirm-h">{{ $t("tutorials.confirm_skip.title") }}</h4>
-          <p class="confirm-p">{{ $t("tutorials.confirm_skip.message") }}</p>
-          <div class="confirm-btns">
-            <button
-              type="button"
-              class="btn-back-tut"
-              :disabled="isSubmitting"
-              @click="showSkipDialog = false"
-            >
-              {{ $t("tutorials.confirm_skip.btn_stay") }}
-            </button>
-            <button
-              type="button"
-              class="btn-confirm-skip"
-              :disabled="isSubmitting"
-              @click="handleConfirmSkip"
-            >
-              {{ $t("tutorials.confirm_skip.btn_confirm") }}
-            </button>
+        <div class="confirm-box os-window-chrome">
+          <header class="os-window-bar">
+            <div class="os-window-dots" aria-hidden="true">
+              <span class="os-dot os-dot--red"></span>
+              <span class="os-dot os-dot--yellow"></span>
+              <span class="os-dot os-dot--green"></span>
+            </div>
+            <div class="os-window-bar-title">
+              {{ $t("tutorials.confirm_skip.title") }}
+            </div>
+          </header>
+          <div class="confirm-body">
+            <p class="confirm-p">{{ $t("tutorials.confirm_skip.message") }}</p>
+            <div class="confirm-btns">
+              <button
+                type="button"
+                class="btn-tactile btn-tactile--secondary btn-tactile--sm btn-confirm-flex"
+                :disabled="isSubmitting"
+                @click.stop="showSkipDialog = false"
+              >
+                {{ $t("tutorials.confirm_skip.btn_stay") }}
+              </button>
+              <button
+                type="button"
+                class="btn-tactile btn-tactile--danger-soft btn-tactile--sm btn-confirm-flex"
+                :disabled="isSubmitting"
+                @click.stop.prevent="handleConfirmSkip"
+              >
+                {{ $t("tutorials.confirm_skip.btn_confirm") }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -511,358 +490,244 @@ function handleConfirmSkip() {
 <style scoped>
 .tutorial-overlay {
   z-index: 2000;
-  padding: 6px;
+  padding: 10px;
 }
 
-.desk-surface.fullscreen-desk {
-  position: relative;
+.tutorial-window {
   width: 100%;
-  height: 100%;
-  max-width: 500px;
-  max-height: 860px;
-  background-color: #fbf9f4;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow:
-    0 16px 40px -10px rgba(0, 0, 0, 0.4),
-    0 2px 8px rgba(0, 0, 0, 0.1);
-  padding: 8px 10px 10px 10px;
+  max-width: 440px;
+  max-height: 94svh;
+  animation: cardSlideUp 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tutorial-window-body {
+  padding: 10px 12px 12px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  gap: 10px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* ── PASTA MANILA + POST-IT DE EXPLICAÇÃO ── */
+.notes-folder-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.manila-tabs-row {
+  display: flex;
+  align-items: flex-end;
   gap: 6px;
-  overflow: hidden;
-  animation: cardSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 0 6px;
+  margin-bottom: -1.5px;
+  position: relative;
+  z-index: 2;
 }
 
-/* CABEÇALHO + ABAS DE NOTAS DO RARDI */
-.top-notes-header-row {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.tutorial-header-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 2px;
-}
-
-.tutorial-title {
-  font-size: 0.86rem;
-  font-weight: 800;
-  color: #1e293b;
-  margin: 0;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-}
-
-.tutorial-badge {
-  font-size: 0.62rem;
-  font-weight: 800;
-  color: #64748b;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  padding: 2px 6px;
-  border-radius: 6px;
-  letter-spacing: 0.04em;
-}
-
-.desk-notes-tray {
-  display: flex;
-  gap: 8px;
-}
-
-.rardi-mini-note-tab {
+.manila-folder-tab {
   flex: 1;
-  display: flex;
+  min-width: 0;
+  display: inline-flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  padding: 6px 10px;
-  background-color: var(--note-color, var(--folder-bg));
-  border: 1.5px solid rgba(15, 23, 42, 0.15);
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  padding: 6px 10px 7px;
+  background-color: #e2e8f0;
+  color: #475569;
+  border: 1.5px solid #94a3b8;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  font-family: var(--font-mono);
+  font-size: clamp(0.65rem, 2.7vw, 0.75rem);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  white-space: nowrap;
   cursor: pointer;
-  transition: all 0.18s ease;
-  height: 6vh;
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    transform 0.16s ease;
 }
 
-.rardi-mini-note-tab.is-active {
-  border-color: #0284c7;
-  box-shadow:
-    0 0 0 2px rgba(2, 132, 199, 0.25),
-    0 3px 8px rgba(0, 0, 0, 0.12);
-  transform: translateY(-1px);
+.manila-tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.rardi-mini-note-tab.is-next-invited {
-  border-color: var(--color-valid-border);
-  box-shadow: 0 0 0 2.5px rgba(22, 163, 74, 0.35);
-  animation: pulseGreen 1.6s infinite;
+.manila-folder-tab.is-active {
+  background-color: var(--note-color, var(--folder-bg));
+  color: #1e3a8a;
+  border-color: rgba(30, 64, 175, 0.35);
+  padding-top: 8px;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.55);
 }
 
-.rardi-mini-note-tab.is-locked {
-  opacity: 0.45;
+.manila-folder-tab.is-done:not(.is-active) {
+  background-color: #f0fdfa;
+  color: #0f766e;
+  border-color: #5eead4;
+}
+
+.manila-folder-tab.is-next-invited {
+  background-color: #ecfdf5;
+  color: #047857;
+  border-color: #10b981;
+  animation: tabInvitePulse 1.6s infinite;
+}
+
+.manila-folder-tab.is-locked {
+  background-color: #e2e8f0;
+  color: #64748b;
+  border-color: #94a3b8;
+  opacity: 0.78;
   cursor: not-allowed;
-  filter: grayscale(0.25);
 }
 
-.rardi-mini-note-tab.is-shaking {
+.manila-folder-tab.is-shaking {
   animation: lockShake 0.45s ease-in-out !important;
 }
 
-.mini-tab-title {
-  font-family: var(--font-handwritten);
-  font-size: clamp(1rem, 3.6vw, 1.14rem);
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  color: #1e293b;
-}
-
 .tab-status-done {
+  flex-shrink: 0;
   font-size: 0.78rem;
   font-weight: 900;
-  color: var(--color-valid-shadow);
+  color: #0f766e;
 }
 
 .just-completed .tab-status-done {
   animation: stampPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.tab-status-locked {
-  font-size: 0.68rem;
+.tab-lock-pixel-svg {
+  flex-shrink: 0;
+  color: #64748b;
+  image-rendering: pixelated;
 }
 
 .tab-status-active {
-  font-size: 0.65rem;
-  color: #0284c7;
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  color: #1e40af;
 }
 
-/* POST-IT VISUAL DO RARDI (EXPANDIDO MOBILE-FIRST) */
-.rardi-visual-note-card {
+/* Post-it quadrado / retangular limpo (alinhado ao RardiHintPostIt) */
+.rardi-postit-card {
   position: relative;
-  flex: 1 1 auto;
-  min-height: clamp(148px, 21vh, 210px);
-  max-height: 235px;
-  display: flex;
-  align-items: center;
+  z-index: 1;
   background-color: var(--note-color, var(--folder-bg));
   background-image: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.32) 0%,
-    rgba(161, 98, 7, 0.06) 100%
+    170deg,
+    rgba(255, 255, 255, 0.44) 0%,
+    rgba(15, 23, 42, 0.04) 100%
   );
-  border-radius: 12px;
-  border: 1.5px solid rgba(15, 23, 42, 0.14);
+  border-radius: 4px;
+  border: 1.5px solid rgba(30, 64, 175, 0.24);
   box-shadow:
-    0 5px 14px rgba(0, 0, 0, 0.1),
-    0 1px 3px rgba(0, 0, 0, 0.06);
-  padding: clamp(14px, 2.4vh, 22px) 12px;
+    0 5px 12px rgba(15, 23, 42, 0.14),
+    0 2px 4px rgba(15, 23, 42, 0.08),
+    inset 0 -8px 14px rgba(0, 0, 0, 0.04);
+  padding: 10px 12px;
   cursor: pointer;
 }
 
-.visual-note-body {
-  width: 100%;
+.postit-card-layout {
   display: flex;
   align-items: center;
+  gap: 10px;
 }
 
-.visual-note-text-col {
-  width: 100%;
+.postit-diagram-col {
+  flex: 0 0 clamp(114px, 34%, 138px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.postit-copy-col {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  gap: clamp(6px, 1.2vh, 12px);
+  gap: 4px;
 }
 
 .note-card-title {
   margin: 0;
   font-family: var(--font-handwritten);
-  font-size: clamp(1.32rem, 4.8vw, 1.55rem);
+  font-size: clamp(1.18rem, 4.3vw, 1.38rem);
   font-weight: 700;
   line-height: 1.05;
-  color: #292524;
+  color: #1e40af;
 }
 
-/* TIRINHA DE DESENHOS MESCLADOS COM O POST-IT (EFEITO CANETA NO PAPEL AMARELO) */
-.note-sketch-strip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 4px 2px 6px 2px;
-  margin: 2px 20px;
-  border-bottom: 1.5px dashed rgba(68, 64, 60, 0.22);
-}
-
-.note-sketch-strip.is-zoomed {
-  justify-content: center;
-  gap: 12px;
-  padding: 8px 14px;
-  width: 100%;
-}
-
-.sketch-step-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  transform: rotate(var(--sketch-tilt, -1.5deg));
-  animation: sketchStepHighlight 3.6s infinite ease-in-out;
-  animation-delay: var(--step-delay, 0s);
-}
-
-.sketch-ink-img {
-  width: clamp(42px, 11.5vw, 50px);
-  height: clamp(42px, 11.5vw, 50px);
-  object-fit: contain;
-  image-rendering: pixelated;
-  /* Mescla o cinza da imagem com o fundo amarelo do post-it como tinta de caneta */
-  mix-blend-mode: multiply;
-  filter: sepia(0.58) hue-rotate(-8deg) saturate(1.55) brightness(1.12)
-    contrast(0.95);
-  opacity: 0.88;
-  pointer-events: none;
-}
-
-.note-sketch-strip.is-zoomed .sketch-ink-img {
-  width: 64px;
-  height: 64px;
-}
-
-.sketch-step-label {
-  font-family: var(--font-handwritten);
-  font-size: clamp(0.88rem, 2.9vw, 1.02rem);
-  font-weight: 700;
-  line-height: 1;
-  color: #44403c;
-  white-space: nowrap;
-}
-
-.note-sketch-strip.is-zoomed .sketch-step-label {
-  font-size: 1.12rem;
-}
-
-.sketch-drawn-arrow {
-  font-family: var(--font-handwritten);
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #b91c1c;
-  opacity: 0.82;
-  margin-bottom: 12px;
-  user-select: none;
-}
-
-.note-sketch-strip.is-zoomed .sketch-drawn-arrow {
-  font-size: 1.4rem;
-  margin-bottom: 16px;
-}
-
-@keyframes sketchStepHighlight {
-  0%,
-  100% {
-    transform: rotate(var(--sketch-tilt, -1.5deg)) scale(1);
-  }
-  18% {
-    transform: rotate(0deg) scale(1.09);
-  }
-  36% {
-    transform: rotate(var(--sketch-tilt, -1.5deg)) scale(1);
-  }
-}
-
-.note-golden-rule-pill {
+.note-golden-rule-tag {
   margin: 0;
-  padding: 5px 9px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.72);
-  border-left: 3px solid #dc2626;
+  padding: 3px 7px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.65);
+  border-left: 2.5px solid #1e40af;
   font-family: var(--font-handwritten);
-  font-size: clamp(1.04rem, 3.7vw, 1.18rem);
+  font-size: clamp(0.95rem, 3.2vw, 1.06rem);
   font-weight: 700;
-  line-height: 1.2;
-  color: #0f172a;
+  line-height: 1.15;
+  color: #1e3a8a;
 }
 
 .note-short-explanation {
   margin: 0;
   font-family: var(--font-handwritten);
-  font-size: clamp(1.3rem, 4vw, 1.28rem);
-  font-weight: 600;
-  line-height: 1.22;
-  color: #292524;
+  font-size: clamp(1.06rem, 3.6vw, 1.2rem);
+  font-weight: 700;
+  line-height: 1.16;
+  color: #1e40af;
 }
 
-/* RODAPÉ DA TELA */
-.fullscreen-footer {
+/* ── RODAPÉ DA JANELA ── */
+.tutorial-window-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 36px;
-  padding: 2px 4px 0 4px;
+  gap: 10px;
+  min-height: 44px;
+  padding-top: 4px;
+  border-top: 1px solid #e2e8f0;
 }
 
 .btn-text-skip {
   background: none;
   border: none;
-  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
   font-weight: 600;
-  color: #94a3b8;
+  color: #64748b;
   text-decoration: underline;
   cursor: pointer;
-  padding: 4px 6px;
+  padding: 6px 4px;
 }
 
 .btn-text-skip:hover {
-  color: #64748b;
+  color: #334155;
 }
 
-.btn-next-step,
-.btn-start-challenge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 0.86rem;
-  font-weight: 800;
-  cursor: pointer;
-  transition: all 0.15s ease;
+.btn-footer-cta {
+  min-height: 40px;
+  padding: 7px 15px;
+  font-size: 0.88rem;
 }
 
-.btn-next-step {
-  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-  box-shadow:
-    0 3px 0 #0369a1,
-    0 4px 10px rgba(14, 165, 233, 0.35);
-}
-
-.btn-start-challenge {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  box-shadow:
-    0 3px 0 #047857,
-    0 4px 10px rgba(16, 185, 129, 0.4);
-  animation: pulseGreen 1.8s infinite;
-}
-
-.btn-next-step:hover:not(:disabled),
-.btn-start-challenge:hover:not(:disabled) {
-  filter: brightness(1.08);
-  transform: translateY(-1px);
+.btn-footer-cta.is-ready-pulse {
+  animation: ctaReadyPulse 1.8s infinite;
 }
 
 .arrow-sym {
-  font-size: 1rem;
+  font-size: 0.96rem;
   line-height: 1;
 }
 
-/* OVERLAY DE ZOOM DA NOTA */
+/* ── OVERLAY DE ZOOM DA NOTA ── */
 .zoomed-note-backdrop {
   z-index: 2200;
   padding: 16px;
@@ -871,42 +736,42 @@ function handleConfirmSkip() {
 .zoomed-note-card {
   position: relative;
   width: 100%;
-  max-width: 360px;
+  max-width: 340px;
   background-color: var(--note-color, var(--folder-bg));
-  border-radius: 14px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
-  padding: 22px 18px 18px 18px;
+  background-image: linear-gradient(
+    170deg,
+    rgba(255, 255, 255, 0.42) 0%,
+    rgba(0, 0, 0, 0.04) 100%
+  );
+  border-radius: 4px;
+  border: 1.5px solid rgba(30, 64, 175, 0.2);
+  box-shadow:
+    0 22px 44px rgba(0, 0, 0, 0.48),
+    0 4px 10px rgba(0, 0, 0, 0.25);
+  padding: 20px 18px 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  animation: zoomCardFromOrigin 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+  gap: 10px;
+  animation: zoomCardFromOrigin 0.26s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.zoomed-tape {
-  top: -10px;
-  width: 70px;
-  height: 18px;
-}
-
-.zoomed-diagram-showcase {
-  display: flex;
-  justify-content: center;
+.zoomed-diagram {
+  max-width: 210px;
 }
 
 .btn-floating-close-note {
   position: absolute;
-  top: -14px;
+  top: -12px;
   right: -12px;
   width: 34px;
   height: 34px;
   border-radius: 50%;
   background: #0f172a;
   color: #f8fafc;
-  border: 2.5px solid #ffffff;
+  border: 2px solid #ffffff;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 800;
   cursor: pointer;
   display: flex;
@@ -917,7 +782,7 @@ function handleConfirmSkip() {
 .zoomed-header {
   width: 100%;
   text-align: center;
-  border-bottom: 1.5px dashed rgba(0, 0, 0, 0.15);
+  border-bottom: 1px dashed rgba(30, 64, 175, 0.25);
   padding-bottom: 6px;
 }
 
@@ -925,16 +790,16 @@ function handleConfirmSkip() {
   font-family: var(--font-handwritten);
   font-size: 1.38rem;
   font-weight: 700;
-  color: #292524;
+  color: #1e40af;
   margin: 0;
 }
 
 .zoomed-body {
   font-family: var(--font-handwritten);
-  font-size: 1.12rem;
-  line-height: 1.28;
-  color: #292524;
-  font-weight: 600;
+  font-size: 1.2rem;
+  line-height: 1.24;
+  color: #1e40af;
+  font-weight: 700;
   text-align: center;
 }
 
@@ -942,35 +807,27 @@ function handleConfirmSkip() {
   margin: 0;
 }
 
-/* Modal de Confirmação para Pular */
+/* ── MODAL DE CONFIRMAÇÃO PARA PULAR ── */
 .confirm-skip-modal {
   padding: 16px;
   z-index: 2300;
 }
 
 .confirm-box {
-  background: #ffffff;
-  border: 2px solid #cbd5e1;
-  border-radius: 12px;
-  padding: 18px 20px;
   max-width: 340px;
   width: 100%;
-  text-align: center;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
 }
 
-.confirm-h {
-  font-size: 1rem;
-  font-weight: 800;
-  color: #0f172a;
-  margin: 0 0 6px 0;
+.confirm-body {
+  padding: 16px 18px;
+  text-align: center;
 }
 
 .confirm-p {
-  font-size: 0.82rem;
-  color: #475569;
-  margin: 0 0 16px 0;
-  line-height: 1.35;
+  font-size: 0.84rem;
+  color: #334155;
+  margin: 0 0 14px 0;
+  line-height: 1.4;
 }
 
 .confirm-btns {
@@ -979,28 +836,32 @@ function handleConfirmSkip() {
   justify-content: center;
 }
 
-.btn-back-tut {
+.btn-confirm-flex {
   flex: 1;
-  padding: 8px 12px;
-  background: #f1f5f9;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #334155;
-  cursor: pointer;
 }
 
-.btn-confirm-skip {
-  flex: 1;
-  padding: 8px 12px;
-  background: var(--color-invalid-bg);
-  border: 1px solid #fca5a5;
-  border-radius: 6px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #dc2626;
-  cursor: pointer;
+@keyframes tabInvitePulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+  }
+}
+
+@keyframes ctaReadyPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 4px 0 #0f766e,
+      0 0 0 0 rgba(20, 184, 166, 0.5);
+  }
+  50% {
+    box-shadow:
+      0 4px 0 #0f766e,
+      0 0 0 7px rgba(20, 184, 166, 0);
+  }
 }
 
 @keyframes cardSlideUp {
@@ -1045,5 +906,18 @@ function handleConfirmSkip() {
 .note-zoom-enter-from,
 .note-zoom-leave-to {
   opacity: 0;
+}
+
+@media (max-width: 390px) {
+  .tutorial-window-body {
+    padding: 8px 10px 10px;
+    gap: 8px;
+  }
+  .postit-diagram-col {
+    flex: 0 0 104px;
+  }
+  .rardi-postit-card {
+    padding: 8px 10px;
+  }
 }
 </style>
