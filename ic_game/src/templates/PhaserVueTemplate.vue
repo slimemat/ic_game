@@ -95,11 +95,15 @@ const nextLevel = () => {
     <div class="ui-controls">
       <div class="level-indicator">Level {{ currentLevel }}</div>
       <div class="button-group">
-        <button class="action-button" type="button" @click="resetGame">
+        <button
+          class="btn-tactile btn-tactile--primary btn-tactile--sm"
+          type="button"
+          @click="resetGame"
+        >
           Restart
         </button>
         <button
-          class="action-button secondary"
+          class="btn-tactile btn-tactile--secondary btn-tactile--sm"
           type="button"
           @click="$emit('back')"
         >
@@ -111,7 +115,11 @@ const nextLevel = () => {
     <!-- Win Overlay -->
     <div v-if="hasWon" class="win-overlay">
       <h2>Level Complete!</h2>
-      <button class="action-button primary" @click="nextLevel">
+      <button
+        type="button"
+        class="btn-tactile btn-tactile--primary btn-tactile--lg"
+        @click="nextLevel"
+      >
         Next Level
       </button>
     </div>
@@ -151,27 +159,6 @@ const nextLevel = () => {
 .button-group {
   display: flex;
   gap: 0.5rem;
-}
-
-.action-button {
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  font-weight: bold;
-  cursor: pointer;
-  background-color: #4a5568;
-  color: white;
-}
-
-.action-button.primary {
-  background-color: #48bb78;
-  font-size: 1.2rem;
-  padding: 1rem 2rem;
-}
-
-.action-button.secondary {
-  background-color: transparent;
-  border: 1px solid #4a5568;
 }
 
 .win-overlay {

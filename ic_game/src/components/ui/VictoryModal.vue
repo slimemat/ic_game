@@ -81,11 +81,10 @@
             <button
               type="button"
               @click="$emit('next')"
-              class="btn-modal btn-next"
+              class="btn-tactile btn-tactile--primary btn-tactile--lg btn-tactile--block"
               autofocus
             >
-              <span class="btn-shine"></span>
-              <span class="btn-text">
+              <span>
                 {{ nextLabel || $t("global.buttons.next_level") }}
               </span>
             </button>
@@ -94,9 +93,9 @@
             <button
               type="button"
               @click="$emit('menu')"
-              class="btn-modal btn-menu"
+              class="btn-tactile btn-tactile--secondary btn-tactile--block"
             >
-              <span class="btn-text">
+              <span>
                 {{ menuLabel || $t("global.buttons.back_to_menu") }}
               </span>
             </button>
@@ -478,83 +477,6 @@ const stampText = computed(() => {
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-
-.btn-modal {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 48px;
-  padding: 10px 18px;
-  border-radius: 10px;
-  font-family: var(--font-main);
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  user-select: none;
-  touch-action: manipulation;
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  overflow: hidden;
-  text-decoration: none;
-}
-
-.btn-modal:active {
-  transform: scale(0.98);
-}
-
-/* ── Botão Hero (Próxima Fase) ── */
-.btn-next {
-  background: linear-gradient(
-    180deg,
-    var(--theme-accent) 0%,
-    var(--theme-accent-hover) 100%
-  );
-  border: 1px solid var(--theme-accent-hover);
-  color: #ffffff;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.45),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.15),
-    0 6px 14px var(--theme-accent-glow);
-}
-
-.btn-next:hover {
-  filter: brightness(1.06);
-  transform: translateY(-1px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    0 8px 18px var(--theme-accent-glow);
-}
-
-.btn-shine {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 48%;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.35) 0%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  border-top-left-radius: 9px;
-  border-top-right-radius: 9px;
-  pointer-events: none;
-}
-
-/* ── Botão Secundário (Voltar ao Menu) ── */
-.btn-menu {
-  background: transparent;
-  border: 1px solid #e2e8f0;
-  color: #64748b;
-  margin-top: 4px;
-}
-
-.btn-menu:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-  color: #334155;
-  transform: translateY(-1px);
 }
 
 /* ── Animações ── */

@@ -49,7 +49,11 @@ function handleConfirmReset() {
       </p>
     </div>
 
-    <button type="button" class="btn-story" @click="emit('start-story')">
+    <button
+      type="button"
+      class="btn-tactile btn-tactile--primary btn-tactile--lg btn-tactile--block"
+      @click="emit('start-story')"
+    >
       <span class="btn-play-icon" aria-hidden="true">▶</span>
       <span>
         {{
@@ -119,14 +123,14 @@ function handleConfirmReset() {
         <div class="reset-confirm-actions">
           <button
             type="button"
-            class="btn-reset-cancel"
+            class="btn-tactile btn-tactile--ghost-dark btn-tactile--sm btn-reset-flex"
             @click="isConfirmingReset = false"
           >
             {{ $t("hub.story.reset_cancel") }}
           </button>
           <button
             type="button"
-            class="btn-reset-confirm"
+            class="btn-tactile btn-tactile--danger btn-tactile--sm btn-reset-flex"
             @click="handleConfirmReset"
           >
             {{ $t("hub.story.reset_confirm") }}
@@ -137,7 +141,7 @@ function handleConfirmReset() {
       <button
         v-else
         type="button"
-        class="btn-reset-trigger"
+        class="btn-tactile btn-tactile--ghost-dark btn-tactile--block"
         :disabled="!hasProgress"
         @click="isConfirmingReset = true"
       >
@@ -186,34 +190,6 @@ function handleConfirmReset() {
   margin: 0;
   color: var(--text-muted);
   font-size: 0.9rem;
-}
-
-.btn-story {
-  width: 100%;
-  min-height: 54px;
-  padding: 14px 20px;
-  border-radius: 12px;
-  border: 2px solid var(--light-green);
-  background: rgba(160, 236, 208, 0.08);
-  color: var(--light-green);
-  font-size: 1.05rem;
-  font-weight: 700;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition:
-    transform 0.1s ease,
-    background-color 0.2s ease;
-}
-
-.btn-story:hover {
-  background: rgba(160, 236, 208, 0.16);
-}
-
-.btn-story:active {
-  transform: scale(0.98);
 }
 
 .btn-play-icon {
@@ -372,38 +348,6 @@ function handleConfirmReset() {
   text-align: center;
 }
 
-.btn-reset-trigger {
-  width: 100%;
-  min-height: 44px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1px solid var(--border-default);
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 0.88rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition:
-    color 0.15s ease,
-    border-color 0.15s ease,
-    background-color 0.15s ease;
-}
-
-.btn-reset-trigger:not(:disabled):hover {
-  color: #fca5a5;
-  border-color: rgba(239, 68, 68, 0.45);
-  background: rgba(239, 68, 68, 0.08);
-}
-
-.btn-reset-trigger:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
 .reset-confirm-card {
   padding: 12px 14px;
   border-radius: 10px;
@@ -435,27 +379,8 @@ function handleConfirmReset() {
   margin-top: 2px;
 }
 
-.btn-reset-cancel,
-.btn-reset-confirm {
+.btn-reset-flex {
   flex: 1;
-  min-height: 44px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.btn-reset-cancel {
-  background: transparent;
-  border: 1px solid var(--border-default);
-  color: var(--text-main);
-}
-
-.btn-reset-confirm {
-  background: rgba(239, 68, 68, 0.22);
-  border: 1px solid rgba(239, 68, 68, 0.65);
-  color: #fecaca;
 }
 
 /* ── Debug Recolhível (Apenas DEV) ── */
@@ -512,9 +437,7 @@ function handleConfirmReset() {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn-story,
   .chapter-card,
-  .btn-reset-trigger,
   .btn-debug-toggle,
   .debug-chevron,
   .fade-enter-active,

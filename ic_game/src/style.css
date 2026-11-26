@@ -490,42 +490,129 @@ h1 {
   background-size: 100% 22px;
 }
 
-.btn-teal-tactile {
+.btn-tactile {
+  --btn-bg: #14b8a6;
+  --btn-bg-hover: #0d9488;
+  --btn-border: #0f766e;
+  --btn-shadow: #0f766e;
+  --btn-color: #ffffff;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 7px;
-  font-family: var(--font-main);
-  background-color: #14b8a6;
-  color: #ffffff;
-  border: 2px solid #0f766e;
-  border-radius: 8px;
+  min-height: 44px;
   padding: 8px 16px;
-  font-size: 0.9rem;
+  border-radius: 8px;
+  border: 2px solid var(--btn-border);
+  background-color: var(--btn-bg);
+  color: var(--btn-color);
+  font-family: var(--font-main);
+  font-size: 0.92rem;
   font-weight: 700;
   letter-spacing: 0.01em;
+  line-height: 1.2;
   cursor: pointer;
-  box-shadow: 0 4px 0 #0f766e;
+  user-select: none;
+  touch-action: manipulation;
+  box-shadow: 0 4px 0 var(--btn-shadow);
   transition:
     transform 0.12s ease,
     background-color 0.15s ease,
     box-shadow 0.12s ease;
 }
 
-.btn-teal-tactile:hover:not(:disabled) {
-  background-color: #0d9488;
+.btn-tactile:hover:not(:disabled) {
+  background-color: var(--btn-bg-hover);
   transform: translateY(-1px);
-  box-shadow: 0 5px 0 #0f766e;
+  box-shadow: 0 5px 0 var(--btn-shadow);
 }
 
-.btn-teal-tactile:active:not(:disabled) {
+.btn-tactile:active:not(:disabled) {
   transform: translateY(3px);
-  box-shadow: 0 1px 0 #0f766e;
+  box-shadow: 0 1px 0 var(--btn-shadow);
 }
 
-.btn-teal-tactile:disabled {
-  opacity: 0.6;
+.btn-tactile:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
+}
+
+.btn-tactile:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+.btn-tactile--primary {
+  --btn-bg: #14b8a6;
+  --btn-bg-hover: #0d9488;
+  --btn-border: #0f766e;
+  --btn-shadow: #0f766e;
+  --btn-color: #ffffff;
+}
+
+.btn-tactile--secondary {
+  --btn-bg: #f1f5f9;
+  --btn-bg-hover: #e2e8f0;
+  --btn-border: #94a3b8;
+  --btn-shadow: #94a3b8;
+  --btn-color: #1e293b;
+}
+
+.btn-tactile--danger-soft {
+  --btn-bg: #fee2e2;
+  --btn-bg-hover: #fecaca;
+  --btn-border: #dc2626;
+  --btn-shadow: #dc2626;
+  --btn-color: #991b1b;
+}
+
+.btn-tactile--danger {
+  --btn-bg: #ef4444;
+  --btn-bg-hover: #dc2626;
+  --btn-border: #b91c1c;
+  --btn-shadow: #b91c1c;
+  --btn-color: #ffffff;
+}
+
+.btn-tactile--ghost-dark {
+  --btn-bg: #334155;
+  --btn-bg-hover: #475569;
+  --btn-border: #1e293b;
+  --btn-shadow: #0f172a;
+  --btn-color: #f8fafc;
+}
+
+.btn-tactile--sm {
+  min-height: 38px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  box-shadow: 0 3px 0 var(--btn-shadow);
+}
+
+.btn-tactile--sm:hover:not(:disabled) {
+  box-shadow: 0 4px 0 var(--btn-shadow);
+}
+
+.btn-tactile--sm:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--btn-shadow);
+}
+
+.btn-tactile--lg {
+  min-height: 50px;
+  padding: 11px 20px;
+  font-size: 1rem;
+}
+
+.btn-tactile--block {
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-tactile {
+    transition: none;
+  }
 }
 
 @keyframes overlayFade {

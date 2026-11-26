@@ -377,7 +377,7 @@ function handleConfirmSkip() {
               v-if="canGoToNextStep"
               key="btn-next-step"
               type="button"
-              class="btn-teal-tactile btn-footer-cta"
+              class="btn-tactile btn-tactile--primary btn-footer-cta"
               @click.stop="goToNextStep"
             >
               <span>{{ $t("tutorials.desk.btn_next_step") }}</span>
@@ -388,7 +388,7 @@ function handleConfirmSkip() {
               v-else-if="isAllStepsCompleted"
               key="btn-start-challenge"
               type="button"
-              class="btn-teal-tactile btn-footer-cta is-ready-pulse"
+              class="btn-tactile btn-tactile--primary btn-footer-cta is-ready-pulse"
               :disabled="isSubmitting"
               @click.stop.prevent="handleStartChallenge"
             >
@@ -465,7 +465,7 @@ function handleConfirmSkip() {
             <div class="confirm-btns">
               <button
                 type="button"
-                class="btn-back-tut"
+                class="btn-tactile btn-tactile--secondary btn-tactile--sm btn-confirm-flex"
                 :disabled="isSubmitting"
                 @click.stop="showSkipDialog = false"
               >
@@ -473,7 +473,7 @@ function handleConfirmSkip() {
               </button>
               <button
                 type="button"
-                class="btn-confirm-skip"
+                class="btn-tactile btn-tactile--danger-soft btn-tactile--sm btn-confirm-flex"
                 :disabled="isSubmitting"
                 @click.stop.prevent="handleConfirmSkip"
               >
@@ -836,28 +836,8 @@ function handleConfirmSkip() {
   justify-content: center;
 }
 
-.btn-back-tut {
+.btn-confirm-flex {
   flex: 1;
-  padding: 8px 12px;
-  background: #e2e8f0;
-  border: 1.5px solid #94a3b8;
-  border-radius: 6px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #1e293b;
-  cursor: pointer;
-}
-
-.btn-confirm-skip {
-  flex: 1;
-  padding: 8px 12px;
-  background: var(--color-invalid-bg);
-  border: 1.5px solid #fca5a5;
-  border-radius: 6px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: #b91c1c;
-  cursor: pointer;
 }
 
 @keyframes tabInvitePulse {

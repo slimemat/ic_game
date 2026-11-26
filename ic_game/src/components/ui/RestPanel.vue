@@ -116,7 +116,7 @@ defineEmits(["continue"]);
             </div>
             <button
               type="button"
-              class="btn-continue"
+              class="btn-tactile btn-tactile--primary btn-tactile--lg btn-tactile--block"
               @click="$emit('continue')"
             >
               {{ $t("restPanel.btn_continue") }}
@@ -382,33 +382,6 @@ defineEmits(["continue"]);
   line-height: 1.4;
 }
 
-.btn-continue {
-  width: 100%;
-  min-height: 48px; /* alvo de toque confortável */
-  padding: 0.75rem 1.25rem;
-  background: #14b8a6;
-  color: #ffffff;
-  border: 2px solid #0f766e;
-  border-radius: 8px;
-  box-shadow: 0 4px 0 #0f766e;
-  font-weight: 700;
-  font-size: 1rem;
-  cursor: pointer;
-  transition:
-    transform 0.12s ease,
-    background-color 0.15s ease,
-    box-shadow 0.12s ease;
-}
-.btn-continue:hover {
-  background: #0d9488;
-  transform: translateY(-1px);
-  box-shadow: 0 5px 0 #0f766e;
-}
-.btn-continue:active {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 #0f766e;
-}
-
 @media (max-width: 400px) {
   .rest-body {
     padding: 0.95rem;
@@ -424,8 +397,7 @@ defineEmits(["continue"]);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .xp-fill,
-  .btn-continue {
+  .xp-fill {
     transition: none;
   }
 }

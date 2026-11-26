@@ -120,11 +120,13 @@ defineEmits(["select-game"]);
 .play-label {
   align-self: flex-start;
   margin-top: 8px;
-  padding: 8px 16px;
-  border-radius: 6px;
-  background: var(--accent-color);
-  color: #fff;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: 2px solid #0f766e;
+  background: #14b8a6;
+  color: #ffffff;
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
+  box-shadow: 0 3px 0 #0f766e;
 }
 </style>
