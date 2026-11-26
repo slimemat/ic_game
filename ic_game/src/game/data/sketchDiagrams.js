@@ -112,30 +112,31 @@ function createClockDiagram(angleDeg, arrowKey, angleLabel, extraHours = []) {
   });
 }
 
+function createMirrorDiagram(axis, shapeTransforms, arrowTransform) {
+  return Object.freeze({
+    kind: "mirror",
+    axis: Object.freeze(axis),
+    shapeTransforms: Object.freeze(shapeTransforms),
+    arrowTransform,
+  });
+}
+
 export const SPATIAL_DIAGRAMS = Object.freeze({
   rotate_cw: createClockDiagram(90, "cw", "90°", ["3h"]),
   rotate_ccw: createClockDiagram(-90, "ccw", "90°", ["9h"]),
   rotate_180: createClockDiagram(180, "half", "180°", ["3h", "6h"]),
   rotate_45: createClockDiagram(45, "cw", "+45°"),
   rotate_ccw_45: createClockDiagram(-45, "ccw", "-45°"),
-  flip_h: Object.freeze({
-    kind: "mirror",
-    axis: Object.freeze({ x1: 110, y1: 16, x2: 110, y2: 114 }),
-    shapeTransforms: Object.freeze([
-      "translate(54, 58)",
-      "translate(166, 58) scale(-1, 1)",
-    ]),
-    arrowTransform: "translate(110, 104)",
-  }),
-  flip_v: Object.freeze({
-    kind: "mirror",
-    axis: Object.freeze({ x1: 34, y1: 65, x2: 186, y2: 65 }),
-    shapeTransforms: Object.freeze([
-      "translate(86, 36) scale(0.75)",
-      "translate(86, 94) scale(0.75, -0.75)",
-    ]),
-    arrowTransform: "translate(148, 65) rotate(90) scale(1.35, 1)",
-  }),
+  flip_h: createMirrorDiagram(
+    { x1: 110, y1: 16, x2: 110, y2: 114 },
+    ["translate(54, 58)", "translate(166, 58) scale(-1, 1)"],
+    "translate(110, 104)",
+  ),
+  flip_v: createMirrorDiagram(
+    { x1: 34, y1: 65, x2: 186, y2: 65 },
+    ["translate(86, 36) scale(0.75)", "translate(86, 94) scale(0.75, -0.75)"],
+    "translate(148, 65) rotate(90) scale(1.35, 1)",
+  ),
 });
 
 /**

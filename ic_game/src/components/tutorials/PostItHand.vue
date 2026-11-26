@@ -54,6 +54,12 @@ const armStyle = computed(() => {
 </template>
 
 <style scoped>
+.postit-hand-layer,
+.postit-arm-back {
+  transform: rotate(-24deg);
+  pointer-events: none;
+}
+
 .postit-hand-layer {
   position: absolute;
   right: -46px;
@@ -61,8 +67,6 @@ const armStyle = computed(() => {
   width: 96px;
   height: 96px;
   transform-origin: 51px 70px;
-  transform: rotate(-24deg);
-  pointer-events: none;
 }
 
 .postit-hand-back {
@@ -74,8 +78,8 @@ const armStyle = computed(() => {
 }
 
 .postit-hand-sprite {
-  width: 96px;
-  height: 96px;
+  width: 100%;
+  height: 100%;
   display: block;
   object-fit: contain;
   image-rendering: pixelated;
@@ -93,8 +97,6 @@ const armStyle = computed(() => {
   border-left: 3px solid;
   border-right: 3px solid;
   transform-origin: 33px -22px;
-  transform: rotate(-24deg);
-  pointer-events: none;
   z-index: 1;
 }
 </style>

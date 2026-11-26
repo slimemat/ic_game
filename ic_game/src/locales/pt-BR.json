@@ -577,5 +577,11 @@
       "note_45_title": "Passo Diagonal (+45° ↷)",
       "note_ccw_45_title": "Diagonal Anti-Horária (-45° ↶)"
     }
+  },
+  "customization": {
+    "hands": {
+      "blue": "Mão Azul",
+      "cow": "Mão Vaquinha"
+    }
   }
 }

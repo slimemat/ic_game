@@ -2,7 +2,6 @@
 import { computed, onMounted, onUnmounted } from "vue";
 import PostItSketchDiagram from "./PostItSketchDiagram.vue";
 import PostItHand from "./PostItHand.vue";
-import { DEFAULT_HAND_SKIN_ID } from "../../game/data/handSkins";
 
 /**
  * RardiHintPostIt: Modal full-focus de dica em formato de post-it quadrado
@@ -37,7 +36,7 @@ const props = defineProps({
   /** ID da skin customizável da mão que segura o post-it */
   handSkinId: {
     type: String,
-    default: DEFAULT_HAND_SKIN_ID,
+    default: undefined,
   },
 });
 
