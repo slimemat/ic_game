@@ -28,7 +28,7 @@ test("HAND_SKINS: todas as skins registradas possuem assets válidos", () => {
   }
 });
 
-test("getHandSkin: retorna a skin solicitada ou faz fallback para 'blue'", () => {
+test("getHandSkin: retorna a skin solicitada ou faz fallback para a padrão ('blue')", () => {
   assert.equal(getHandSkin("blue").id, "blue");
   assert.equal(getHandSkin("cow").id, "cow");
   assert.equal(getHandSkin("non_existent_skin").id, DEFAULT_HAND_SKIN_ID);
