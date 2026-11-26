@@ -38,6 +38,7 @@ export const DEFAULT_HAND_SKIN_ID = "blue";
 export const HAND_SKINS = Object.freeze({
   blue: createHandSkin("blue", { fillColor: "#1c3377" }),
   cow: createHandSkin("cow", { fillColor: "#f8fafc", hasArmTile: true }),
+  tiger: createHandSkin("tiger", { fillColor: "#f97316", hasArmTile: true }),
 });
 
 /**

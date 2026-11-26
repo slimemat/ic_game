@@ -581,7 +581,8 @@
   "customization": {
     "hands": {
       "blue": "Mão Azul",
-      "cow": "Mão Vaquinha"
+      "cow": "Mão Vaquinha",
+      "tiger": "Mão Tigre"
     }
   }
 }
