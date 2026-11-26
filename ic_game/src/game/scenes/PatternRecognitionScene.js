@@ -1090,30 +1090,57 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     const btnHeight = Math.max(46, baseSize * 0.12);
     const btnX = width / 2;
     const btnY = height * 0.89;
+    const radius = 8;
+    const lipDepth = 4;
 
-    this.trackTask(
-      this.add.rectangle(
-        btnX + 2,
-        btnY + 3,
+    const drawRoundedButton = (gfx, fillColor, strokeColor) => {
+      gfx.clear();
+      gfx.fillStyle(fillColor, 1);
+      gfx.fillRoundedRect(
+        -btnWidth / 2,
+        -btnHeight / 2,
         btnWidth,
         btnHeight,
-        0x000000,
-        0.3,
-      ),
-    );
+        radius,
+      );
+      if (strokeColor !== undefined) {
+        gfx.lineStyle(2, strokeColor, 1);
+        gfx.strokeRoundedRect(
+          -btnWidth / 2,
+          -btnHeight / 2,
+          btnWidth,
+          btnHeight,
+          radius,
+        );
+      }
+    };
 
-    const btnBg = this.trackTask(
-      this.add
-        .rectangle(btnX, btnY, btnWidth, btnHeight, button)
-        .setInteractive({ useHandCursor: true })
-        .setStrokeStyle(2, buttonBorder),
+    // Degrau 3D sólido (#0f766e) combinando com .btn-tactile
+    const btnLip = this.trackTask(this.add.graphics());
+    btnLip.setPosition(btnX, btnY + lipDepth);
+    drawRoundedButton(btnLip, buttonBorder);
+
+    const btnBg = this.trackTask(this.add.graphics());
+    btnBg.setPosition(btnX, btnY);
+    drawRoundedButton(btnBg, button, buttonBorder);
+    btnBg.setInteractive(
+      new Phaser.Geom.Rectangle(
+        -btnWidth / 2,
+        -btnHeight / 2,
+        btnWidth,
+        btnHeight,
+      ),
+      Phaser.Geom.Rectangle.Contains,
     );
+    if (btnBg.input) {
+      btnBg.input.cursor = "pointer";
+    }
 
     const btnText = this.trackTask(
       this.add
         .text(btnX, btnY, t("global.buttons.confirm"), {
           fontFamily: FONT_MAIN,
-          fontSize: `${Math.max(18, Math.min(22, baseSize * 0.05))}px`,
+          fontSize: `${Math.max(17, Math.min(20, baseSize * 0.048))}px`,
           fill: this.theme.text.button,
           fontStyle: "bold",
         })
@@ -1121,14 +1148,23 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     );
 
     const release = () => {
-      btnBg.setFillStyle(button);
+      drawRoundedButton(btnBg, button, buttonBorder);
+      btnBg.setY(btnY);
       btnText.setY(btnY);
     };
 
+    btnBg.on("pointerover", () => {
+      if (this.isInputLocked) return;
+      drawRoundedButton(btnBg, buttonPressed, buttonBorder);
+      btnBg.setY(btnY - 1);
+      btnText.setY(btnY - 1);
+    });
+
     btnBg.on("pointerdown", () => {
       if (this.isInputLocked) return;
-      btnBg.setFillStyle(buttonPressed);
-      btnText.setY(btnY + 2);
+      drawRoundedButton(btnBg, buttonPressed, buttonBorder);
+      btnBg.setY(btnY + 3);
+      btnText.setY(btnY + 3);
       this.checkAnswer();
     });
     btnBg.on("pointerup", release);
