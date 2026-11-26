@@ -6,7 +6,8 @@
     "description": "Teste do phaser com plataforma e coleta de itens.",
     "status": "Play",
     "category": "platform",
-    "previewImage": "https://placehold.co/400x300/36393B/A0ECD0?text=Star+Runner"
+    "icon": "gamepad",
+    "previewImage": null
   },
   {
     "id": "pattern-recognition",
@@ -15,7 +16,8 @@
     "description": "Reconhecimento de padrões.",
     "status": "Play",
     "category": "logic",
-    "previewImage": "https://placehold.co/400x300/36393B/94DDBC?text=Pattern"
+    "icon": "sparkles",
+    "previewImage": null
   },
   {
     "id": "matrix-mirror",
@@ -24,7 +26,8 @@
     "description": "Aprenda manipulação de arrays Python.",
     "status": "Play",
     "category": "educational",
-    "previewImage": "https://placehold.co/400x300/36393B/A0ECD0?text=Matrix"
+    "icon": "grid",
+    "previewImage": null
   },
   {
     "id": "charade-game",
@@ -33,6 +36,7 @@
     "description": "Resolva charadas de lógica montando esquemas no canvas.",
     "status": "Play",
     "category": "logic",
-    "previewImage": "https://placehold.co/400x300/36393B/0EA5E9?text=Charadas"
+    "icon": "search",
+    "previewImage": null
   }
 ]

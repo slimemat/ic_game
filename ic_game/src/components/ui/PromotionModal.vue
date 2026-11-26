@@ -53,7 +53,11 @@ const badgeColor = computed(() => {
       </div>
 
       <div class="card-footer">
-        <button class="btn-continue" @click="$emit('continue')">
+        <button
+          type="button"
+          class="btn-tactile btn-tactile--primary btn-tactile--lg btn-tactile--block"
+          @click="$emit('continue')"
+        >
           {{ $t("story.promotion.btn_continue") }} ➔
         </button>
       </div>
@@ -164,27 +168,6 @@ const badgeColor = computed(() => {
 
 .card-footer {
   padding: 1.25rem 2rem 2rem 2rem;
-}
-
-.btn-continue {
-  background: linear-gradient(180deg, #4fd1c5 0%, #319795 100%);
-  color: #fff;
-  border: none;
-  font-size: 1.1rem;
-  font-weight: 700;
-  padding: 0.85rem 2rem;
-  border-radius: 10px;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(49, 151, 149, 0.35);
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
-  width: 100%;
-}
-
-.btn-continue:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(49, 151, 149, 0.45);
 }
 
 .anim-pop-in {

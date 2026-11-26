@@ -166,7 +166,11 @@ const triggerWarning = (msg, type = "info") => {
         </div>
       </template>
       <template #actions>
-        <button @click="nextLevel" class="btn btn-primary">
+        <button
+          type="button"
+          @click="nextLevel"
+          class="btn-tactile btn-tactile--primary btn-tactile--lg btn-tactile--block"
+        >
           {{
             currentLevel < CHARADES_LEVELS.length - 1
               ? $t("global.buttons.next_level")

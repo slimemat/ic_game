@@ -89,15 +89,34 @@ const resolvedAvatar = computed(() => {
   /* espaço à direita para o botão de pausa (44px + margem) */
   padding: 0.75rem 4.5rem 0.75rem 1rem;
   min-height: 4.5rem;
-  background: rgba(252, 252, 252, 0.9);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border-bottom: 1px dashed rgba(0, 0, 0, 0.15);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  color: #333;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.88) 0%,
+    rgba(240, 249, 255, 0.78) 100%
+  );
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 6px 20px rgba(14, 74, 110, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+  color: var(--aero-text-primary, #0f172a);
   z-index: 10;
   overflow: hidden;
   transition: all 0.35s ease;
+}
+
+.chat-header::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 52% 0;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.42) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
 }
 
 .chat-header-avatar {
@@ -151,33 +170,46 @@ const resolvedAvatar = computed(() => {
 
 .chat-header-participants {
   font-size: 0.8rem;
-  color: #666;
+  color: var(--aero-text-muted, #475569);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   transition: color 0.3s ease;
 }
 
-/* ── Variante Padrão (Chamado Corporativo / Pasta) ───────────────────────── */
+/* ── Variante Padrão (Frutiger Aero Glass / Chamado Corporativo) ───────── */
 .variant-default .chat-header-avatar {
-  background: var(--folder-bg, #fef08a);
-  border: 2px solid var(--folder-border, #ca8a04);
+  background: linear-gradient(135deg, #fef9c3 0%, #fde047 100%);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-shadow:
+    0 4px 12px rgba(14, 74, 110, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 .variant-default .chat-header-eyebrow {
-  color: var(--folder-shadow, #a16207);
+  color: var(--aero-accent, #0284c7);
+}
+.variant-default .chat-header-title {
+  color: var(--aero-text-primary, #0f172a);
 }
 
 /* ── Variante Morning (Bom Dia / Dia 2 - Céu Azul com Nuvens Pixel Art) ─── */
 .variant-morning {
-  background: linear-gradient(180deg, #38bdf8 0%, #7dd3fc 60%, #bae6fd 100%);
-  border-bottom: 2px solid #0284c7;
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.28);
+  background: linear-gradient(
+    180deg,
+    rgba(56, 189, 248, 0.9) 0%,
+    rgba(125, 211, 252, 0.85) 60%,
+    rgba(186, 230, 253, 0.88) 100%
+  );
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow:
+    0 6px 18px rgba(2, 132, 199, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 
 .variant-morning .chat-header-avatar {
-  background: #fef08a;
-  border: 2px solid #f59e0b;
-  box-shadow: 0 0 14px rgba(250, 204, 21, 0.8);
+  background: linear-gradient(135deg, #fef9c3 0%, #fde047 100%);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 14px rgba(250, 204, 21, 0.85);
 }
 
 .variant-morning .chat-header-eyebrow {
@@ -271,18 +303,32 @@ const resolvedAvatar = computed(() => {
   }
 }
 
-/* ── Variante Bot (Tipster Bot / Turno Noturno) ─────────────────────────── */
+/* ── Variante Bot (Tipster Bot / Turno Noturno - Aero Glass Violeta) ────── */
 .variant-bot {
-  background: rgba(24, 24, 38, 0.93);
-  border-bottom: 2px solid #8b5cf6;
-  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);
+  background: linear-gradient(
+    180deg,
+    rgba(30, 27, 75, 0.84) 0%,
+    rgba(49, 46, 129, 0.76) 100%
+  );
+  border-bottom: 1.5px solid rgba(167, 139, 250, 0.65);
+  box-shadow:
+    0 6px 20px rgba(76, 29, 149, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
   color: #f5f3ff;
 }
 
+.variant-bot::before {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.16) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
 .variant-bot .chat-header-avatar {
-  background: #2e1065;
-  border: 2px solid #a855f7;
-  box-shadow: 0 0 14px rgba(168, 85, 247, 0.6);
+  background: rgba(46, 16, 101, 0.88);
+  border: 2px solid rgba(196, 181, 253, 0.85);
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.55);
 }
 
 .variant-bot .chat-header-eyebrow {

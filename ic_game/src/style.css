@@ -53,6 +53,28 @@
   --color-invalid-border: #ef4444;
   --color-invalid-bg: #fee2e2;
   --color-invalid-shadow: #b91c1c;
+
+  /* ── Frutiger Aero Lobby Design Tokens ── */
+  --aero-sky-top: #7dd3fc;
+  --aero-sky-mid: #bae6fd;
+  --aero-sky-bottom: #f0f9ff;
+  --aero-accent: #0284c7;
+  --aero-accent-bright: #0ea5e9;
+  --aero-teal: #14b8a6;
+  --aero-teal-deep: #0f766e;
+
+  --aero-glass-bg: rgba(255, 255, 255, 0.72);
+  --aero-glass-bg-strong: rgba(255, 255, 255, 0.88);
+  --aero-glass-bg-subtle: rgba(255, 255, 255, 0.52);
+  --aero-glass-border: rgba(255, 255, 255, 0.82);
+  --aero-glass-border-soft: rgba(14, 165, 233, 0.22);
+  --aero-glass-shadow:
+    0 10px 28px rgba(14, 74, 110, 0.14), 0 2px 6px rgba(14, 74, 110, 0.08);
+  --aero-glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.95);
+
+  --aero-text-primary: #0f172a;
+  --aero-text-secondary: #334155;
+  --aero-text-muted: #475569;
 }
 
 * {
@@ -402,6 +424,295 @@ h1 {
   border: 1px dashed rgba(15, 23, 42, 0.2);
   border-radius: 2px;
   pointer-events: none;
+}
+
+/* ── Primitivos Compartilhados do Capítulo 1 (macOS Chrome + Papelaria) ── */
+.os-window-chrome {
+  position: relative;
+  background-color: #f8fafc;
+  border-radius: 14px;
+  border: 2px solid #cbd5e1;
+  box-shadow: 0 8px 0 #1e293b;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(--font-main);
+}
+
+.os-window-bar {
+  position: relative;
+  height: 38px;
+  padding: 0 14px;
+  background: linear-gradient(to bottom, #ffffff 0%, #e2e8f0 100%);
+  border-bottom: 2px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.os-window-dots {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.os-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  padding: 0;
+}
+
+.os-dot--red {
+  background-color: #ff5f56;
+  border: 1px solid #e0443e;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.os-dot--red:hover {
+  transform: scale(1.15);
+}
+
+.os-dot--yellow {
+  background-color: #ffbd2e;
+  border: 1px solid #dea123;
+}
+
+.os-dot--green {
+  background-color: #27c93f;
+  border: 1px solid #1aab29;
+}
+
+.os-window-bar-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #334155;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  max-width: calc(100% - 120px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.office-lined-card {
+  background-color: #fcfcfc;
+  background-image: linear-gradient(
+    transparent,
+    transparent 21px,
+    rgba(203, 213, 225, 0.42) 21px,
+    rgba(203, 213, 225, 0.42) 22px
+  );
+  background-size: 100% 22px;
+}
+
+.btn-tactile {
+  --btn-bg: #14b8a6;
+  --btn-bg-hover: #0d9488;
+  --btn-border: #0f766e;
+  --btn-shadow: #0f766e;
+  --btn-color: #ffffff;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 2px solid var(--btn-border);
+  background-color: var(--btn-bg);
+  color: var(--btn-color);
+  font-family: var(--font-main);
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  box-shadow: 0 4px 0 var(--btn-shadow);
+  transition:
+    transform 0.12s ease,
+    background-color 0.15s ease,
+    box-shadow 0.12s ease;
+}
+
+.btn-tactile:hover:not(:disabled) {
+  background-color: var(--btn-bg-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 var(--btn-shadow);
+}
+
+.btn-tactile:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--btn-shadow);
+}
+
+.btn-tactile:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-tactile:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
+.btn-tactile--primary {
+  --btn-bg: #14b8a6;
+  --btn-bg-hover: #0d9488;
+  --btn-border: #0f766e;
+  --btn-shadow: #0f766e;
+  --btn-color: #ffffff;
+}
+
+.btn-tactile--secondary {
+  --btn-bg: #f1f5f9;
+  --btn-bg-hover: #e2e8f0;
+  --btn-border: #94a3b8;
+  --btn-shadow: #94a3b8;
+  --btn-color: #1e293b;
+}
+
+.btn-tactile--danger-soft {
+  --btn-bg: #fee2e2;
+  --btn-bg-hover: #fecaca;
+  --btn-border: #dc2626;
+  --btn-shadow: #dc2626;
+  --btn-color: #991b1b;
+}
+
+.btn-tactile--danger {
+  --btn-bg: #ef4444;
+  --btn-bg-hover: #dc2626;
+  --btn-border: #b91c1c;
+  --btn-shadow: #b91c1c;
+  --btn-color: #ffffff;
+}
+
+.btn-tactile--ghost-dark {
+  --btn-bg: #334155;
+  --btn-bg-hover: #475569;
+  --btn-border: #1e293b;
+  --btn-shadow: #0f172a;
+  --btn-color: #f8fafc;
+}
+
+.btn-tactile--sm {
+  min-height: 38px;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  box-shadow: 0 3px 0 var(--btn-shadow);
+}
+
+.btn-tactile--sm:hover:not(:disabled) {
+  box-shadow: 0 4px 0 var(--btn-shadow);
+}
+
+.btn-tactile--sm:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--btn-shadow);
+}
+
+.btn-tactile--lg {
+  min-height: 50px;
+  padding: 11px 20px;
+  font-size: 1rem;
+}
+
+.btn-tactile--block {
+  width: 100%;
+}
+
+.btn-tactile--gloss {
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 4px 0 var(--btn-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.btn-tactile--gloss::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 52% 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.28),
+    rgba(255, 255, 255, 0)
+  );
+  pointer-events: none;
+}
+
+.btn-tactile--gloss:hover:not(:disabled) {
+  box-shadow:
+    0 5px 0 var(--btn-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.btn-tactile--gloss:active:not(:disabled) {
+  box-shadow:
+    0 1px 0 var(--btn-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.btn-tactile--gloss.btn-tactile--sm {
+  box-shadow:
+    0 3px 0 var(--btn-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.btn-tactile--gloss.btn-tactile--sm:hover:not(:disabled) {
+  box-shadow:
+    0 4px 0 var(--btn-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.btn-tactile--gloss.btn-tactile--sm:active:not(:disabled) {
+  box-shadow:
+    0 1px 0 var(--btn-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.btn-tactile--ghost-link {
+  --btn-bg: transparent;
+  --btn-bg-hover: rgba(239, 68, 68, 0.1);
+  --btn-border: transparent;
+  --btn-shadow: transparent;
+  --btn-color: #b91c1c;
+
+  min-height: 40px;
+  padding: 6px 12px;
+  border-width: 1px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.btn-tactile--ghost-link:hover:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+  border-color: rgba(220, 38, 38, 0.25);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.btn-tactile--ghost-link:active:not(:disabled) {
+  transform: scale(0.98);
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-tactile {
+    transition: none;
+  }
 }
 
 @keyframes overlayFade {
