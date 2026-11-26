@@ -19,6 +19,11 @@ const props = defineProps({
     type: String,
     default: null,
   },
+  /** Garante isolamento explícito de estado/pontuação em modo sandbox de tutorial */
+  sandboxMode: {
+    type: Boolean,
+    default: true,
+  },
 });
 
 const emit = defineEmits(["option-placed", "option-removed"]);
@@ -75,13 +80,16 @@ const isPlacedInvalid = computed(() =>
   Boolean(placedOption.value && !placedOption.value.isCorrect),
 );
 
-const actionBadgeLabel = computed(() => {
-  if (props.actionKey === "rotate_cw") return "↷ 90°";
-  if (props.actionKey === "rotate_ccw") return "↶ 90°";
-  if (props.actionKey === "flip_h") return "⇄ Espelho H";
-  if (props.actionKey === "flip_v") return "⇅ Espelho V";
-  return "➜";
-});
+const ACTION_BADGE_MAP = {
+  rotate_cw: "↻ 90°",
+  rotate_ccw: "↺ 90°",
+  flip_h: "⇄ Espelho H",
+  flip_v: "⇅ Espelho V",
+};
+
+const actionBadgeLabel = computed(
+  () => ACTION_BADGE_MAP[props.actionKey] || "➜",
+);
 
 const slotHeaderText = computed(() => {
   if (isPlacedValid.value) return "CORRETO ✓";
@@ -101,7 +109,7 @@ function getPieceTransformStyle(piece) {
 </script>
 
 <template>
-  <div class="spatial-arena-wrapper">
+  <div class="spatial-arena-wrapper" :data-sandbox="sandboxMode">
     <!-- 1. PALCO DE PROJEÇÃO MENTAL: [ORIGINAL (0°)] ➜ [RESULTADO (?)] -->
     <section class="projection-arena">
       <!-- Quadro 1: Peça Original (0°) com Marcador de Topo ▲ -->
@@ -118,35 +126,23 @@ function getPieceTransformStyle(piece) {
         </div>
       </div>
 
-      <!-- Seta de Transformação Central com Mini Animação Contínua -->
+      <!-- Indicador direcional legível entre Original e Resultado -->
       <div class="arena-transform-bridge" aria-hidden="true">
-        <!-- Mini palco de demonstração animada do bonequinho -->
-        <div class="bridge-anim-box">
-          <!-- Silhueta Fantasma (Posição Inicial 0° de referência) -->
-          <div class="bridge-ghost-origin">
-            <span class="bridge-hat-anchor">▲</span>
-            <img
-              :src="spritepaintImg"
-              alt=""
-              class="bridge-sprite-img"
-              draggable="false"
-            />
-          </div>
-
-          <!-- Ator Animado em Loop Contínuo com a ação ativa -->
-          <div class="bridge-animated-actor" :class="`anim-${actionKey}`">
-            <span class="bridge-hat-anchor active-hat">▲</span>
-            <img
-              :src="spritepaintImg"
-              alt=""
-              class="bridge-sprite-img"
-              draggable="false"
-            />
-          </div>
-        </div>
-
-        <span class="bridge-action-pill">{{ actionBadgeLabel }}</span>
-        <span class="bridge-arrow">➜</span>
+        <span class="bridge-action-badge">{{ actionBadgeLabel }}</span>
+        <svg
+          class="bridge-arrow-svg"
+          viewBox="0 0 44 16"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M2 8H39M33 2L40 8L33 14"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
       </div>
 
       <!-- Quadro 2: Slot de Destino RESULTADO (?) -->
@@ -202,10 +198,7 @@ function getPieceTransformStyle(piece) {
             @keydown.enter.prevent="placeOptionIntoSlot(opt)"
             @keydown.space.prevent="placeOptionIntoSlot(opt)"
           >
-            <div
-              class="postit-tape-strip option-mini-tape"
-              aria-hidden="true"
-            />
+            <div class="postit-top-band" aria-hidden="true"></div>
             <span class="option-letter-tag">
               {{ String.fromCharCode(65 + oIdx) }}
             </span>
@@ -251,26 +244,26 @@ function getPieceTransformStyle(piece) {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 2px;
+  gap: 10px;
+  padding: 2px 0;
 }
 
 .arena-stage-slot {
   position: relative;
-  width: 116px;
+  width: clamp(98px, 27vw, 112px);
   aspect-ratio: 1 / 1;
-  border-radius: 12px;
-  border: 2px solid #cbd5e1;
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.04);
+  border-radius: 6px;
+  border: 2px solid #94a3b8;
+  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.06);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding-top: 14px;
   transition:
-    border-color 0.18s ease,
-    background-color 0.18s ease,
-    box-shadow 0.18s ease;
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    box-shadow 0.16s ease;
 }
 
 .arena-stage-slot.target-slot {
@@ -281,10 +274,12 @@ function getPieceTransformStyle(piece) {
 
 .arena-stage-slot.target-slot.is-drop-hot {
   border-style: solid;
-  border-width: 3px;
-  border-color: var(--accent-color);
+  border-width: 2.5px;
+  border-color: #0284c7;
   background-color: #e0f2fe;
-  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.22);
+  box-shadow:
+    inset 0 0 0 2px rgba(14, 165, 233, 0.25),
+    0 0 0 3px rgba(14, 165, 233, 0.22);
 }
 
 .arena-stage-slot.target-slot.is-slot-valid {
@@ -309,15 +304,23 @@ function getPieceTransformStyle(piece) {
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
+  font-family: var(--font-mono);
   font-size: 0.56rem;
-  font-weight: 800;
+  font-weight: 700;
+  letter-spacing: 0.03em;
   color: #475569;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.94);
   padding: 1px 6px;
-  border-radius: 6px;
-  border: 1px solid #e2e8f0;
+  border-radius: 3px;
+  border: 1px solid #cbd5e1;
   z-index: 80;
   pointer-events: none;
+}
+
+.target-slot.is-drop-hot .slot-header-tag {
+  color: #0369a1;
+  border-color: #38bdf8;
+  background: #e0f2fe;
 }
 
 .target-slot.is-slot-valid .slot-header-tag {
@@ -337,190 +340,33 @@ function getPieceTransformStyle(piece) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  min-width: 52px;
+  gap: 4px;
+  min-width: 58px;
 }
 
-.bridge-anim-box {
-  position: relative;
-  width: 40px;
-  height: 40px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1.5px dashed rgba(2, 132, 199, 0.4);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  overflow: hidden;
-}
-
-.bridge-ghost-origin,
-.bridge-animated-actor {
-  position: absolute;
-  width: 26px;
-  height: 26px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.bridge-ghost-origin {
-  opacity: 0.24;
-  filter: grayscale(0.5);
-}
-
-.bridge-sprite-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  image-rendering: pixelated;
-}
-
-.bridge-hat-anchor {
-  position: absolute;
-  top: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 0.45rem;
-  line-height: 1;
-  color: #dc2626;
-  font-weight: 900;
-  text-shadow: 0 0 2px #ffffff;
-  z-index: 5;
-}
-
-/* Keyframes de animação contínua (demonstração da transformação) */
-.anim-rotate_cw {
-  animation: bridgeRotateCw 2.4s infinite cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.anim-rotate_ccw {
-  animation: bridgeRotateCcw 2.4s infinite cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.anim-rotate_180 {
-  animation: bridgeRotate180 2.6s infinite cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.anim-rotate_45 {
-  animation: bridgeRotate45 2.4s infinite cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.anim-flip_h {
-  animation: bridgeFlipH 2.4s infinite cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.anim-flip_v {
-  animation: bridgeFlipV 2.4s infinite cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes bridgeRotateCw {
-  0%,
-  20% {
-    transform: rotate(0deg);
-  }
-  50%,
-  80% {
-    transform: rotate(90deg);
-  }
-  100% {
-    transform: rotate(0deg);
-  }
-}
-
-@keyframes bridgeRotateCcw {
-  0%,
-  20% {
-    transform: rotate(0deg);
-  }
-  50%,
-  80% {
-    transform: rotate(-90deg);
-  }
-  100% {
-    transform: rotate(0deg);
-  }
-}
-
-@keyframes bridgeRotate180 {
-  0%,
-  20% {
-    transform: rotate(0deg);
-  }
-  50%,
-  80% {
-    transform: rotate(180deg);
-  }
-  100% {
-    transform: rotate(0deg);
-  }
-}
-
-@keyframes bridgeRotate45 {
-  0%,
-  20% {
-    transform: rotate(0deg);
-  }
-  50%,
-  80% {
-    transform: rotate(45deg);
-  }
-  100% {
-    transform: rotate(0deg);
-  }
-}
-
-@keyframes bridgeFlipH {
-  0%,
-  20% {
-    transform: scaleX(1);
-  }
-  50%,
-  80% {
-    transform: scaleX(-1);
-  }
-  100% {
-    transform: scaleX(1);
-  }
-}
-
-@keyframes bridgeFlipV {
-  0%,
-  20% {
-    transform: scaleY(1);
-  }
-  50%,
-  80% {
-    transform: scaleY(-1);
-  }
-  100% {
-    transform: scaleY(1);
-  }
-}
-
-.bridge-action-pill {
-  font-size: 0.65rem;
-  font-weight: 900;
+.bridge-action-badge {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
   color: #0369a1;
   background: #e0f2fe;
-  border: 1px solid #7dd3fc;
-  padding: 2px 7px;
-  border-radius: 999px;
+  border: 1.5px solid #38bdf8;
+  padding: 3px 8px;
+  border-radius: 4px;
+  box-shadow: 0 2px 0 rgba(2, 132, 199, 0.18);
   white-space: nowrap;
 }
 
-.bridge-arrow {
-  font-size: 1.15rem;
-  font-weight: 900;
+.bridge-arrow-svg {
+  width: 38px;
+  height: 14px;
   color: #0284c7;
-  line-height: 1;
 }
 
 .piece-with-anchor {
   position: relative;
-  width: 64px;
-  height: 64px;
+  width: 58px;
+  height: 58px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -531,23 +377,24 @@ function getPieceTransformStyle(piece) {
   height: 100%;
   object-fit: contain;
   image-rendering: pixelated;
-  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.16));
+  filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.16));
   pointer-events: none;
 }
 
 .empty-target-placeholder {
-  width: 60px;
-  height: 60px;
-  border-radius: 10px;
-  border: 2px dashed rgba(2, 132, 199, 0.35);
+  width: 56px;
+  height: 56px;
+  border-radius: 6px;
+  border: 2px dashed rgba(2, 132, 199, 0.38);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .question-mark-sym {
-  font-size: 1.6rem;
-  font-weight: 900;
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 700;
   color: #0284c7;
 }
 
@@ -556,12 +403,12 @@ function getPieceTransformStyle(piece) {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
 }
 
 .options-section-label {
-  font-size: 0.7rem;
-  font-weight: 800;
+  font-size: 0.72rem;
+  font-weight: 700;
   color: #334155;
   text-align: center;
 }
@@ -571,96 +418,136 @@ function getPieceTransformStyle(piece) {
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   width: 100%;
-  max-width: 360px;
+  max-width: 340px;
   margin: 0 auto;
 }
 
 .postit-home-slot {
   position: relative;
   aspect-ratio: 1 / 1;
-  border-radius: 12px;
-  background: rgba(15, 23, 42, 0.06);
-  border: 1.5px dashed rgba(100, 116, 139, 0.35);
+  border-radius: 4px;
+  background: rgba(148, 163, 184, 0.12);
+  border: 1.5px dashed rgba(100, 116, 139, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+/* Post-it real combinando com as peças do jogo Phaser */
 .postit-option-btn {
   position: relative;
   width: 100%;
   height: 100%;
-  background: #f8fafc;
-  border: 2.5px solid #cbd5e1;
-  border-radius: 12px;
-  box-shadow: 0 3px 0 #94a3b8;
+  background-color: #fef9c3;
+  background-image: linear-gradient(
+    170deg,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(202, 138, 4, 0.06) 100%
+  );
+  border: 1.5px solid #eab308;
+  border-radius: 3px;
+  box-shadow:
+    0 3px 0 #ca8a04,
+    0 4px 8px rgba(15, 23, 42, 0.14);
   cursor: grab;
   touch-action: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px;
+  padding: 14px 8px 6px;
   user-select: none;
   -webkit-user-select: none;
   will-change: transform;
+  overflow: visible;
+}
+
+.postit-top-band {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 14px;
+  background: rgba(253, 224, 71, 0.85);
+  border-bottom: 1px solid rgba(202, 138, 4, 0.25);
+  border-top-left-radius: 2px;
+  border-top-right-radius: 2px;
+  pointer-events: none;
 }
 
 .postit-option-btn:hover {
-  background: #fef9c3;
-  border-color: var(--folder-border);
-  box-shadow: 0 3px 0 var(--folder-shadow);
+  background-color: #fef08a;
+  border-color: #ca8a04;
+  box-shadow:
+    0 4px 0 #a16207,
+    0 6px 12px rgba(15, 23, 42, 0.18);
 }
 
 .postit-option-btn.is-dragging {
   cursor: grabbing;
-  background: #fef9c3;
-  border-color: var(--accent-color);
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.28);
+  background-color: #fef08a;
+  border-color: #0284c7;
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.26);
 }
 
 /* Contorno VERDE quando encaixado e CORRETO */
 .postit-option-btn.is-placed-valid {
-  background: var(--color-valid-bg);
+  background-color: var(--color-valid-bg);
+  background-image: none;
   border-color: var(--color-valid-border);
-  border-width: 3px;
+  border-width: 2.5px;
   box-shadow:
-    0 4px 12px rgba(22, 163, 74, 0.25),
-    0 0 0 2px rgba(22, 163, 74, 0.2);
+    0 4px 10px rgba(22, 163, 74, 0.24),
+    0 0 0 2px rgba(22, 163, 74, 0.18);
+}
+
+.postit-option-btn.is-placed-valid .postit-top-band {
+  background: rgba(134, 239, 172, 0.8);
+  border-bottom-color: rgba(22, 163, 74, 0.25);
 }
 
 /* Contorno VERMELHO quando encaixado e INCORRETO */
 .postit-option-btn.is-placed-invalid {
-  background: var(--color-invalid-bg);
+  background-color: var(--color-invalid-bg);
+  background-image: none;
   border-color: var(--color-invalid-border);
-  border-width: 3px;
+  border-width: 2.5px;
   box-shadow:
-    0 4px 12px rgba(239, 68, 68, 0.25),
-    0 0 0 2px rgba(239, 68, 68, 0.2);
+    0 4px 10px rgba(239, 68, 68, 0.24),
+    0 0 0 2px rgba(239, 68, 68, 0.18);
+}
+
+.postit-option-btn.is-placed-invalid .postit-top-band {
+  background: rgba(252, 165, 165, 0.8);
+  border-bottom-color: rgba(239, 68, 68, 0.25);
 }
 
 .postit-option-btn.is-wrong-shake .option-piece-box {
   animation: lockShake 0.42s ease-in-out;
 }
 
-.option-mini-tape {
-  top: -5px;
-  width: 28px;
-  height: 8px;
-}
-
 .option-letter-tag {
   position: absolute;
-  top: 4px;
-  left: 6px;
+  top: 1px;
+  left: 5px;
+  font-family: var(--font-mono);
   font-size: 0.62rem;
-  font-weight: 900;
-  color: #64748b;
+  font-weight: 700;
+  color: #854d0e;
   pointer-events: none;
+  z-index: 2;
+}
+
+.postit-option-btn.is-placed-valid .option-letter-tag {
+  color: var(--color-valid-shadow);
+}
+
+.postit-option-btn.is-placed-invalid .option-letter-tag {
+  color: var(--color-invalid-shadow);
 }
 
 .option-piece-box {
-  width: 58px;
-  height: 58px;
+  width: 52px;
+  height: 52px;
   pointer-events: none;
 }
 
@@ -668,18 +555,19 @@ function getPieceTransformStyle(piece) {
   position: absolute;
   bottom: -6px;
   right: -6px;
-  width: 22px;
-  height: 22px;
+  width: 21px;
+  height: 21px;
   border-radius: 50%;
   border: 2px solid #ffffff;
   color: #ffffff;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 900;
   display: inline-grid;
   place-items: center;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.22);
   animation: stampPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   pointer-events: none;
+  z-index: 5;
 }
 
 .placed-status-stamp.stamp-valid {

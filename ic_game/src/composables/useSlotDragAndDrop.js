@@ -148,6 +148,7 @@ export function useSlotDragAndDrop({
   function handlePointerDown(option, event) {
     if (isDisabled()) return;
     if (event.button !== undefined && event.button !== 0) return;
+    event.stopPropagation();
 
     const isAlreadyInSlot = placedOptionId.value === option.id;
     const startOffset = isAlreadyInSlot

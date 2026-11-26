@@ -32,7 +32,7 @@ defineProps({
 
 <template>
   <header
-    class="assistant-top-push"
+    class="assistant-top-push office-lined-card"
     :class="{
       'is-error-alert': isError,
       'is-done-alert': isDone && !isError,
@@ -40,7 +40,6 @@ defineProps({
   >
     <div class="push-avatar-box">
       <img :src="assistantAvatar" alt="Malu" class="push-avatar-img" />
-      <span class="online-indicator" aria-hidden="true"></span>
     </div>
 
     <div class="push-content-box">
@@ -48,7 +47,7 @@ defineProps({
         <span class="push-sender-title">
           {{ $t("tutorials.desk.sender", { assistantName: "Malu" }) }}
         </span>
-        <span class="push-counter-tag" :class="{ done: isDone }">
+        <span class="push-counter-tag" :class="{ done: isDone && !isError }">
           {{ counterLabel }}
         </span>
       </div>
@@ -65,101 +64,115 @@ defineProps({
 <style scoped>
 .assistant-top-push {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
-  background: #ffffff;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 7px 11px;
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.08),
-    0 1px 3px rgba(0, 0, 0, 0.04);
+  border: 1px solid #cbd5e1;
+  border-left: 3.5px solid #38bdf8;
+  border-radius: 6px;
+  padding: 7px 10px;
+  box-shadow: 1px 2px 6px rgba(15, 23, 42, 0.08);
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease;
 }
 
 .assistant-top-push.is-error-alert {
-  background: var(--color-invalid-bg);
-  border-color: var(--color-invalid-border);
+  background-color: #fef2f2;
+  border-color: #fecaca;
+  border-left-color: var(--color-invalid-border);
 }
 
 .assistant-top-push.is-done-alert {
-  background: #f0fdf4;
-  border-color: #86efac;
+  background-color: #f0fdfa;
+  border-color: #99f6e4;
+  border-left-color: #0d9488;
 }
 
 .push-avatar-box {
   position: relative;
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: #f1f5f9;
-  border: 1.5px solid #cbd5e1;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  background: #ffffff;
+  border: 1.5px solid #38bdf8;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.push-avatar-img {
-  width: 30px;
-  height: 30px;
-  object-fit: contain;
-  image-rendering: pixelated;
+.assistant-top-push.is-error-alert .push-avatar-box {
+  border-color: var(--color-invalid-border);
 }
 
-.online-indicator {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 10px;
-  height: 10px;
-  background: #22c55e;
-  border: 2px solid #ffffff;
-  border-radius: 50%;
+.assistant-top-push.is-done-alert .push-avatar-box {
+  border-color: #0d9488;
+}
+
+.push-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
 }
 
 .push-content-box {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .push-header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 2px;
+  gap: 8px;
 }
 
 .push-sender-title {
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: #1e293b;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #0369a1;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
+.assistant-top-push.is-error-alert .push-sender-title {
+  color: var(--color-invalid-shadow);
+}
+
+.assistant-top-push.is-done-alert .push-sender-title {
+  color: #0f766e;
+}
+
 .push-counter-tag {
-  font-size: 0.64rem;
-  font-weight: 800;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
   color: #0369a1;
   background: #e0f2fe;
+  border: 1px solid #bae6fd;
   padding: 1px 7px;
-  border-radius: 10px;
+  border-radius: 4px;
+  white-space: nowrap;
 }
 
 .push-counter-tag.done {
-  color: #15803d;
-  background: var(--color-valid-bg);
+  color: #0f766e;
+  background: #ccfbf1;
+  border-color: #5eead4;
 }
 
 .push-message-text {
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: #334155;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #1e293b;
   margin: 0;
-  line-height: 1.25;
+  line-height: 1.3;
 }
 
 .assistant-top-push.is-error-alert .push-message-text {
@@ -169,17 +182,17 @@ defineProps({
 .push-down-enter-active,
 .push-down-leave-active {
   transition:
-    opacity 0.2s ease,
-    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 0.18s ease,
+    transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .push-down-enter-from {
   opacity: 0;
-  transform: translateY(-14px);
+  transform: translateY(-8px);
 }
 
 .push-down-leave-to {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(6px);
 }
 </style>

@@ -404,6 +404,130 @@ h1 {
   pointer-events: none;
 }
 
+/* ── Primitivos Compartilhados do Capítulo 1 (macOS Chrome + Papelaria) ── */
+.os-window-chrome {
+  position: relative;
+  background-color: #f8fafc;
+  border-radius: 14px;
+  border: 2px solid #cbd5e1;
+  box-shadow: 0 8px 0 #1e293b;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: var(--font-main);
+}
+
+.os-window-bar {
+  position: relative;
+  height: 38px;
+  padding: 0 14px;
+  background: linear-gradient(to bottom, #ffffff 0%, #e2e8f0 100%);
+  border-bottom: 2px solid #cbd5e1;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.os-window-dots {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.os-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  padding: 0;
+}
+
+.os-dot--red {
+  background-color: #ff5f56;
+  border: 1px solid #e0443e;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.os-dot--red:hover {
+  transform: scale(1.15);
+}
+
+.os-dot--yellow {
+  background-color: #ffbd2e;
+  border: 1px solid #dea123;
+}
+
+.os-dot--green {
+  background-color: #27c93f;
+  border: 1px solid #1aab29;
+}
+
+.os-window-bar-title {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #334155;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  max-width: calc(100% - 120px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.office-lined-card {
+  background-color: #fcfcfc;
+  background-image: linear-gradient(
+    transparent,
+    transparent 21px,
+    rgba(203, 213, 225, 0.42) 21px,
+    rgba(203, 213, 225, 0.42) 22px
+  );
+  background-size: 100% 22px;
+}
+
+.btn-teal-tactile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-family: var(--font-main);
+  background-color: #14b8a6;
+  color: #ffffff;
+  border: 2px solid #0f766e;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #0f766e;
+  transition:
+    transform 0.12s ease,
+    background-color 0.15s ease,
+    box-shadow 0.12s ease;
+}
+
+.btn-teal-tactile:hover:not(:disabled) {
+  background-color: #0d9488;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 #0f766e;
+}
+
+.btn-teal-tactile:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #0f766e;
+}
+
+.btn-teal-tactile:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 @keyframes overlayFade {
   from {
     opacity: 0;

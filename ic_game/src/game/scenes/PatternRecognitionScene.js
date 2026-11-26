@@ -99,6 +99,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     this.loadToken = 0;
     this.attemptedAssets = new Set();
     this.isShutdown = false;
+    this.isInputLocked = false;
 
     this.handlePause = () => this.music?.pause();
     this.handleResume = () => this.music?.resume();
@@ -147,6 +148,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   create() {
     this.isShutdown = false;
     AudioManager.init(this);
+    this.setInputLocked(Boolean(this.registry.get("inputLocked")));
 
     // Permite distinguir um toque rápido (auto-drag) de um arraste manual
     this.input.dragDistanceThreshold = 10;
@@ -890,14 +892,21 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     });
 
     piece.on("pointerdown", (pointer) => {
-      if (this.isTransitioning || this.isSolved) return;
+      if (this.isInputLocked || this.isTransitioning || this.isSolved) return;
       piece.setData("downX", pointer.x);
       piece.setData("downY", pointer.y);
       piece.setData("didDrag", false);
     });
 
     piece.on("pointerup", (pointer) => {
-      if (this.isTransitioning || this.isSolved || this.isDragging) return;
+      if (
+        this.isInputLocked ||
+        this.isTransitioning ||
+        this.isSolved ||
+        this.isDragging
+      ) {
+        return;
+      }
       const dist = Phaser.Math.Distance.Between(
         piece.getData("downX") ?? pointer.x,
         piece.getData("downY") ?? pointer.y,
@@ -1117,6 +1126,7 @@ export default class PatternRecognitionScene extends Phaser.Scene {
     };
 
     btnBg.on("pointerdown", () => {
+      if (this.isInputLocked) return;
       btnBg.setFillStyle(buttonPressed);
       btnText.setY(btnY + 2);
       this.checkAnswer();
@@ -1126,6 +1136,34 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   }
 
   // --- DRAG & DROP -------------------------------------------------------
+
+  /**
+   * Bloqueia ou desbloqueia toda a entrada da cena (usado quando um tutorial ou modal está aberto).
+   * @param {boolean} locked
+   */
+  setInputLocked(locked) {
+    this.isInputLocked = Boolean(locked);
+    if (this.input) {
+      this.input.enabled = !this.isInputLocked;
+    }
+
+    if (this.isInputLocked && this.isDragging) {
+      this.isDragging = false;
+      this.setSlotHighlight(false);
+      this.options.forEach((piece, index) => {
+        piece.setDepth(0);
+        const shadow = piece.getData("tileShadow");
+        if (shadow) shadow.setPosition(2, 3);
+        if (this.slot.occupant === index && this.slotInfo) {
+          piece.setPosition(this.slotInfo.x, this.slotInfo.y);
+          piece.setScale(1);
+          this.setPiecePostItStyle(piece, true);
+        } else {
+          this.sendHome(piece, 0);
+        }
+      });
+    }
+  }
 
   /**
    * Altera a paleta da peça entre post-it amarelo e branco.
@@ -1158,7 +1196,9 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   }
 
   onDragStart(pointer, piece) {
-    if (this.isTransitioning || !this.isOption(piece)) return;
+    if (this.isInputLocked || this.isTransitioning || !this.isOption(piece)) {
+      return;
+    }
 
     piece.setData("didDrag", true);
     this.isDragging = true;
@@ -1187,7 +1227,14 @@ export default class PatternRecognitionScene extends Phaser.Scene {
    * @param {Phaser.GameObjects.Container} piece
    */
   handlePieceTap(piece) {
-    if (this.isTransitioning || this.isSolved || !this.isOption(piece)) return;
+    if (
+      this.isInputLocked ||
+      this.isTransitioning ||
+      this.isSolved ||
+      !this.isOption(piece)
+    ) {
+      return;
+    }
 
     const optionIndex = piece.getData("optionIndex");
     if (this.slot.occupant === optionIndex) {
@@ -1212,14 +1259,14 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   }
 
   onDrag(pointer, piece, dragX, dragY) {
-    if (!this.isOption(piece)) return;
+    if (this.isInputLocked || !this.isOption(piece)) return;
 
     piece.setPosition(dragX, dragY);
     this.setSlotHighlight(this.isPieceOverSlot(piece));
   }
 
   onDragEnd(pointer, piece) {
-    if (!this.isOption(piece)) return;
+    if (this.isInputLocked || !this.isOption(piece)) return;
 
     this.isDragging = false;
     this.setSlotHighlight(false);
@@ -1297,7 +1344,14 @@ export default class PatternRecognitionScene extends Phaser.Scene {
   // --- RESULTADO ---------------------------------------------------------
 
   checkAnswer() {
-    if (this.isTransitioning || this.isDragging || this.isSolved) return;
+    if (
+      this.isInputLocked ||
+      this.isTransitioning ||
+      this.isDragging ||
+      this.isSolved
+    ) {
+      return;
+    }
 
     const activeStep = this.getActiveStep();
     const targetCorrectIndex =

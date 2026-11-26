@@ -60,8 +60,11 @@ const isSlotFilled = ref(false);
 const isDraggingPiece = ref(false);
 const showInactivityHint = ref(false);
 const currentStepIndex = ref(0);
+const isOverlayDismissCooldown = ref(false);
 let inactivityTimer = null;
 let warningTimer = null;
+let dismissCooldownTimer = null;
+let dismissCooldownRaf = null;
 
 const stageStartLevel = computed(() => {
   if (!props.storyMode) return 1;
@@ -215,8 +218,44 @@ function toggleHint() {
   AudioManager.play("reply_sfx", { volume: 0.45 });
 }
 
+const isGameInputLocked = computed(
+  () =>
+    Boolean(activeTutorial.value) ||
+    isHintOpen.value ||
+    isPaused.value ||
+    isOverlayDismissCooldown.value,
+);
+
+function dismissOverlaySafely(dismissFn) {
+  if (dismissCooldownRaf !== null) {
+    cancelAnimationFrame(dismissCooldownRaf);
+    dismissCooldownRaf = null;
+  }
+  if (dismissCooldownTimer) {
+    clearTimeout(dismissCooldownTimer);
+    dismissCooldownTimer = null;
+  }
+
+  isOverlayDismissCooldown.value = true;
+  dismissFn();
+
+  dismissCooldownRaf = requestAnimationFrame(() => {
+    dismissCooldownRaf = null;
+    dismissCooldownTimer = setTimeout(() => {
+      dismissCooldownTimer = null;
+      isOverlayDismissCooldown.value = false;
+    }, 120);
+  });
+}
+
+const handleTutorialComplete = () =>
+  dismissOverlaySafely(completeActiveTutorial);
+const handleTutorialSkip = () => dismissOverlaySafely(skipActiveTutorial);
+
 function closeHint() {
-  isHintOpen.value = false;
+  dismissOverlaySafely(() => {
+    isHintOpen.value = false;
+  });
 }
 
 /** Passa para a cena Phaser os dados que ela precisa (via registry). */
@@ -235,6 +274,15 @@ function syncRegistry() {
 watch(currentLevel, () => {
   resetLevelUxState();
 });
+
+watch(
+  isGameInputLocked,
+  (locked) => {
+    game.value?.registry.set("inputLocked", locked);
+    gameScene.value?.setInputLocked(locked);
+  },
+  { immediate: true },
+);
 
 watch(activeTutorial, (tutorial) => {
   if (!tutorial) {
@@ -259,6 +307,7 @@ onMounted(() => {
   scheduleInactivityTimer();
 
   const handleWin = ({ isGroupComplete = false } = {}) => {
+    if (isGameInputLocked.value) return;
     clearInactivityTimer();
     let reachedGoal = false;
     if (props.storyMode) {
@@ -283,6 +332,7 @@ onMounted(() => {
   };
 
   const handleError = (msg, { isMistake = true } = {}) => {
+    if (isGameInputLocked.value) return;
     if (isMistake) {
       performance.recordMistake();
       if (!isHintOpen.value) {
@@ -296,6 +346,7 @@ onMounted(() => {
     isSlotFilled: filled = false,
     isInteracting = false,
   } = {}) => {
+    if (isGameInputLocked.value) return;
     isSlotFilled.value = Boolean(filled);
     isDraggingPiece.value = Boolean(isInteracting);
     if (filled || isInteracting) {
@@ -307,6 +358,7 @@ onMounted(() => {
   };
 
   const handleStepChange = ({ stepIndex = 0 } = {}) => {
+    if (isGameInputLocked.value) return;
     currentStepIndex.value = stepIndex;
     shouldPulseHint.value = false;
   };
@@ -337,6 +389,7 @@ onMounted(() => {
     },
     callbacks: {
       preBoot: (gameInstance) => {
+        gameInstance.registry.set("inputLocked", isGameInputLocked.value);
         gameInstance.registry.set("level", currentLevel.value);
         gameInstance.registry.set("stageLevel", stageLevel.value);
         gameInstance.registry.set("totalLevels", totalLevels.value);
@@ -357,6 +410,10 @@ onMounted(() => {
 onBeforeUnmount(() => {
   clearInactivityTimer();
   clearTimeout(warningTimer);
+  if (dismissCooldownRaf !== null) {
+    cancelAnimationFrame(dismissCooldownRaf);
+  }
+  clearTimeout(dismissCooldownTimer);
   story.setPaused(false);
   game.value?.destroy(true);
   game.value = null;
@@ -482,6 +539,8 @@ const triggerWarning = (msg, type = "info") => {
     <div
       ref="gameRoot"
       class="game-root"
+      :class="{ 'is-input-locked': isGameInputLocked }"
+      :inert="isGameInputLocked || undefined"
       aria-label="Pattern Recognition Game"
     ></div>
 
@@ -514,8 +573,8 @@ const triggerWarning = (msg, type = "info") => {
     <InteractiveTutorialModal
       v-if="activeTutorial"
       :tutorial="activeTutorial"
-      @complete="completeActiveTutorial"
-      @skip="skipActiveTutorial"
+      @complete="handleTutorialComplete"
+      @skip="handleTutorialSkip"
     />
 
     <!-- Modals Compartilhados -->
@@ -564,6 +623,11 @@ const triggerWarning = (msg, type = "info") => {
 </template>
 
 <style scoped>
+.game-root.is-input-locked {
+  pointer-events: none;
+  user-select: none;
+}
+
 .pattern-hud {
   position: absolute;
   top: 0;

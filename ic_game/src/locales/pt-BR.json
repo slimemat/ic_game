@@ -148,7 +148,7 @@
     }
   },
   "mainMenu": {
-    "title": "Logic Hub"
+    "title": "IC GAME"
   },
   "restPanel": {
     "window_title": "Sala de Descanso",
@@ -499,6 +499,8 @@
       "completed": "Pode continuar experimentando à vontade, mas lembra que temos que resolver o chamado!"
     },
     "desk": {
+      "window_title_rotation": "Manual de Treinamento • Rotação",
+      "window_title_reflection": "Manual de Treinamento • Espelho vs. Giro",
       "desk_title": "Tutorial: Rotação",
       "desk_subtitle": "Orientação Espacial",
       "desk_badge": "Etapa 1 • Giro Mental",
@@ -560,17 +562,17 @@
     },
     "rardi_notes": {
       "note_1_title": "Giro Horário (↷)",
-      "note_1_tag_clean": "1. Sentido Horário (↷)",
+      "note_1_tag_clean": "1. Sentido Horário",
       "note_1_text": "O sentido horário segue os ponteiros do relógio analógico!",
       "note_2_title": "Giro Anti-Horário (↶)",
-      "note_2_tag_clean": "2. Anti-Horário (↶)",
+      "note_2_tag_clean": "2. Anti-Horário",
       "note_2_text": "Vai contra os ponteiros do relógio: 1 quarto de volta para a esquerda!",
       "note_3_title": "Espelho Horizontal (⇄)",
-      "note_3_tag_clean": "1. Espelho H (⇄)",
+      "note_3_tag_clean": "1. Espelho H",
       "note_3_golden_rule": "Topo ▲ fixo • Esquerda ⇄ Direita",
       "note_3_text": "Como virar uma página: o topo fica em cima e só os lados trocam!",
       "note_4_title": "Espelho Vertical (⇅)",
-      "note_4_tag_clean": "2. Espelho V (⇅)",
+      "note_4_tag_clean": "2. Espelho V",
       "note_4_golden_rule": "Lados fixos • Topo ⇅ Base",
       "note_4_text": "Como reflexo na água: vira de ponta-cabeça mantendo os lados!",
       "note_180_title": "Meia-Volta (180°)",
