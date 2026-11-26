@@ -1,8 +1,8 @@
 <script setup>
 import { computed, onMounted, onUnmounted } from "vue";
 import PostItSketchDiagram from "./PostItSketchDiagram.vue";
-import handSpriteImg from "../../assets/sprites/blue-hand.png";
-import handBackSpriteImg from "../../assets/sprites/blue-hand-back.png";
+import PostItHand from "./PostItHand.vue";
+import { DEFAULT_HAND_SKIN_ID } from "../../game/data/handSkins";
 
 /**
  * RardiHintPostIt: Modal full-focus de dica em formato de post-it quadrado
@@ -33,6 +33,11 @@ const props = defineProps({
   replayLabel: {
     type: String,
     default: "",
+  },
+  /** ID da skin customizável da mão que segura o post-it */
+  handSkinId: {
+    type: String,
+    default: DEFAULT_HAND_SKIN_ID,
   },
 });
 
@@ -88,16 +93,8 @@ onUnmounted(() => {
         </span>
       </button>
 
-      <!-- Camada traseira (z-index: 1): Palma da mão + braço saindo por trás do post-it até a base da tela -->
-      <div class="postit-hand-layer postit-hand-back" aria-hidden="true">
-        <img
-          :src="handBackSpriteImg"
-          alt=""
-          class="postit-hand-sprite"
-          draggable="false"
-        />
-      </div>
-      <div class="postit-arm-back" aria-hidden="true"></div>
+      <!-- Mão customizável em 3 seções (palma traseira + braço em z-index 1, polegar em z-index 3) -->
+      <PostItHand :skinId="handSkinId" />
 
       <!-- Camada média (z-index: 2): Post-it Quadrado (clicar no corpo NÃO fecha o modal) -->
       <article
@@ -138,16 +135,6 @@ onUnmounted(() => {
           </p>
         </div>
       </article>
-
-      <!-- Camada frontal (z-index: 3): Polegar em pixel art segurando a borda inferior direita -->
-      <div class="postit-hand-layer postit-hand-front" aria-hidden="true">
-        <img
-          :src="handSpriteImg"
-          alt=""
-          class="postit-hand-sprite"
-          draggable="false"
-        />
-      </div>
     </div>
   </div>
 </template>
@@ -321,49 +308,6 @@ onUnmounted(() => {
 .replay-tab-icon {
   font-size: 1rem;
   line-height: 1;
-}
-
-/* Camadas da mão em pixel art (escala inteira 3x = 96x96) compartilhando o mesmo pivô */
-.postit-hand-layer {
-  position: absolute;
-  right: -46px;
-  bottom: -26px;
-  width: 96px;
-  height: 96px;
-  transform-origin: 51px 70px;
-  transform: rotate(-24deg);
-  pointer-events: none;
-}
-
-.postit-hand-back {
-  z-index: 1;
-}
-
-.postit-hand-front {
-  z-index: 3;
-}
-
-.postit-arm-back {
-  position: absolute;
-  right: -34px;
-  top: calc(100% + 22px);
-  width: 66px;
-  height: 100vh;
-  background: #1c3377;
-  border-left: 3px solid #262626;
-  border-right: 3px solid #262626;
-  transform-origin: 33px -22px;
-  transform: rotate(-24deg);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.postit-hand-sprite {
-  width: 96px;
-  height: 96px;
-  display: block;
-  object-fit: contain;
-  image-rendering: pixelated;
 }
 
 @media (prefers-reduced-motion: reduce) {
