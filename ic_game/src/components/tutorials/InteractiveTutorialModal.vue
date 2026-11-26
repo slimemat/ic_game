@@ -230,15 +230,9 @@ function handleConfirmSkip() {
     role="dialog"
     aria-modal="true"
     :aria-label="windowTitle"
-    @pointerdown.stop
-    @pointermove.stop
-    @pointerup.stop
     @mousedown.stop
     @mouseup.stop
     @click.stop
-    @touchstart.stop
-    @touchmove.stop
-    @touchend.stop
     @keydown.stop
   >
     <div class="tutorial-window os-window-chrome">

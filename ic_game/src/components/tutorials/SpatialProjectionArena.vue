@@ -126,8 +126,30 @@ function getPieceTransformStyle(piece) {
         </div>
       </div>
 
-      <!-- Indicador direcional legível entre Original e Resultado -->
+      <!-- Indicador direcional legível + mini prévia fantasma animada -->
       <div class="arena-transform-bridge" aria-hidden="true">
+        <div class="bridge-anim-box blueprint-grid-surface">
+          <div class="bridge-ghost-origin">
+            <span class="bridge-hat-anchor">▲</span>
+            <img
+              :src="spritepaintImg"
+              alt=""
+              class="bridge-sprite-img"
+              draggable="false"
+            />
+          </div>
+
+          <div class="bridge-animated-actor" :class="`anim-${actionKey}`">
+            <span class="bridge-hat-anchor active-hat">▲</span>
+            <img
+              :src="spritepaintImg"
+              alt=""
+              class="bridge-sprite-img"
+              draggable="false"
+            />
+          </div>
+        </div>
+
         <span class="bridge-action-badge">{{ actionBadgeLabel }}</span>
         <svg
           class="bridge-arrow-svg"
@@ -244,13 +266,13 @@ function getPieceTransformStyle(piece) {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   padding: 2px 0;
 }
 
 .arena-stage-slot {
   position: relative;
-  width: clamp(98px, 27vw, 112px);
+  width: clamp(96px, 27vw, 110px);
   aspect-ratio: 1 / 1;
   border-radius: 6px;
   border: 2px solid #94a3b8;
@@ -342,6 +364,173 @@ function getPieceTransformStyle(piece) {
   justify-content: center;
   gap: 4px;
   min-width: 58px;
+}
+
+.bridge-anim-box {
+  position: relative;
+  width: clamp(42px, 12vw, 48px);
+  height: clamp(42px, 12vw, 48px);
+  border: 1.5px solid #94a3b8;
+  border-radius: 6px;
+  box-shadow: inset 0 1px 3px rgba(15, 23, 42, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.bridge-ghost-origin,
+.bridge-animated-actor {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bridge-ghost-origin {
+  opacity: 0.24;
+  filter: grayscale(0.5);
+}
+
+.bridge-sprite-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.bridge-hat-anchor {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.45rem;
+  line-height: 1;
+  color: #dc2626;
+  font-weight: 900;
+  text-shadow: 0 0 2px #ffffff;
+  z-index: 5;
+}
+
+.anim-rotate_cw {
+  animation: bridgeRotateCw 2.4s infinite cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.anim-rotate_ccw {
+  animation: bridgeRotateCcw 2.4s infinite cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.anim-rotate_180 {
+  animation: bridgeRotate180 2.6s infinite cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.anim-rotate_45 {
+  animation: bridgeRotate45 2.4s infinite cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.anim-flip_h {
+  animation: bridgeFlipH 2.4s infinite cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.anim-flip_v {
+  animation: bridgeFlipV 2.4s infinite cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes bridgeRotateCw {
+  0%,
+  20% {
+    transform: rotate(0deg);
+  }
+  50%,
+  80% {
+    transform: rotate(90deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes bridgeRotateCcw {
+  0%,
+  20% {
+    transform: rotate(0deg);
+  }
+  50%,
+  80% {
+    transform: rotate(-90deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes bridgeRotate180 {
+  0%,
+  20% {
+    transform: rotate(0deg);
+  }
+  50%,
+  80% {
+    transform: rotate(180deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes bridgeRotate45 {
+  0%,
+  20% {
+    transform: rotate(0deg);
+  }
+  50%,
+  80% {
+    transform: rotate(45deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes bridgeFlipH {
+  0%,
+  20% {
+    transform: scaleX(1);
+  }
+  50%,
+  80% {
+    transform: scaleX(-1);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes bridgeFlipV {
+  0%,
+  20% {
+    transform: scaleY(1);
+  }
+  50%,
+  80% {
+    transform: scaleY(-1);
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-rotate_cw,
+  .anim-rotate_ccw,
+  .anim-rotate_180,
+  .anim-rotate_45,
+  .anim-flip_h,
+  .anim-flip_v {
+    animation: none;
+  }
 }
 
 .bridge-action-badge {
